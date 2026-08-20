@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "chapl",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "chapl-admin",
+      "runtimeExecutable": "/Users/yawdonkor/Desktop/web-dev/fastdev/bin/python",
+      "runtimeArgs": [
+        "-m", "uvicorn", "app.main:app",
+        "--app-dir", "/Users/yawdonkor/Desktop/git-repos/chapl",
+        "--reload",
+        "--reload-dir", "/Users/yawdonkor/Desktop/git-repos/chapl/app",
+        "--port", "8010"
+      ],
+      "port": 8010
+    }
+  ]
+}

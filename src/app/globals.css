@@ -1,26 +1,1345 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------
+   Chapl tokens
+   Palette derived from stained glass: saturated jewel colours held
+   in dark leading, read against white light. Colour is never
+   decoration here — each hue is bound to one domain of church life.
+   --------------------------------------------------------------- */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+
+  --paper: #ffffff;
+  --mist: #f6f7f9;
+  --sunk: #eef0f4;
+  --line: #e6e8ec;
+  --line-soft: #eef0f3;
+  --line-strong: #d4d8e0;
+
+  --ink: #0e1116;
+  --ink-2: #4a5261;
+  --ink-3: #7b8291;
+
+  --cobalt: #2b50e8; /* people, brand */
+  --violet: #7c3aed; /* branches */
+  --teal: #0d9ba0; /* cells */
+  --emerald: #0e9f68; /* giving */
+  --gold: #dd8f06; /* attendance, birthdays */
+  --ruby: #d92142; /* care, notifications */
+
+  --accent: var(--cobalt);
+  --accent-ink: #ffffff;
+
+  /* Elevation is light against light: a soft hairline plus a long, cool
+     falloff that never reads as a hard box. */
+  --elevation:
+    0 1px 2px rgb(14 17 22 / 0.04),
+    0 12px 32px -16px rgb(14 17 22 / 0.16);
+  --elevation-hover:
+    0 2px 4px rgb(14 17 22 / 0.05),
+    0 18px 44px -16px rgb(14 17 22 / 0.22);
+  --glow: 0 10px 28px -10px color-mix(in oklab, var(--accent) 45%, transparent);
+
+  /*
+   * Motion curves, named once.
+   *
+   * The built-in CSS easings are too weak to read as intentional — an
+   * element on `ease-out` still looks like it is coasting. These are the
+   * strong variants this app was already using inline; naming them stops
+   * the next animation from being drawn with a slightly different one.
+   *
+   * `--ease-out` is for anything entering or leaving, and for press
+   * feedback: it starts fast, which is the moment the eye is on it.
+   * `--ease-in-out` is for something moving across the screen, where
+   * both ends need to settle. There is no `--ease-in` on purpose — it
+   * delays the first frames, and a 200ms ease-in feels slower than a
+   * 200ms ease-out even though it is not.
+   */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --paper: #0a0c11;
+  --mist: #10131a;
+  --sunk: #161a23;
+  --line: #222733;
+  --line-soft: #191d27;
+  --line-strong: #313847;
+
+  --ink: #eef0f4;
+  --ink-2: #a4adbc;
+  --ink-3: #717a8b;
+
+  --cobalt: #7595ff;
+  --violet: #b192ff;
+  --teal: #2bd0d5;
+  --emerald: #2fd898;
+  --gold: #ffc247;
+  --ruby: #ff6b81;
+
+  --accent: var(--cobalt);
+  --accent-ink: #08090d;
+
+  /* On a near-black canvas the shadow has nothing to cast against — the
+     card is lit by its edge instead. */
+  --elevation:
+    0 1px 2px rgb(0 0 0 / 0.4),
+    0 18px 44px -16px rgb(0 0 0 / 0.65);
+  --elevation-hover:
+    0 2px 4px rgb(0 0 0 / 0.45),
+    0 24px 52px -16px rgb(0 0 0 / 0.7);
+  --glow: 0 10px 30px -10px color-mix(in oklab, var(--accent) 55%, transparent);
+}
+
+/*
+ * Surfaces that stay dark in both themes (the media room) carry their own
+ * light: the jewel tones have to be the lifted variants or they sink into
+ * the background when the rest of the page is white.
+ */
+.on-dark {
+  --paper: #0e1117;
+  --mist: #131720;
+  --sunk: #191e29;
+  --line: rgba(255, 255, 255, 0.09);
+  --line-soft: rgba(255, 255, 255, 0.05);
+  --line-strong: rgba(255, 255, 255, 0.16);
+
+  --ink: #f0f2f6;
+  --ink-2: rgba(255, 255, 255, 0.62);
+  --ink-3: rgba(255, 255, 255, 0.42);
+
+  --cobalt: #7595ff;
+  --violet: #b192ff;
+  --teal: #2bd0d5;
+  --emerald: #2fd898;
+  --gold: #ffc247;
+  --ruby: #ff6b81;
+
+  --accent: var(--cobalt);
+  --accent-ink: #08090d;
+
+  --elevation:
+    0 1px 2px rgb(0 0 0 / 0.4),
+    0 18px 44px -16px rgb(0 0 0 / 0.65);
+  --elevation-hover:
+    0 2px 4px rgb(0 0 0 / 0.45),
+    0 24px 52px -16px rgb(0 0 0 / 0.7);
+
+  color: var(--ink);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-paper: var(--paper);
+  --color-mist: var(--mist);
+  --color-sunk: var(--sunk);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-line-strong: var(--line-strong);
+
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+
+  --color-cobalt: var(--cobalt);
+  --color-violet: var(--violet);
+  --color-teal: var(--teal);
+  --color-emerald: var(--emerald);
+  --color-gold: var(--gold);
+  --color-ruby: var(--ruby);
+
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--line);
+}
+
+/*
+ * Scroll, silently — everywhere.
+ *
+ * This was declared per container: `.table-fill`, `.modal-body`, and
+ * whatever got built next. Which meant every new scrolling panel arrived
+ * with a thumb until somebody noticed, because the rule lived with the
+ * components rather than with the decision. It is one decision about the
+ * whole product, so it is written once.
+ *
+ * Scrolling still works by every means it did — wheel, trackpad, keyboard,
+ * touch, and dragging a selection past the edge. Only the thumb is gone.
+ */
+*,
+*::before,
+*::after {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv05" 1, "ss01" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--cobalt) 22%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* --- type roles ------------------------------------------------ */
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+}
+
+.head {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.04;
+}
+
+.eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- the dot: atomic unit of the whole system ------------------ */
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.dot-hollow {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1.25px currentColor;
+  opacity: 0.45;
+}
+
+/* Hero orchestration: the congregation settles into place. */
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.settle {
+  animation: settle 0.5s var(--ease-out) backwards;
+}
+
+.rise {
+  animation: rise 0.7s var(--ease-out) backwards;
+}
+
+.branch-dim {
+  opacity: 0.16;
+  filter: saturate(0.2);
+}
+
+.field-branch {
+  transition: opacity 0.28s ease, filter 0.28s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .settle,
+  .rise {
+    animation: none;
+  }
+  .field-branch {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------
+   The signed-in product
+   ---------------------------------------------------------------
+   The marketing page breathes: big display type, one accent, and a
+   lot of white between things. The admin screens were built denser
+   than that, and the two halves of the product stopped looking like
+   one thing.
+
+   These are the rules that put them back together. The instinct
+   throughout is restraint — space carries the structure, and colour
+   is reserved for the six domains and for status. A screen where
+   everything is emphasised has nothing emphasised.
+   --------------------------------------------------------------- */
+
+/* A section of a page: hairline top, generous inset, no box. Cards
+   inside cards is how an admin UI ends up looking like a spreadsheet
+   wearing a costume. */
+/*
+ * Compact by default.
+ *
+ * These screens are worked in, not read through. Someone marking a
+ * register or chasing a follow-up wants everything on one screen — so
+ * the inset is the smallest that still separates one panel from the
+ * next, and the horizontal gutters are nearly nothing. Air belongs
+ * inside a panel, between a label and its number; not around the edge
+ * of the window.
+ */
+.sheet {
+  position: relative;
+  background: var(--paper);
+  /* No shadow, ever. On this canvas the card is separated from the rest by
+     its edge alone — a hairline that turns to line-strong on hover. The
+     price of a flat surface is that hierarchy has to come from border,
+     colour and type, so every one of those earns its place. */
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
+  padding: 0.875rem 1rem;
+}
+
+.sheet-lg {
+  padding: 1.125rem 1.25rem;
+}
+
+/* Interactive cards get an edge that shows itself on hover instead of a
+   shadow — elevation is gone, so the affordance is a border change. */
+.sheet-hover {
+  transition: border-color 0.2s ease, background-color 0.2s ease,
+    transform 0.14s var(--ease-out);
+}
+.sheet-hover:hover {
+  border-color: var(--line-strong);
+  background: color-mix(in oklab, var(--paper) 30%, var(--mist));
+  transform: translateY(-1px);
+}
+
+/*
+ * The press.
+ *
+ * A card that lifts on hover and then does nothing when you push it is a
+ * card that stops responding at the exact moment you commit. `0.99` and
+ * not `0.97`: the scale is a proportion, so what reads as a firm click on
+ * a 90px button reads as the whole panel flinching at 400px wide.
+ */
+.sheet-hover:active {
+  transform: scale(0.99);
+  transition-duration: 0.09s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-hover {
+    transition: none;
+  }
+  .sheet-hover:hover,
+  .sheet-hover:active {
+    transform: none;
+  }
+}
+
+/* The quiet variant, for anything that supports rather than states. It
+   stays flat on purpose — elevation is what says "this is the thing you
+   were looking for", and not every panel is. */
+.sheet-mist {
+  background: var(--mist);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* A hairline of colour along the top of a featured card. Used sparingly —
+   one per page, on the card the reader is meant to land on first. Set
+   --edge to the hue it belongs to. */
+.sheet-edge::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 1.25rem;
+  right: 1.25rem;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--edge, var(--cobalt)) 70%, transparent) 30%,
+    color-mix(in oklab, var(--edge, var(--cobalt)) 70%, transparent) 70%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* The ambient light of the signed-in half: two faint jewel tints bleeding
+   in from the top corners. The canvas is mist, not paper, so a flat card
+   still reads as a card against it — contrast does the work a shadow
+   used to. */
+.app-ambient {
+  background:
+    radial-gradient(
+      52rem 26rem at 8% -6%,
+      color-mix(in oklab, var(--violet) 8%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      44rem 22rem at 98% -4%,
+      color-mix(in oklab, var(--cobalt) 9%, transparent),
+      transparent 55%
+    ),
+    var(--mist);
+}
+
+/* Reading measure. Prose past this is prose nobody finishes. */
+.measure {
+  max-width: 62ch;
+}
+
+/* --- the page rhythm ------------------------------------------- */
+
+/*
+ * One orchestrated moment per page, the same as the hero.
+ *
+ * Staggered by depth rather than by index: the heading, then the
+ * numbers, then the detail. Anything below that appears with the
+ * page, because a cascade that runs for a second is a page you wait
+ * for rather than a page that arrives.
+ */
+.page-in > * {
+  animation: rise 0.38s var(--ease-out) backwards;
+}
+.page-in > *:nth-child(1) { animation-delay: 0ms; }
+.page-in > *:nth-child(2) { animation-delay: 45ms; }
+.page-in > *:nth-child(3) { animation-delay: 80ms; }
+.page-in > *:nth-child(n + 4) { animation-delay: 110ms; }
+
+/*
+ * The same page, arriving without the cascade.
+ *
+ * A page you land on once can afford to assemble itself. A page you step
+ * through — one service, then the next, then the next — cannot: replaying
+ * the entrance on every step turns a control you press ten times in a row
+ * into a control that makes you wait. Same rule as never animating a
+ * keyboard action; the trigger is repetition, not the input device.
+ */
+.page-in-quiet > * {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-in > * {
+    animation: none;
+  }
+}
+
+/* --- controls -------------------------------------------------- */
+
+/* Pill buttons, as on the marketing page. A rounded rectangle in the
+   product and a pill on the home page reads as two design systems. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4375rem;
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-size: 13px;
+  font-weight: 500;
+  transition: opacity 0.15s, border-color 0.15s, box-shadow 0.15s,
+    background-color 0.15s, transform 0.14s var(--ease-out);
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: linear-gradient(
+    135deg,
+    var(--cobalt),
+    color-mix(in oklab, var(--cobalt) 62%, var(--violet))
+  );
+  color: var(--accent-ink);
+}
+.btn-primary:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+/*
+ * Every pill answers a press.
+ *
+ * `:active` only cancelled the hover lift before, which reads as nothing
+ * happening — the button moved back to where it started. A small scale
+ * down is the whole feedback loop: the interface heard you, before the
+ * network has any opinion about it.
+ */
+.btn:active {
+  transform: scale(0.97);
+}
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.btn-quiet {
+  border: 1px solid var(--line);
+  color: var(--ink);
+  background: color-mix(in oklab, var(--paper) 60%, transparent);
+}
+.btn-quiet:hover {
+  border-color: var(--line-strong);
+  background: var(--paper);
+}
+
+.btn-sm {
+  padding: 0.3125rem 0.75rem;
+  font-size: 12px;
+}
+
+/* A status or category chip. Colour comes from the caller, because
+   the six brights are bound to domains and this must not pick one. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  border-radius: 999px;
+  padding: 0.125rem 0.5rem;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: 1px solid color-mix(in oklab, currentColor 18%, transparent);
+  white-space: nowrap;
+}
+
+/* --- figures --------------------------------------------------- */
+
+/*
+ * A headline number. Display face, tight tracking, tabular — so a
+ * column of them lines up and a changing one does not reflow.
+ */
+.figure {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+/*
+ * A headline number set as a gradient. `color: transparent` is the only
+ * way background-clip: text works, so a `style={{ color }}` would fight
+ * it — use this class instead of an inline colour.
+ */
+.grad-text {
+  background-image: linear-gradient(
+    118deg,
+    var(--cobalt),
+    color-mix(in oklab, var(--cobalt) 52%, var(--violet)) 60%,
+    var(--violet)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* A signed change, the quiet way. */
+.delta-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.0625rem 0.4375rem;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.45;
+}
+
+/* A stat card. Flat — no corner light — but a hairline of the domain
+   hue runs across the top so a row of stats still reads as colour-coded
+   at a glance. The caller sets --stat-tone. */
+.stat-card {
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--stat-tone, var(--cobalt)) 45%, transparent),
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* --- lists ----------------------------------------------------- */
+
+/* Rows separated by their own hairline rather than by a box each. */
+.rows > * + * {
+  border-top: 1px solid var(--line);
+}
+
+/*
+ * The number inside a ring.
+ *
+ * A donut with an empty hole is a donut that spent its middle on
+ * nothing. The total goes there — it is the figure people came for, and
+ * the slices are the answer to "made up of what".
+ *
+ * NOT called `.ring`: that is a Tailwind utility, and Tailwind generates
+ * it from any class it finds in the markup. It painted a 1px near-black
+ * `box-shadow` around every donut on the dashboard — the same collision
+ * that `.grid` caused on the admin tables, and just as invisible in the
+ * source.
+ */
+.dial {
+  position: relative;
+}
+
+.dial-centre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  text-align: center;
+  line-height: 1.1;
+}
+
+/* A label above a figure, repeated across a strip. */
+.kpi-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------
+   Charts
+   ---------------------------------------------------------------
+   TanStack draws axes with `stroke="currentColor"`, which inherits
+   the panel's near-black ink. Two domain lines along the bottom and
+   left, plus the plot edge, then read as a hard frame drawn around
+   every chart.
+
+   The frame goes. Ticks and their labels stay, because they are the
+   only thing telling you what the shape is measured against — but at
+   `ink-3`, which is the weight a reference should have next to the
+   data it is a reference for.
+   --------------------------------------------------------------- */
+
+.ts-chart {
+  color: var(--ink-3);
+}
+
+.ts-chart__axes line[data-ts-key="x-axis"],
+.ts-chart__axes line[data-ts-key="y-axis"] {
+  display: none;
+}
+
+.ts-chart__axes line {
+  stroke-opacity: 0.35;
+}
+
+.ts-chart__axes text {
+  font-size: 10px;
+  letter-spacing: 0.01em;
+}
+
+/*
+ * The hover card. It floats over the plot, so it gets the same roof as a
+ * real card: hairline, elevation, a little blur so the data never shouts
+ * through it.
+ */
+.ts-chart-tooltip {
+  background: var(--paper) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--elevation-hover) !important;
+  font-family: var(--font-sans);
+  padding: 0.5rem 0.625rem !important;
+}
+.ts-chart-tooltip__title {
+  color: var(--ink-3);
+  font-size: 11px;
+  font-weight: 500;
+}
+.ts-chart-tooltip__rows {
+  margin-top: 0.125rem;
+}
+.ts-chart-tooltip__row {
+  color: var(--ink-2);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------
+   The congregation field, at hero scale
+   ---------------------------------------------------------------
+   On the marketing page the dot is 5px because it sits under a
+   headline. Here it is the headline, so it carries a size of its
+   own — big enough that one person is a thing you can point at,
+   small enough that eight hundred of them still fit above the fold.
+   --------------------------------------------------------------- */
+
+.field .dot,
+.field .dot-hollow {
+  width: 7px;
+  height: 7px;
+}
+
+.field .dot-hollow {
+  box-shadow: inset 0 0 0 1.5px currentColor;
+  opacity: 0.4;
+}
+
+/* A cell is a target, not an illustration. The lift is small on purpose
+   — at this density anything larger makes the whole field twitch. */
+.cell-cluster {
+  border-radius: 5px;
+  padding: 3px;
+  margin: -3px;
+  transition: background-color 0.14s ease;
+}
+
+.cell-cluster:hover,
+.cell-lit {
+  background: color-mix(in oklab, currentColor 11%, transparent);
+}
+
+.cell-cluster:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+}
+
+/* The field gets its own ground: full-bleed on mist, no card. It is the
+   page's subject rather than the first of eleven panels, and the change
+   of surface is what says so. */
+.field-band {
+  background: var(--mist);
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  margin-left: calc(var(--shell-gutter, 0.125rem) * -1);
+  margin-right: calc(var(--shell-gutter, 0.125rem) * -1);
+  padding: 1.25rem 1.25rem 1.5rem;
+  border-radius: 14px;
+}
+
+/* ---------------------------------------------------------------
+   People as dots, everywhere people are counted
+   ---------------------------------------------------------------
+   The dot is the atomic unit of this system, so a head count in a
+   table cell should look like the congregation field does — small,
+   countable, filled if they were there. It reads faster than the
+   number beside it and it ties every page back to the signature.
+   --------------------------------------------------------------- */
+
+.dotrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  align-items: center;
+  max-width: 132px;
+}
+
+.dotrow .dot,
+.dotrow .dot-hollow {
+  width: 5px;
+  height: 5px;
+}
+
+/* ---------------------------------------------------------------
+   A table that fills what is left of the screen
+   ---------------------------------------------------------------
+   The header names the columns and the footer totals them; both are
+   useless if they scroll away from the rows they describe. So the
+   page becomes exactly one screen, the two ends stay put, and only
+   the rows move.
+   --------------------------------------------------------------- */
+
+/* One inset, equal on every side, used by every page. */
+.page-pad {
+  padding: 1.75rem;
+}
+
+@media (max-width: 640px) {
+  .page-pad {
+    padding: 1rem;
+  }
+}
+
+.page-fill {
+  height: calc(100dvh - 7.75rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-bottom: 0;
+}
+
+.table-fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.table-fill table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table-fill thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+
+.table-fill tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+}
+
+/* ---------------------------------------------------------------
+   Leaderboard
+   ---------------------------------------------------------------
+   Rank is a number, not a medal. The top three get the accent and
+   everything below it stays quiet, because a board where every row
+   is decorated has no top three.
+   --------------------------------------------------------------- */
+
+.rank {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: var(--sunk);
+  color: var(--ink-3);
+  flex-shrink: 0;
+}
+
+.rank-top {
+  background: color-mix(in oklab, currentColor 16%, transparent);
+}
+
+/* ---------------------------------------------------------------
+   Modal
+   ---------------------------------------------------------------
+   A create form is a detour, not a place. It arrives over the page
+   it was launched from, blurs what is behind it so the eye has one
+   target, and leaves again — which is why the page underneath keeps
+   its scroll position and its state.
+   --------------------------------------------------------------- */
+
+.modal-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  /* Centred on both axes. Anchored to the top, a short form floated in
+     the upper third with a lake of scrim under it. */
+  place-items: center;
+  padding: 1.5rem 1rem;
+  /* Light mode dims with ink; dark mode has to go darker than its own
+     background or the panel floats on nothing. */
+  background: color-mix(in oklab, var(--ink) 34%, transparent);
+  backdrop-filter: blur(10px) saturate(0.85);
+  -webkit-backdrop-filter: blur(10px) saturate(0.85);
+  animation: scrim-in 0.16s ease-out;
+}
+
+.dark .modal-scrim,
+[data-theme="dark"] .modal-scrim {
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(12px) saturate(0.8);
+  -webkit-backdrop-filter: blur(12px) saturate(0.8);
+}
+
+/*
+ * The panel is a fixed frame with a scrolling middle.
+ *
+ * A tall form used to push the save button off the bottom of the scrim,
+ * so the only way to finish was to scroll the whole overlay. Header and
+ * footer are pinned; the fields between them move. The height cap is a
+ * share of the viewport, so a short form is still only as tall as it
+ * needs to be.
+ */
+.modal-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 52rem;
+  max-height: min(86vh, 52rem);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  animation: modal-in 0.22s var(--ease-out);
+}
+
+/* The church record carries five sections of fields; at 52rem they
+   stack into a column tall enough that the scroll does all the work. */
+.modal-wide {
+  max-width: 62rem;
+}
+
+.modal-head {
+  flex-shrink: 0;
+  padding: 1.75rem 2rem 1rem;
+}
+
+.modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 2rem 1.25rem;
+}
+
+.modal-foot {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem 1.5rem;
+  border-top: 1px solid var(--line);
+  background: var(--paper);
+  border-radius: 0 0 20px 20px;
+}
+
+@media (max-width: 640px) {
+  .modal-panel {
+    max-height: 92vh;
+    border-radius: 16px;
+  }
+  .modal-head { padding: 1.25rem 1.25rem 0.75rem; }
+  .modal-body { padding: 0 1.25rem 1rem; }
+  .modal-foot { padding: 0.875rem 1.25rem 1.25rem; }
+}
+
+/* ---------------------------------------------------------------
+   A form in sections
+   ---------------------------------------------------------------
+   Ten fields in one column is a wall. Grouped under a heading that
+   says what the group is for, the same ten become three short
+   decisions — and an administrator can tell at a glance which parts
+   they may skip.
+   --------------------------------------------------------------- */
+
+.fieldset-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+  margin-bottom: 0.75rem;
+}
+
+.fieldset-head::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.fieldset-title {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+/* An icon sitting inside the field it names. */
+.field-icon {
+  position: absolute;
+  left: 0.875rem;
+  top: 0.8125rem;
+  width: 15px;
+  height: 15px;
+  color: var(--ink-3);
+  pointer-events: none;
+}
+
+.has-icon input,
+.has-icon select,
+.has-icon textarea {
+  padding-left: 2.5rem;
+}
+
+@keyframes scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-scrim,
+  .modal-panel {
+    animation: none;
+  }
+}
+
+/* The scrim covers the document, so the page behind it must not also
+   scroll under the cursor. */
+body:has(.modal-scrim) {
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------
+   The hero picture, held in the dot field
+   ---------------------------------------------------------------
+   The image is not framed by dots, it is made of them where the
+   light runs out. See `components/dot-photo.tsx` for why the
+   spotlight is a moved layer rather than a moved mask.
+   --------------------------------------------------------------- */
+
+.dot-photo {
+  --dot-gap: 7px;
+  --dot-r: 1.45px;
+  /* How far the solid middle reaches before it starts breaking up. */
+  --core: 34%;
+  --fade: 76%;
+
+  position: relative;
+  /*
+   * No frame, no plate, no corner radius.
+   *
+   * All three were fighting the thing itself: an image whose whole idea
+   * is that it stops being an image at its edges cannot also have a
+   * hairline saying exactly where it stops. The `--sunk` plate behind it
+   * was worse — it drew a rounded rectangle *through* the dots, so the
+   * dissolve faded into a visible block rather than into the page.
+   */
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.dot-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/*
+ * The dissolve.
+ *
+ * Union of a soft core and a tiled dot: continuous in the middle,
+ * granular at the edges. `add` is the standards spelling and
+ * `source-over` the WebKit one — both are needed, and they mean the
+ * same thing here.
+ */
+.dot-photo-base {
+  -webkit-mask-image:
+    radial-gradient(115% 92% at 50% 42%, #000 var(--core), rgba(0, 0, 0, 0.5) 60%, transparent var(--fade)),
+    radial-gradient(circle at 50% 50%, #000 var(--dot-r), transparent calc(var(--dot-r) + 0.6px));
+  mask-image:
+    radial-gradient(115% 92% at 50% 42%, #000 var(--core), rgba(0, 0, 0, 0.5) 60%, transparent var(--fade)),
+    radial-gradient(circle at 50% 50%, #000 var(--dot-r), transparent calc(var(--dot-r) + 0.6px));
+  -webkit-mask-size: 100% 100%, var(--dot-gap) var(--dot-gap);
+  mask-size: 100% 100%, var(--dot-gap) var(--dot-gap);
+  -webkit-mask-repeat: no-repeat, repeat;
+  mask-repeat: no-repeat, repeat;
+  -webkit-mask-composite: source-over;
+  mask-composite: add;
+}
+
+/*
+ * The travelling window.
+ *
+ * Full-size so its mask centre is the frame centre at rest; moved with
+ * translate3d, with the picture inside moved back by the same amount.
+ * `will-change` because this is the one element on the page that is
+ * genuinely animating every frame.
+ */
+.dot-photo-spot {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+  -webkit-mask-image: radial-gradient(circle 210px at 50% 50%, #000 34%, rgba(0, 0, 0, 0.45) 58%, transparent 76%);
+  mask-image: radial-gradient(circle 210px at 50% 50%, #000 34%, rgba(0, 0, 0, 0.45) 58%, transparent 76%);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+.dot-photo-sharp {
+  will-change: transform;
+}
+
+@media (max-width: 640px) {
+  .dot-photo {
+    --dot-gap: 6px;
+    --dot-r: 1.25px;
+  }
+  .dot-photo-spot {
+    -webkit-mask-image: radial-gradient(circle 130px at 50% 50%, #000 34%, transparent 76%);
+    mask-image: radial-gradient(circle 130px at 50% 50%, #000 34%, transparent 76%);
+  }
+}
+
+/*
+ * Reduced motion keeps the picture and loses the movement.
+ * The dissolve is what the thing *is*; the travelling light is the part
+ * that could make somebody feel unwell, so only that goes.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .dot-photo-spot,
+  .dot-photo-sharp {
+    transform: none !important;
+    will-change: auto;
+  }
+}
+
+/*
+ * Scroll reveal — a transition, not a keyframe.
+ *
+ * Transitions retarget mid-flight; a keyframe restarts from zero. Someone
+ * scrolling quickly can cross a section's threshold while it is still
+ * arriving, and this is the difference between that reading as smooth and
+ * reading as a stutter.
+ */
+.reveal {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.55s var(--ease-out), transform 0.55s var(--ease-out);
+}
+
+.reveal[data-shown="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Skeletons
+   ---------------------------------------------------------------
+   A sweep rather than a pulse. A block fading in and out reads as
+   something broken blinking at you; a highlight passing over it
+   reads as loading, which is the thing being communicated.
+
+   The sweep is a `translateX` on a pseudo-element, so it runs on
+   the compositor. Animating `background-position` — the usual way
+   this is written — repaints the element every frame, and a page
+   of thirty skeletons doing that is a page that stutters before it
+   has even loaded.
+   --------------------------------------------------------------- */
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--sunk);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--paper) 55%, transparent),
+    transparent
+  );
+  animation: sweep 1.5s var(--ease-in-out) infinite;
+}
+
+@keyframes sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/*
+ * Reduced motion keeps the shape and drops the travel. The blocks still
+ * say "a page is coming"; they just stop moving while they say it.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Tooltip
+   ---------------------------------------------------------------
+   125ms, ease-out, and it scales from the side it is anchored to
+   rather than from its own middle — a label for the icon on your
+   left should grow out of that icon, not appear in the air beside
+   it. `transform-origin` is the whole difference and nobody will
+   ever consciously notice it.
+   --------------------------------------------------------------- */
+
+.tip {
+  position: fixed;
+  z-index: 90;
+  pointer-events: none;
+  white-space: nowrap;
+  border-radius: 7px;
+  padding: 0.3125rem 0.5rem;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.005em;
+  color: var(--paper);
+  background: var(--ink);
+  box-shadow: 0 4px 14px -6px rgb(0 0 0 / 0.4);
+  animation: tip-in 0.125s var(--ease-out);
+}
+
+.dark .tip {
+  color: var(--ink);
+  background: var(--line-strong);
+}
+
+.tip[data-placement="right"] {
+  transform: translateY(-50%);
+  transform-origin: left center;
+}
+
+.tip[data-placement="top"] {
+  transform: translate(-50%, -100%);
+  transform-origin: center bottom;
+}
+
+/*
+ * The second tooltip does not animate at all.
+ *
+ * Once one is open the reader is reading tooltips, and replaying a
+ * 125ms entrance for every icon they pass turns a row of eight into
+ * something that feels like it is buffering.
+ */
+.tip[data-instant] {
+  animation: none;
+}
+
+@keyframes tip-in {
+  from {
+    opacity: 0;
+    /* 0.96, never 0 — nothing in the world appears out of nothing. */
+    scale: 0.96;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tip {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Popover — the shell for the date, time and combo pickers
+   ---------------------------------------------------------------
+   Anchored under its field, so it grows out of the field rather
+   than appearing beside it. 150ms: long enough to read as a
+   movement, short enough that opening it ten times in a form never
+   feels like waiting.
+   --------------------------------------------------------------- */
+
+.pop {
+  position: fixed;
+  z-index: 120;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  box-shadow:
+    0 1px 2px rgb(14 17 22 / 0.05),
+    0 16px 40px -12px rgb(14 17 22 / 0.28);
+  transform-origin: top center;
+  animation: pop-in 0.15s var(--ease-out);
+}
+
+.dark .pop {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.5),
+    0 20px 48px -12px rgb(0 0 0 / 0.7);
+}
+
+/* Flipped above the field, it has to grow downward from its own base. */
+.pop[data-up] {
+  transform: translateY(-100%);
+  transform-origin: bottom center;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    /* 0.97, not 0 — a menu that inflates from a point reads as a toy. */
+    scale: 0.97;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pop {
+    animation: none;
+  }
 }
