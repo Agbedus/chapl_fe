@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { signOut } from "@/app/actions/auth";
 import { search } from "@/app/actions/search";
+import { markAllRead, realtimeTicket, unreadCount } from "@/app/actions/manage";
 import { AppNav } from "@/components/app-nav";
 import { AppTopbar } from "@/components/app-topbar";
 import { readable } from "@/lib/access";
@@ -57,6 +58,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           health={health}
           runtime={runtime}
           searchAction={search}
+        getTicket={realtimeTicket}
+        getUnread={unreadCount}
+        markRead={markAllRead}
         />
         {/* No capped reading column — everything here is scanned rather than
             read, and a measure on a wide monitor just moves the work into a

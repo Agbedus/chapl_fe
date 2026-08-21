@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Loader2, Search, X } from "lucide-react";
 
 import type { Hit } from "@/app/actions/search";
+import { NotificationBell } from "@/components/notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 /**
@@ -22,12 +23,19 @@ export function AppTopbar({
   health,
   runtime,
   searchAction,
+  getTicket,
+  getUnread,
+  markRead,
 }: {
   churchName: string | null;
   environment: string | null;
   health: "ok" | "warn" | "down" | null;
   runtime: string | null;
   searchAction: (term: string) => Promise<Hit[]>;
+  /** Server Actions for the bell — the session cookie is httpOnly. */
+  getTicket: () => Promise<{ ticket: string } | null>;
+  getUnread: () => Promise<number>;
+  markRead: () => Promise<void>;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -160,6 +168,11 @@ export function AppTopbar({
               {health === "ok" ? "Operational" : health === "warn" ? "Warnings" : "Down"}
             </span>
           )}
+          <NotificationBell
+            getTicket={getTicket}
+            getUnread={getUnread}
+            onOpen={markRead}
+          />
           <ThemeToggle />
         </div>
       </header>

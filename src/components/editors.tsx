@@ -306,6 +306,105 @@ export function ActionButton({
   );
 }
 
+/**
+ * A member asking for prayer, or asking to be called.
+ *
+ * The only form in this file a person with no role ever opens, and the
+ * copy is written for that: no jargon, no scope picker, nothing about
+ * branches. Where it goes is decided by where they belong, which the
+ * server already knows.
+ *
+ * `is_private` is the field that matters. Ticked, it routes past the
+ * cell leader to pastors only — enforced when the notification is
+ * written, not when a list is drawn, so it cannot leak by somebody
+ * opening a page later.
+ */
+export function CareRequestEditor({ action }: { action: Action }) {
+  return (
+    <Editor
+      label="Ask for prayer or a call"
+      submit="Send it"
+      action={action}
+      icon={<Heart className="h-3.5 w-3.5" aria-hidden />}
+      context="This goes to your cell leader and your branch pastor. Tick private and it goes to the pastors only."
+    >
+      {(state) => (
+        <div className="space-y-5">
+          <Fieldset title="What do you need?">
+            <Select
+              label="I would like"
+              name="kind"
+              required
+              defaultValue="prayer"
+              icon={<Heart className="h-full w-full" />}
+              options={[
+                { value: "prayer", label: "Prayer" },
+                { value: "call", label: "Someone to call me" },
+              ]}
+            />
+            <Select
+              label="How soon"
+              name="urgency"
+              required
+              defaultValue="whenever"
+              icon={<Clock className="h-full w-full" />}
+              options={[
+                { value: "whenever", label: "Whenever there is time" },
+                { value: "soon", label: "Some time this week" },
+                { value: "urgent", label: "As soon as possible" },
+              ]}
+            />
+            <Wide>
+              <Field
+                label="In a few words"
+                name="subject"
+                required
+                example="My mother is unwell"
+                error={state.fieldErrors?.subject}
+                icon={<Megaphone className="h-full w-full" />}
+                hint="This is what a leader sees first."
+              />
+            </Wide>
+            <Wide>
+              <Area
+                label="Anything else"
+                name="body"
+                rows={4}
+                hint="Only if you want to. You can say the rest on the phone."
+              />
+            </Wide>
+          </Fieldset>
+
+          <Fieldset title="Who sees it">
+            <Select
+              label="Privacy"
+              name="is_private"
+              required
+              defaultValue="false"
+              icon={<ShieldCheck className="h-full w-full" />}
+              options={[
+                { value: "false", label: "My cell leader and pastors" },
+                { value: "true", label: "Pastors only" },
+              ]}
+            />
+            <Select
+              label="Tell me when it is picked up"
+              name="notify_me"
+              required
+              defaultValue="true"
+              icon={<Check className="h-full w-full" />}
+              options={[
+                { value: "true", label: "Yes, let me know" },
+                { value: "false", label: "No need" },
+              ]}
+            />
+          </Fieldset>
+        </div>
+      )}
+    </Editor>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /* the church itself                                                   */
 /* ------------------------------------------------------------------ */

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { CalendarDays, Megaphone, Users as UsersIcon } from "lucide-react";
 
+import { raiseCareRequest } from "@/app/actions/manage";
+import { CareRequestEditor } from "@/components/editors";
 import { Empty, Page, Panel, StatCard } from "@/components/panels";
 import type { ChurchEvent, Me, Notice, PersonProfile } from "@/lib/types";
 
@@ -66,12 +68,18 @@ export function MemberHome({
               "You are not placed in a branch yet"}
           </p>
         </div>
-        {next && (
-          <Link href="/app/events" className="btn btn-primary btn-sm">
-            <CalendarDays className="h-3.5 w-3.5" aria-hidden />
-            What&apos;s on
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          {/* The one action a member has. It sits in the header rather
+              than at the bottom of the page because somebody who needs it
+              should not have to scroll past their attendance to find it. */}
+          <CareRequestEditor action={raiseCareRequest} />
+          {next && (
+            <Link href="/app/events" className="btn btn-quiet btn-sm">
+              <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+              What&apos;s on
+            </Link>
+          )}
+        </div>
       </header>
 
       {/* --- the next thing that happens ---------------------------- */}

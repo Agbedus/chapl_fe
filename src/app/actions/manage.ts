@@ -476,3 +476,64 @@ export async function settleCheckup(
   revalidatePath("/app/people");
   return { message: status === "reached" ? "Marked as reached." : "Marked resolved." };
 }
+
+/**
+ * A one-minute ticket for the realtime socket.
+ *
+ * The browser cannot open an authenticated WebSocket: it may not set an
+ * Authorization header on one, and the session cookie is httpOnly by
+ * design so client JavaScript cannot read it either. So the exchange
+ * happens here, on the server, and the short-lived ticket is the only
+ * thing that crosses into the client.
+ */
+export async function realtimeTicket(): Promise<{ ticket: string } | null> {
+  const result = await api<{ ticket: string }>("/realtime/ticket", {
+    method: "POST",
+  });
+  return result.ok ? { ticket: result.data.ticket } : null;
+}
+
+/** A member asks for prayer, or asks to be called. */
+export async function raiseCareRequest(
+  _prev: FormState,
+  data: FormData,
+): Promise<FormState> {
+  const subject = str(data, "subject");
+  if (subject.length < 3) {
+    return {
+      error: "Give it a short subject so somebody can see what it is about.",
+      fieldErrors: { subject: "A few words at least" },
+    };
+  }
+
+  const result = await api<unknown>("/care/requests", {
+    method: "POST",
+    body: {
+      kind: str(data, "kind") || "prayer",
+      subject,
+      body: orNull(data, "body"),
+      urgency: str(data, "urgency") || "whenever",
+      is_private: str(data, "is_private") === "true",
+      notify_me: str(data, "notify_me") !== "false",
+    },
+  });
+  if (!result.ok) return fail(result.error);
+
+  revalidatePath("/app");
+  revalidatePath("/app/care");
+  return { message: "Sent. Someone will be in touch." };
+}
+
+/** How many notifications this person has not read. */
+export async function unreadCount(): Promise<number> {
+  const result = await api<{ unread: number }>(
+    "/communication/notifications/unread-count",
+  );
+  return result.ok ? result.data.unread : 0;
+}
+
+/** Mark everything read. Called when the tray is opened. */
+export async function markAllRead(): Promise<void> {
+  await api<unknown>("/communication/notifications/read-all", { method: "POST" });
+  revalidatePath("/app", "layout");
+}

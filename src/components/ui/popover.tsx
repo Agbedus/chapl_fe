@@ -62,9 +62,25 @@ export function Popover({
       // flickers between the two on every resize.
       const up = below < box.offsetHeight + 12 && r.top > below;
 
-      box.style.left = `${r.left}px`;
+      /*
+       * Clamped to the viewport.
+       *
+       * The panel was pinned to the trigger's left edge, which is right
+       * for a form field and wrong for anything near the right-hand side
+       * — the notification tray hangs off a bell in the top bar corner
+       * and rendered half off-screen. It prefers left-aligned, flips to
+       * right-aligned when that would overflow, and never goes past the
+       * edge either way.
+       */
+      const panelWidth = width ?? r.width;
+      const margin = 8;
+      let left = r.left;
+      if (left + panelWidth > window.innerWidth - margin) {
+        left = Math.max(margin, r.right - panelWidth);
+      }
+      box.style.left = `${Math.max(margin, left)}px`;
       box.style.top = `${up ? r.top - 6 : r.bottom + 6}px`;
-      box.style.width = `${width ?? r.width}px`;
+      box.style.width = `${panelWidth}px`;
       box.style.visibility = "visible";
       if (up) box.dataset.up = "";
       else delete box.dataset.up;
