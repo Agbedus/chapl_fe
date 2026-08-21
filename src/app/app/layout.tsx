@@ -4,6 +4,7 @@ import { signOut } from "@/app/actions/auth";
 import { search } from "@/app/actions/search";
 import { AppNav } from "@/components/app-nav";
 import { AppTopbar } from "@/components/app-topbar";
+import { readable } from "@/lib/access";
 import { api } from "@/lib/api";
 import { currentChurchId, requireMe } from "@/lib/session";
 import type { Church, Dashboard } from "@/lib/types";
@@ -46,6 +47,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         userName={me.full_name}
         userEmail={me.email}
         signOutAction={signOut}
+        allowed={[...readable(me)]}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">

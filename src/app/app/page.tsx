@@ -12,6 +12,8 @@ import { turnoutColour } from "@/lib/palette";
 import { currentChurchId, requireMe } from "@/lib/session";
 import { settleCheckup } from "@/app/actions/manage";
 import { WorkQueue, type QueueItem } from "@/components/work-queue";
+import { isPlainMember } from "@/lib/access";
+import { MemberDashboard } from "@/app/app/member";
 import { ROLE_LABEL } from "@/lib/types";
 import type { Dashboard, Invitation, Paged } from "@/lib/types";
 
@@ -97,6 +99,22 @@ function money(value: number, currency: string): string {
 export default async function DashboardPage() {
   const me = await requireMe("/app");
   const churchId = await currentChurchId();
+
+  /*
+   * Two audiences, one route.
+   *
+   * Somebody holding no grant is not an administrator with empty data —
+   * they are a different reader with different questions. Sending them
+   * to the console below meant a checklist telling them to add a branch,
+   * panels headed "Cells at risk", and zeroes everywhere because the API
+   * refuses them the figures. Their own page answers what they came for.
+   *
+   * The fork is on grants, not on membership: a department head holds one
+   * narrow grant and still belongs on the leader's side.
+   */
+  if (isPlainMember(me)) {
+    return <MemberDashboard me={me} />;
+  }
 
   const unscoped = me.is_platform_staff && !churchId;
   const [result, invites, grants] = await Promise.all([

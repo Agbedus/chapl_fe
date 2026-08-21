@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import type { Resource } from "@/lib/access";
+
 import { Tooltip } from "@/components/tooltip";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
@@ -25,7 +27,22 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-type Item = { href: string; label: string; icon: typeof Home; tone: string };
+type Item = {
+  href: string;
+  label: string;
+  icon: typeof Home;
+  tone: string;
+  /**
+   * The resource this page reads. An item with none is for everybody —
+   * the dashboard and the account page are the only two.
+   *
+   * Filtering on this is what stops a member being shown Branches,
+   * Everyone and Team & roles and then being 403'd by the API on all
+   * three. See `lib/access.ts` for why the table lives in the frontend
+   * at all.
+   */
+  needs?: Resource;
+};
 
 const SECTIONS: { heading: string; items: Item[] }[] = [
   {
@@ -36,28 +53,28 @@ const SECTIONS: { heading: string; items: Item[] }[] = [
     // The tree, top down: the church, its sites, the groups inside them.
     heading: "Church",
     items: [
-      { href: "/app/church", label: "Church", icon: Church, tone: "var(--violet)" },
-      { href: "/app/branches", label: "Branches", icon: Building2, tone: "var(--violet)" },
-      { href: "/app/cells", label: "Cells", icon: Compass, tone: "var(--teal)" },
-      { href: "/app/departments", label: "Departments", icon: Layers, tone: "var(--emerald)" },
+      { href: "/app/church", label: "Church", icon: Church, tone: "var(--violet)", needs: "church" },
+      { href: "/app/branches", label: "Branches", icon: Building2, tone: "var(--violet)", needs: "branch" },
+      { href: "/app/cells", label: "Cells", icon: Compass, tone: "var(--teal)", needs: "cell" },
+      { href: "/app/departments", label: "Departments", icon: Layers, tone: "var(--emerald)", needs: "department" },
     ],
   },
   {
     heading: "People",
     items: [
-      { href: "/app/people", label: "Everyone", icon: Users, tone: "var(--cobalt)" },
-      { href: "/app/invitations", label: "Invitations", icon: MailPlus, tone: "var(--gold)" },
-      { href: "/app/team", label: "Team & roles", icon: ShieldCheck, tone: "var(--ruby)" },
+      { href: "/app/people", label: "Everyone", icon: Users, tone: "var(--cobalt)", needs: "user" },
+      { href: "/app/invitations", label: "Invitations", icon: MailPlus, tone: "var(--gold)", needs: "membership" },
+      { href: "/app/team", label: "Team & roles", icon: ShieldCheck, tone: "var(--ruby)", needs: "assignment" },
     ],
   },
   {
     heading: "Activity",
     items: [
-      { href: "/app/attendance", label: "Attendance", icon: Activity, tone: "var(--gold)" },
-      { href: "/app/giving", label: "Giving", icon: CreditCard, tone: "var(--emerald)" },
-      { href: "/app/sermons", label: "Sermons", icon: Mic, tone: "var(--ruby)" },
-      { href: "/app/events", label: "Events", icon: CalendarDays, tone: "var(--violet)" },
-      { href: "/app/notices", label: "Notices", icon: Megaphone, tone: "var(--cobalt)" },
+      { href: "/app/attendance", label: "Attendance", icon: Activity, tone: "var(--gold)", needs: "attendance" },
+      { href: "/app/giving", label: "Giving", icon: CreditCard, tone: "var(--emerald)", needs: "donation" },
+      { href: "/app/sermons", label: "Sermons", icon: Mic, tone: "var(--ruby)", needs: "sermon" },
+      { href: "/app/events", label: "Events", icon: CalendarDays, tone: "var(--violet)", needs: "event" },
+      { href: "/app/notices", label: "Notices", icon: Megaphone, tone: "var(--cobalt)", needs: "notice" },
     ],
   },
   {
@@ -115,13 +132,31 @@ export function AppNav({
   userName,
   userEmail,
   signOutAction,
+  allowed,
 }: {
   churchName: string | null;
   userName: string;
   userEmail: string;
   signOutAction: () => Promise<void>;
+  /**
+   * Resources this person can read, worked out on the server.
+   *
+   * A plain array rather than the `Me` record: only things that
+   * serialise cross into a Client Component, and the nav has no business
+   * with the rest of a person's identity anyway.
+   */
+  allowed: Resource[];
 }) {
   const pathname = usePathname();
+
+  // Sections whose every item was filtered out disappear with their
+  // heading — a "People" heading over nothing reads as a loading bug.
+  const permitted = new Set(allowed);
+  const sections = SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter((item) => !item.needs || permitted.has(item.needs)),
+  })).filter((section) => section.items.length > 0);
+
   const collapsed = useSyncExternalStore(
     collapseStore.subscribe,
     collapseStore.get,
@@ -237,7 +272,7 @@ export function AppNav({
           />
         )}
 
-        {SECTIONS.map((section) => (
+        {sections.map((section) => (
           <div key={section.heading} className="mb-5">
             <p
               className="eyebrow px-3 pb-2 text-ink-3 transition-opacity duration-200
