@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!--
+    A lancet window with a cross cut out of it.
+
+    The arch is the window from the hero, so the logo and the landing
+    page are the same building. The cross is cut rather than stroked: at
+    sixteen pixels a line that thin disappears, a hole does not.
+
+    Three versions were wrong first, and each for a reason worth keeping:
+
+    - Three dots inside the arch read unmistakably as a ghost. Two of
+      them sat side by side near the top and the eye finds a face in
+      anything.
+    - A cross of dots read as a little figure — head, arms, legs — and
+      lost the cross entirely.
+    - Adding a detached sill under the arch turned it into a headstone
+      on a plinth, which is a poor thing for a church product to be.
+
+    So: no sill, and a lancet rather than a wide arch. The cross sits
+    above centre where window tracery actually sits, which is the other
+    thing that keeps it architectural.
+
+    Colours are literal rather than tokens. A favicon is fetched on its
+    own and never sees the page's CSS, so the media query is the only way
+    it follows the system theme.
+  -->
+  <style>
+    .shape { fill: #2b50e8 }
+    .void  { fill: #ffffff }
+    @media (prefers-color-scheme: dark) {
+      .shape { fill: #7595ff }
+      .void  { fill: #0a0c11 }
+    }
+  </style>
+  <path class="shape" d="M4.2 22.4V9.6a7.8 7.8 0 0 1 15.6 0v12.8a.6.6 0 0 1-.6.6H4.8a.6.6 0 0 1-.6-.6Z"/>
+  <path class="void" d="M10.7 4.9h2.6v3.3h3.1v2.6h-3.1v7.9h-2.6v-7.9H7.6V8.2h3.1Z"/>
+</svg>

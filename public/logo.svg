@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 28" width="132" height="28">
+  <!--
+    The lockup, flattened.
+
+    For a README, an OG card, or anywhere else that cannot run the React
+    component. In the app itself use `components/logo.tsx`: it draws the
+    name as real text in the display face, which stays selectable and is
+    read aloud properly.
+
+    The font stack degrades on purpose. This file may be opened where
+    Bricolage Grotesque is not installed, and a grotesque fallback is a
+    closer miss than a serif default.
+  -->
+  <style>
+    .shape { fill: #2b50e8 }
+    .void  { fill: #ffffff }
+    .name  { fill: #0e1116 }
+    @media (prefers-color-scheme: dark) {
+      .shape { fill: #7595ff }
+      .void  { fill: #0a0c11 }
+      .name  { fill: #eef0f4 }
+    }
+  </style>
+  <g transform="translate(2 2)">
+    <path class="shape" d="M4.2 22.4V9.6a7.8 7.8 0 0 1 15.6 0v12.8a.6.6 0 0 1-.6.6H4.8a.6.6 0 0 1-.6-.6Z"/>
+    <path class="void" d="M10.7 4.9h2.6v3.3h3.1v2.6h-3.1v7.9h-2.6v-7.9H7.6V8.2h3.1Z"/>
+  </g>
+  <text class="name" x="32" y="20"
+        font-family="'Bricolage Grotesque', 'Inter', ui-sans-serif, system-ui, sans-serif"
+        font-size="18" font-weight="600" letter-spacing="-0.4">Chapl</text>
+</svg>

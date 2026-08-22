@@ -122,9 +122,19 @@ export function AppTopbar({
 
   return (
     <>
+      {/*
+        A floating card, like the sidenav beside it.
+
+        It was a full-bleed bar with a bottom rule, which made the shell
+        read as two different systems: a rounded panel on the left and a
+        flat strip across the top. Now it starts at the same `top-4` the
+        sidenav does, carries the same radius and hairline, and its
+        `mx-7` matches `page-pad` — so its edges line up with the content
+        underneath rather than running past it.
+      */}
       <header
-        className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-line-soft
-                   bg-paper/70 px-5 backdrop-blur-xl"
+        className="sticky top-4 z-30 mx-7 mt-4 flex h-14 items-center gap-4 rounded-2xl
+                   border border-line-soft bg-paper/70 px-4 backdrop-blur-xl"
       >
         <div className="flex min-w-0 items-center gap-3">
           <span className="truncate text-[14px] font-semibold text-ink">
