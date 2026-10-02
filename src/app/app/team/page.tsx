@@ -6,8 +6,10 @@ import { ActionButton, GrantEditor } from "@/components/editors";
 import { DataTable, type TableColumn, type TableRow } from "@/components/data-table";
 import { Page, PageHead, Panel, StatCard } from "@/components/panels";
 import { api } from "@/lib/api";
-import { requireMe } from "@/lib/session";
-import type { Assignment, Branch, Cell, Paged, Person, Role } from "@/lib/types";
+import { currentChurchId, requireMe } from "@/lib/session";
+import type {
+  Assignment, Branch, Cell, Church, Department, Paged, Person, Role,
+} from "@/lib/types";
 import { ROLE_BLURB, ROLE_LABEL, ROLE_SCOPE } from "@/lib/types";
 
 export const metadata = { title: "Team — Chapl" };
@@ -28,13 +30,20 @@ const GRANTABLE: Role[] = [
 ];
 
 export default async function TeamPage() {
-  await requireMe("/app/team");
+  const me = await requireMe("/app/team");
 
-  const [grants, people, branches, cells] = await Promise.all([
+  // A church-scoped role is still granted *over* something — the church
+  // itself — so the form needs the church's id and its name to say what
+  // it is about to do.
+  const churchId = (await currentChurchId()) ?? me.memberships[0]?.church_id ?? null;
+
+  const [grants, people, branches, cells, departments, church] = await Promise.all([
     api<Paged<Assignment>>("/assignments/?limit=200"),
     api<Paged<Person>>("/users/?limit=300&sort=full_name&order=asc"),
     api<Paged<Branch>>("/branches/?limit=200&sort=name&order=asc"),
     api<Paged<Cell>>("/cells/?limit=300&sort=code&order=asc"),
+    api<Paged<Department>>("/departments/?limit=200&sort=name&order=asc"),
+    churchId ? api<Church>(`/churches/${churchId}`) : Promise.resolve(null),
   ]);
 
   if (!grants.ok) {
@@ -51,8 +60,12 @@ export default async function TeamPage() {
 
   const names = new Map(people.ok ? people.data.items.map((p) => [p.id, p.full_name]) : []);
   const scopeNames = new Map<string, string>([
+    ...(churchId && church?.ok ? [[churchId, church.data.name] as [string, string]] : []),
     ...(branches.ok ? branches.data.items.map((b) => [b.id, b.name] as [string, string]) : []),
     ...(cells.ok ? cells.data.items.map((c) => [c.id, c.name] as [string, string]) : []),
+    ...(departments.ok
+      ? departments.data.items.map((d) => [d.id, d.name] as [string, string])
+      : []),
   ]);
 
   const active = grants.data.items.filter((g) => g.is_active);
@@ -69,14 +82,15 @@ export default async function TeamPage() {
   const peopleOptions = people.ok
     ? people.data.items.map((p) => ({ value: p.id, label: `${p.full_name} · ${p.email}` }))
     : [];
-  const scopeOptions = [
-    ...(branches.ok
-      ? branches.data.items.map((b) => ({ value: b.id, label: `Branch · ${b.name}` }))
-      : []),
-    ...(cells.ok
-      ? cells.data.items.map((c) => ({ value: c.id, label: `Cell · ${c.name} (${c.code})` }))
-      : []),
-  ];
+  const branchOptions = branches.ok
+    ? branches.data.items.map((b) => ({ value: b.id, label: b.name }))
+    : [];
+  const cellOptions = cells.ok
+    ? cells.data.items.map((c) => ({ value: c.id, label: `${c.name} · ${c.code}` }))
+    : [];
+  const departmentOptions = departments.ok
+    ? departments.data.items.map((d) => ({ value: d.id, label: d.name }))
+    : [];
 
   const teamColumns: TableColumn[] = [
     { key: "person", label: "Person" },
@@ -153,15 +167,21 @@ export default async function TeamPage() {
         lede="Who may do what, and on which rung."
         action={
           <GrantEditor
-          action={grantRole}
-          people={peopleOptions}
-          roles={GRANTABLE.map((r) => ({ value: r, label: ROLE_LABEL[r] }))}
-          scopes={scopeOptions}
-          legend={GRANTABLE.map((r) => ({
-            label: ROLE_LABEL[r],
-            blurb: ROLE_BLURB[r],
-            scope: ROLE_SCOPE[r],
+            action={grantRole}
+            people={peopleOptions}
+            roles={GRANTABLE.map((r) => ({
+              role: r,
+              label: ROLE_LABEL[r],
+              blurb: ROLE_BLURB[r],
+              scope: ROLE_SCOPE[r],
             }))}
+            branches={branchOptions}
+            cells={cellOptions}
+            departments={departmentOptions}
+            church={{
+              id: churchId ?? "",
+              name: church?.ok ? church.data.name : "This church",
+            }}
           />
         }
       />

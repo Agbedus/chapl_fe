@@ -134,6 +134,22 @@ export function Popover({
       aria-labelledby={labelledBy}
       className="pop"
       style={{ left: 0, top: 0, visibility: "hidden" }}
+      /*
+       * A portal escapes the DOM, not React.
+       *
+       * This panel is appended to `<body>`, but the click still travels
+       * up the *React* tree — through the field, through the form, and
+       * into the modal scrim's "click outside closes me". So choosing a
+       * person from a combo box closed the form it was in, and the same
+       * went for every date and time picker in every modal: the value
+       * was set, and then the panel carrying it disappeared.
+       *
+       * Stopped here rather than on the scrim, because it is this panel
+       * that is genuinely on top. Escape is handled the same way, a few
+       * lines up, for the same reason.
+       */
+      onClick={(event) => event.stopPropagation()}
+      onMouseDown={(event) => event.stopPropagation()}
     >
       {children}
     </div>,

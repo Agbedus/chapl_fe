@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ClipboardCheck } from "lucide-react";
 
 import { Absentees } from "@/components/absentees";
 import { BarsChart, DonutChart, StackedChart } from "@/components/charts";
@@ -63,6 +64,10 @@ export default async function AttendancePage({
           No service has been marked yet. Once a register is taken, this page
           draws it.
         </Empty>
+        <Link href="/app/attendance/register" className="btn btn-primary btn-sm w-fit">
+          <ClipboardCheck className="h-3.5 w-3.5" aria-hidden />
+          Take the first register
+        </Link>
       </Page>
     );
   }
@@ -123,11 +128,17 @@ export default async function AttendancePage({
         title="Attendance"
         lede="Who was in a seat, service by service."
         action={
-          <ServiceStepper
-            dates={service.dates}
-            current={service.date}
-            label={serviceLabel}
-          />
+          <span className="flex items-center gap-2">
+            <ServiceStepper
+              dates={service.dates}
+              current={service.date}
+              label={serviceLabel}
+            />
+            <Link href="/app/attendance/register" className="btn btn-primary btn-sm">
+            <ClipboardCheck className="h-3.5 w-3.5" aria-hidden />
+            Take the register
+          </Link>
+          </span>
         }
       />
 

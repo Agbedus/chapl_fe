@@ -1,4 +1,8 @@
+import Link from "next/link";
+
+import { saveDepartment } from "@/app/actions/manage";
 import { DataTable, type TableColumn, type TableRow } from "@/components/data-table";
+import { DepartmentEditor } from "@/components/editors";
 import { DepartmentGrid, type DeptCard } from "@/components/department-grid";
 import { DotRow, Page, PageHead, Panel, StatCard } from "@/components/panels";
 import { api } from "@/lib/api";
@@ -68,10 +72,14 @@ export default async function DepartmentsPage() {
   const biggest = [...rows].sort((a, b) => b.people - a.people)[0];
   const dash_ = <span className="text-ink-3">—</span>;
 
+  // `DepartmentGrid` filters on {id, name}; a `Select` wants
+  // {value, label}. Two shapes of the same list, named for what reads
+  // them rather than converted at the call site.
   const branchOptions = (branchList.ok ? branchList.data.items : []).map((b) => ({
     id: b.id,
     name: b.name,
   }));
+  const branchChoices = branchOptions.map((b) => ({ value: b.id, label: b.name }));
 
   const cards: DeptCard[] = rows.map((d) => ({
     id: d.id,
@@ -99,10 +107,10 @@ export default async function DepartmentsPage() {
   const tableRows: TableRow[] = rows.map((d) => ({
     id: d.id,
     cells: [
-      <span key="n" className="flex items-center gap-2">
+      <Link key="n" href={`/app/departments/${d.id}`} className="flex items-center gap-2">
         <span className="dot shrink-0" style={{ color: d.tone }} aria-hidden />
-        <span className="font-medium text-ink">{d.name}</span>
-      </span>,
+        <span className="font-medium text-ink hover:underline">{d.name}</span>
+      </Link>,
       d.branch_id ? (
         (branchName.get(d.branch_id) ?? dash_)
       ) : (
@@ -142,6 +150,9 @@ export default async function DepartmentsPage() {
         eyebrow="Church"
         title="Departments"
         lede="Ministry teams, off the branch and cell tree."
+        action={
+          <DepartmentEditor action={saveDepartment} branches={branchChoices} />
+        }
       />
 
       <section className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">

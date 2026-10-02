@@ -275,6 +275,45 @@ Pages under `/app` that manage the tree:
 | `/app/people/[id]` | One person: record, placement, authority |
 | `/app/invitations` | Send, resend, revoke — the whole lifecycle |
 | `/app/team` | Who holds which role, over what |
+| `/app/departments` | Ministry teams; `[id]` is one team and its roster |
+| `/app/audit` | The trail — read-only, all the way down |
+
+## Four things that could be read and not written
+
+The API could do all of this; nothing in the product called it.
+
+**`/app/attendance/register`** is the sheet — the one thing a church
+does every week, and the reason every attendance figure exists.
+`POST /attendance/bulk` was already there: one request, one permission
+pass, `replace_existing` so marking twice is a correction rather than a
+doubling. Three decisions in `components/register.tsx`: present is the
+default (a roll call records who came, and starting from all-absent is
+forty taps for a normal Tuesday); it posts once; and **an unchecked box
+sends nothing**, so the whole roster rides along in hidden inputs and
+`takeRegister` takes the difference — otherwise the absent would vanish
+rather than be recorded as absent.
+
+**Giving** can be entered. `recordGift` always files a gift against its
+giver, even an anonymous one: `DonationCreate.user_id` defaults to the
+*caller*, so omitting it would file the offering against whichever
+administrator counted it and put it in their own giving history.
+Anonymous means the name is off the report, not that the money came
+from nobody. The button is gated on `canWrite(me, "donation")` — a
+senior pastor reads giving and cannot record it, and a control that
+always 403s is worse than no control.
+
+**Departments** can be created, edited, and staffed. The roster writes
+did not exist on the API at all; `POST /departments/{id}/members` and
+its delete are new. Rejoining reactivates the row that is there rather
+than writing a second one, and leaving is dated rather than deleted —
+"who served in the choir in 2024" is a question a church asks.
+
+**The audit log** has a page. It names its own actors, because the
+front end cannot: `/users/` lists a church's *roll*, and the accounts
+that appear in a trail are disproportionately staff ones with no
+membership, so joining the two rendered almost every row as "Unknown".
+`AuditLogRead.user_name` is filled by one join in the endpoint.
+
 
 `/app/attendance` is built around **one service at a time**, stepped
 through with `ServiceStepper`. `GET /attendance/service` answers the
@@ -292,9 +331,19 @@ entrance cascade runs on arrival only. A control pressed ten times in a
 row must not make you watch the page assemble itself ten times.
 
 
-Mail is not wired up, so an invitation hands back a link to pass on by
-hand. `LinkResult` renders it with a copy button rather than as prose:
-nobody should be selecting a sixty-character token by hand.
+Mail **is** wired up now — the API emails the invitation — but the link
+still comes back in the response and `LinkResult` still renders it with
+a copy button. Delivery is not a guarantee: the transport may be
+unconfigured, or the address may bounce an hour later, and nobody
+should have to re-issue an invitation because they could not tell
+whether the first one was sent.
+
+`SiteNav` asks who is reading. Signed in, "Sign in · Get started"
+becomes one **Dashboard** button and their first name — "Get started"
+in particular offers somebody a thing they finished doing. It calls
+`getMe()` rather than looking at the cookie, because a cookie says a
+token was issued and not that it still works; that makes `/` dynamic,
+which is the price of a header that is right.
 
 ## Form controls
 
@@ -313,22 +362,31 @@ Firefox amount to a text box wanting a format nobody guesses right.
 | --- | --- | --- |
 | `DateField` | `type="date"` | A month stepper made *date of birth* unusable — opening on this month asks a seventy-year-old to press "previous" 840 times. It carries a 110-year select, and `startYear` points it the right way first. |
 | `TimeField` | `type="time"` | 96 quarter hours, opened onto the current value. A church meets on the quarter and types the same six service times forever. |
-| `DateTimeField` | `type="datetime-local"` | Event start and end. Two controls, one hidden input, writing the `YYYY-MM-DDTHH:MM` the API already wanted. |
+| `DateTimeField` | `type="datetime-local"` | Event start and end. Two controls, one shadow input, writing the `YYYY-MM-DDTHH:MM` the API already wanted. |
 | `ComboField` | `<select>` past ~12 options | Cells (81) and notice/event audiences (88). A select that long is a scroll, not a choice. Search, arrow keys, Enter. |
 
 Three rules hold across all of them:
 
-- **Each keeps a hidden input** carrying the machine value, so the forms
-  above them still post ordinary `FormData` to a Server Action. Nothing
-  in `editors.tsx` had to learn a new shape.
+- **Each keeps a shadow input** (`Value`) carrying the machine value, so
+  the forms above them still post ordinary `FormData` to a Server
+  Action. Nothing in `editors.tsx` had to learn a new shape. It is a
+  real input laid invisibly over the control, *not* `type="hidden"`:
+  hidden inputs are barred from constraint validation, so `required` on
+  a picker was decoration until a stepped form needed "Next" to know
+  whether the step had been answered. `.picker-value` must stay
+  rendered — `display: none` bars it again.
 - **`DateShell` and `TimeShell` are the controlled cores**; `DateField`
-  and `TimeField` are those plus state and the hidden input.
-  `DateTimeField` composes the shells directly — two hidden inputs
-  fighting over one `name` was the bug that forced the split.
+  and `TimeField` are those plus state and the shadow input.
+  `DateTimeField` composes the shells directly — two inputs fighting
+  over one `name` was the bug that forced the split.
 - **They post through `Popover`** (`ui/popover.tsx`), which portals to
   the body. Every one of these opens inside `.modal-body`, which scrolls
   and therefore clips; a date picker cut in half by its own form is worse
-  than the native one it replaced.
+  than the native one it replaced. The portal escapes the DOM but not
+  React, so `Popover` stops click and Escape from propagating: without
+  that, choosing an option travelled up the React tree into the modal
+  scrim's click-outside and closed the form the value had just gone
+  into.
 
 `Popover` writes its position **straight to the node**, never through
 state. The obvious version measures into `useState` and costs a render on
@@ -339,6 +397,43 @@ is four numbers the browser needs.
 Escape closes **one** thing. The popover's handler calls
 `stopPropagation`, so pressing it with a picker open closes the picker
 and leaves the form — and everything typed into it — alone.
+
+## Long forms
+
+A form past about ten fields is a wall, and grouping it into `Fieldset`
+sections only turns one wall into a stack of them. `Editor` takes
+`steps` instead of `children` for those: Church, Branch, Cell, Person,
+Self, Event and Grant. The sections each already had become the steps,
+and the rail at the top says how many there are and which one you are
+on — the question a long form otherwise refuses to answer.
+
+- **Every step stays mounted**, hidden rather than unmounted. There is
+  one `<form>` and one submission, so a field on step 1 has to still be
+  in the document when step 4 posts. Unmounting would also discard
+  anything typed the moment somebody stepped back to check a spelling.
+- **The form carries `noValidate` and checks itself.** A required field
+  two steps back is `display: none` at submit time, and Chrome answers
+  that with "An invalid form control is not focusable" and no way
+  forward. `guard()` finds the first failing control, opens the step it
+  lives on, and only then asks the browser to report it.
+- **Enter means Next, not Save**, anywhere but the last step.
+- **A rejected write opens the step that was rejected**, which is what
+  each step's `fields` list is for. Both that and the close-on-success
+  are render-phase state adjustments, not effects — the compiler's
+  `set-state-in-effect` rule refuses the effect version, and an effect
+  would paint the wrong step first anyway.
+
+**Granting a role is dynamic.** `ROLE_SCOPE` is the same table the API
+validates against, so choosing *cell leader* is choosing "over a cell",
+and the last step asks only for the thing that can follow: cells for
+cell roles, branches for branch roles, departments for a department
+head, and nothing at all for a church role beyond naming the church.
+The old form offered one flat list of every branch and cell for every
+role. It also never sent `scope_type`, which the API's schema requires,
+so **every grant had come back 422 and the form had never once worked**;
+`grantRole` derives it from the role rather than taking it from the
+form, because a client copy of that table is a client that can disagree
+with it.
 
 ## Waiting
 

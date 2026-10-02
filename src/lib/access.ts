@@ -83,3 +83,35 @@ export function canRead(me: Me, resource: Resource): boolean {
 export function isPlainMember(me: Me): boolean {
   return !me.is_platform_staff && me.assignments.length === 0;
 }
+
+/**
+ * May they *write* this resource, not merely read it?
+ *
+ * `readable()` answers what a page may show. This answers what it may
+ * offer, and the two are not the same: a senior pastor reads giving and
+ * cannot record it, so a "Record a gift" button on their screen is a
+ * button that always comes back 403. A control that always fails is
+ * worse than no control — the same rule that keeps platform roles off
+ * the grant form.
+ *
+ * Transcribed from `PERMISSIONS` in `app/core/permissions.py`. It is a
+ * second copy of that table and will drift if the first one changes,
+ * which is why it covers only the handful of resources where read and
+ * write genuinely diverge rather than mirroring the whole thing.
+ */
+const WRITERS: Partial<Record<Resource, Role[]>> = {
+  // Giving is the sharpest split: everyone senior reads it, only a
+  // church admin may enter it.
+  donation: ["super_admin", "church_admin"],
+  assignment: ["super_admin", "church_admin"],
+  audit_log: [], // nobody — the API has no write route at all
+  church: ["super_admin", "platform_admin", "church_admin"],
+};
+
+export function canWrite(me: Me, resource: Resource): boolean {
+  const allowed = WRITERS[resource];
+  // Not listed means read and write travel together for this resource,
+  // so whoever may read it may write it.
+  if (!allowed) return canRead(me, resource);
+  return me.assignments.some((a) => allowed.includes(a.role));
+}

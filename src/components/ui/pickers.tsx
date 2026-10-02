@@ -20,9 +20,10 @@ import { Popover } from "@/components/ui/popover";
  *   service times over and over.
  * - `<select>` with eighty-one cells in it is a scroll, not a choice.
  *
- * Each keeps a **hidden input** carrying the machine value, so the forms
+ * Each keeps a **shadow input** carrying the machine value, so the forms
  * around them still post ordinary `FormData` to a Server Action and
- * nothing above them had to change.
+ * nothing above them had to change. It is a real input rather than a
+ * hidden one so that `required` means something — see `Value`.
  */
 
 /* ------------------------------------------------------------------ */
@@ -89,6 +90,45 @@ function Trigger({
         </button>
       )}
     </span>
+  );
+}
+
+/**
+ * The machine value each of these controls posts.
+ *
+ * It used to be `type="hidden"`, which posts correctly and validates
+ * never: the constraint API skips hidden inputs outright, so `required`
+ * on a picker was decoration and an empty one went to the server to be
+ * refused there. That was survivable while every form was one page and
+ * one submit. It is not survivable in a stepped form, where "Next" has
+ * to know whether this step was answered.
+ *
+ * So it is an ordinary input the browser will check, laid over the
+ * control it belongs to and made invisible. `pointer-events: none`
+ * lets every click through to the real control underneath, and
+ * `tabIndex={-1}` keeps it out of the tab order — the only thing that
+ * ever focuses it is `reportValidity()`, which is exactly when you want
+ * the message to appear over this field.
+ */
+function Value({
+  name,
+  value,
+  required,
+}: {
+  name: string;
+  value: string;
+  required?: boolean;
+}) {
+  return (
+    <input
+      name={name}
+      value={value}
+      required={required}
+      onChange={() => {}}
+      tabIndex={-1}
+      aria-hidden
+      className="picker-value"
+    />
   );
 }
 
@@ -342,8 +382,8 @@ export function DateField({
 }) {
   const [value, setValue] = useState(defaultValue);
   return (
-    <div>
-      <input type="hidden" name={name} value={value} />
+    <div className="relative">
+      <Value name={name} value={value} required={required} />
       <DateShell
         label={label}
         value={value}
@@ -495,8 +535,8 @@ export function TimeField({
   // The API sends `HH:MM:SS`; the control works in `HH:MM`.
   const [value, setValue] = useState(defaultValue.slice(0, 5));
   return (
-    <div>
-      <input type="hidden" name={name} value={value} />
+    <div className="relative">
+      <Value name={name} value={value} required={required} />
       <TimeShell
         label={label}
         value={value}
@@ -593,7 +633,7 @@ export function ComboField({
 
   return (
     <div className="relative">
-      <input type="hidden" name={name} value={value} />
+      <Value name={name} value={value} required={required} />
       <Trigger
         id={name}
         label={label}
@@ -711,8 +751,8 @@ export function DateTimeField({
   const combined = date ? `${date}T${clock || "00:00"}` : "";
 
   return (
-    <div>
-      <input type="hidden" name={name} value={combined} />
+    <div className="relative">
+      <Value name={name} value={combined} required={required} />
       <div className="grid grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] gap-2">
         <DateShell label={`${label} · date`} value={date} onChange={setDate} error={error} />
         <TimeShell label={`${label} · time`} value={clock} onChange={setClock} />

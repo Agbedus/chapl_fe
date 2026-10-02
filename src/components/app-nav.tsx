@@ -25,6 +25,7 @@ import {
   Compass,
   MailPlus,
   ShieldCheck,
+  History,
 } from "lucide-react";
 
 type Item = {
@@ -75,6 +76,15 @@ const SECTIONS: { heading: string; items: Item[] }[] = [
       { href: "/app/sermons", label: "Sermons", icon: Mic, tone: "var(--ruby)", needs: "sermon" },
       { href: "/app/events", label: "Events", icon: CalendarDays, tone: "var(--violet)", needs: "event" },
       { href: "/app/notices", label: "Notices", icon: Megaphone, tone: "var(--cobalt)", needs: "notice" },
+    ],
+  },
+  {
+    // Not "Activity": the trail is not something the church does, it is
+    // the record of what was done to it. Gated on `audit_log`, so a
+    // cell leader never sees a link they would be refused at.
+    heading: "Oversight",
+    items: [
+      { href: "/app/audit", label: "Audit log", icon: History, tone: "var(--ink-3)", needs: "audit_log" },
     ],
   },
   {

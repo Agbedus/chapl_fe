@@ -27,6 +27,7 @@ import type {
   Person,
   Role,
 } from "@/lib/types";
+import { ROLE_LABEL, ROLE_SCOPE } from "@/lib/types";
 
 const str = (data: FormData, key: string) => String(data.get(key) ?? "").trim();
 const orNull = (data: FormData, key: string) => str(data, key) || null;
@@ -265,6 +266,20 @@ export async function savePlacement(_prev: FormState, data: FormData): Promise<F
 /* authority                                                           */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Grant a role.
+ *
+ * `scope_type` is derived here rather than posted. The API's schema
+ * insists on it and checks it against its own `ROLE_SCOPE` table, so a
+ * form field would only be a second copy of a fact the role already
+ * carries — and a copy a client could disagree with. This posted no
+ * `scope_type` at all until now, which meant every grant came back 422
+ * and the form had never once worked.
+ *
+ * Church-scoped roles need a `scope_id` too: the grant is written
+ * against a church, and the API refuses one that names none. The old
+ * hint under the field said the opposite.
+ */
 export async function grantRole(_prev: FormState, data: FormData): Promise<FormState> {
   const user_id = str(data, "user_id");
   const role = str(data, "role") as Role;
@@ -272,9 +287,21 @@ export async function grantRole(_prev: FormState, data: FormData): Promise<FormS
   if (!user_id) return { error: "Choose a person.", fieldErrors: { user_id: "Required" } };
   if (!role) return { error: "Choose a role.", fieldErrors: { role: "Required" } };
 
+  const scope_type = ROLE_SCOPE[role];
+  if (!scope_type) return { error: "That is not a role this church can grant." };
+  if (scope_type === "platform") {
+    return { error: "Platform roles are not a church's to grant." };
+  }
+  if (!scope_id) {
+    return {
+      error: `A ${ROLE_LABEL[role].toLowerCase()} is granted over one ${scope_type}. Choose which.`,
+      fieldErrors: { scope_id: "Required" },
+    };
+  }
+
   const result = await api<Assignment>("/assignments/", {
     method: "POST",
-    body: { user_id, role, scope_id: scope_id || null },
+    body: { user_id, role, scope_type, scope_id },
   });
 
   if (!result.ok) {
@@ -536,4 +563,207 @@ export async function unreadCount(): Promise<number> {
 export async function markAllRead(): Promise<void> {
   await api<unknown>("/communication/notifications/read-all", { method: "POST" });
   revalidatePath("/app", "layout");
+}
+
+/* ------------------------------------------------------------------ */
+/* departments                                                         */
+/* ------------------------------------------------------------------ */
+
+export async function saveDepartment(
+  _prev: FormState,
+  data: FormData,
+): Promise<FormState> {
+  const id = str(data, "id");
+  const name = str(data, "name");
+  if (!name) return { error: "Give the team a name.", fieldErrors: { name: "Required" } };
+
+  const body = {
+    name,
+    description: orNull(data, "description"),
+    // A department may be church-wide — the choir that draws from every
+    // branch — so an empty branch is a real answer rather than a
+    // missing one.
+    branch_id: orNull(data, "branch_id"),
+    meeting_day: orNull(data, "meeting_day"),
+    meeting_time: orNull(data, "meeting_time"),
+    is_active: str(data, "is_active") !== "false",
+  };
+
+  const result = id
+    ? await api(`/departments/${id}`, { method: "PATCH", body })
+    : await api("/departments/", { method: "POST", body });
+  if (!result.ok) return fail(result.error);
+
+  revalidatePath("/app/departments");
+  if (id) revalidatePath(`/app/departments/${id}`);
+  return { message: id ? "Team saved." : "Team added." };
+}
+
+export async function addToRoster(_prev: FormState, data: FormData): Promise<FormState> {
+  const department = str(data, "department_id");
+  const user_id = str(data, "user_id");
+  if (!user_id) {
+    return { error: "Choose somebody.", fieldErrors: { user_id: "Required" } };
+  }
+
+  const result = await api(`/departments/${department}/members`, {
+    method: "POST",
+    body: { user_id, role_in_department: orNull(data, "role_in_department") },
+  });
+  if (!result.ok) {
+    if (result.error.status === 409) {
+      return { error: "They are already on this team." };
+    }
+    return fail(result.error);
+  }
+
+  revalidatePath(`/app/departments/${department}`);
+  revalidatePath("/app/departments");
+  return { message: "Added to the team." };
+}
+
+export async function removeFromRoster(
+  _prev: FormState,
+  data: FormData,
+): Promise<FormState> {
+  const department = str(data, "department_id");
+  const user_id = str(data, "user_id");
+
+  const result = await api(`/departments/${department}/members/${user_id}`, {
+    method: "DELETE",
+  });
+  if (!result.ok) return fail(result.error);
+
+  revalidatePath(`/app/departments/${department}`);
+  revalidatePath("/app/departments");
+  return { message: "Taken off the team." };
+}
+
+/* ------------------------------------------------------------------ */
+/* giving                                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Record a gift.
+ *
+ * The ledger could be read and never written to, which made `/app/giving`
+ * a report on a table nothing in this product could fill. Counting the
+ * offering is the money workflow a church actually performs, weekly.
+ *
+ * `status` is `completed` because this is somebody entering what was
+ * counted, not a payment awaiting a gateway — `pending` belongs to the
+ * Paystack path, which writes its own rows.
+ */
+export async function recordGift(_prev: FormState, data: FormData): Promise<FormState> {
+  const amount = num(data, "amount");
+  if (amount === null || amount <= 0) {
+    return { error: "Enter an amount.", fieldErrors: { amount: "Required" } };
+  }
+  /*
+   * The giver is always required, even for an anonymous gift.
+   *
+   * `DonationCreate.user_id` defaults to the caller, so leaving it out
+   * on an anonymous entry would file the gift against whichever
+   * administrator was counting — and it would then turn up in *their*
+   * giving history. Anonymous means the name is not shown on a report,
+   * which is what a church means by it; it does not mean the money
+   * arrived from nobody.
+   */
+  const user_id = str(data, "user_id");
+  const anonymous = str(data, "is_anonymous") === "true";
+  if (!user_id) {
+    return { error: "Name the giver.", fieldErrors: { user_id: "Required" } };
+  }
+
+  const result = await api("/donations/", {
+    method: "POST",
+    body: {
+      amount,
+      currency: str(data, "currency") || "GHS",
+      donation_type: str(data, "donation_type") || "offering",
+      description: orNull(data, "description"),
+      payment_method: orNull(data, "payment_method"),
+      // Counted in a room, not taken by a gateway.
+      payment_provider: "manual",
+      is_anonymous: anonymous,
+      receipt_number: orNull(data, "receipt_number"),
+      given_on: orNull(data, "given_on"),
+      user_id,
+    },
+  });
+  if (!result.ok) return fail(result.error);
+
+  revalidatePath("/app/giving");
+  return { message: "Gift recorded." };
+}
+
+/* ------------------------------------------------------------------ */
+/* the register                                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Mark a whole gathering.
+ *
+ * One request, not one per person. `POST /attendance/bulk` exists for
+ * exactly this shape of work: somebody stands at the back of a cell
+ * meeting and marks forty people at one service on one date, and doing
+ * that as forty POSTs is forty permission checks, forty transactions,
+ * and a roll call that can end half-written when the tenth fails.
+ *
+ * `replace_existing` is on, because marking the same service twice is a
+ * correction rather than a duplicate — without it the second pass
+ * writes a parallel set of rows and every turnout figure quietly
+ * doubles.
+ *
+ * The form posts one checkbox per member and a hidden list of everyone
+ * who was on the sheet. An unchecked box sends nothing at all, so the
+ * absent are the roster minus the checked — which is why the roster has
+ * to travel with the form rather than being looked up again here.
+ */
+export async function takeRegister(_prev: FormState, data: FormData): Promise<FormState> {
+  const roster = data.getAll("roster").map(String).filter(Boolean);
+  const present = new Set(data.getAll("present").map(String));
+  const attendance_date = str(data, "attendance_date");
+  const service_day = str(data, "service_day");
+
+  if (!attendance_date) {
+    return { error: "Choose the date.", fieldErrors: { attendance_date: "Required" } };
+  }
+  if (!service_day) {
+    return { error: "Choose the service.", fieldErrors: { service_day: "Required" } };
+  }
+  if (roster.length === 0) {
+    return { error: "There is nobody on this sheet to mark." };
+  }
+
+  const result = await api<{ created: number; updated: number; skipped: unknown[] }>(
+    "/attendance/bulk",
+    {
+      method: "POST",
+      body: {
+        attendance_date,
+        service_day,
+        replace_existing: true,
+        marks: roster.map((member_id) => ({
+          member_id,
+          is_present: present.has(member_id),
+        })),
+      },
+    },
+  );
+  if (!result.ok) return fail(result.error);
+
+  const { created, updated, skipped } = result.data;
+  const counted = present.size;
+  const missed = roster.length - counted;
+
+  revalidatePath("/app/attendance");
+  revalidatePath("/app");
+
+  return {
+    message:
+      `${counted} present, ${missed} missing — ${created + updated} marked` +
+      (skipped.length ? `, ${skipped.length} skipped` : "") +
+      ".",
+  };
 }

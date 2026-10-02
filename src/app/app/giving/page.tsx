@@ -3,9 +3,12 @@ import { notFound } from "next/navigation";
 
 import { DonutChart, TrendChart } from "@/components/charts";
 import { Empty, Page, Panel, RingPanel, Stat } from "@/components/panels";
+import { recordGift } from "@/app/actions/manage";
+import { canWrite } from "@/lib/access";
+import { GiftEditor } from "@/components/editors";
 import { api } from "@/lib/api";
 import { requireMe } from "@/lib/session";
-import type { Dashboard, Paged } from "@/lib/types";
+import type { Dashboard, Paged, Person } from "@/lib/types";
 
 export const metadata = { title: "Giving — Chapl" };
 
@@ -67,17 +70,20 @@ export default async function GivingPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
-  await requireMe("/app/giving");
+  const me = await requireMe("/app/giving");
 
   const params = await searchParams;
   const page = Math.max(1, Number(params.page ?? 1) || 1);
   const PAGE = 25;
 
-  const [dash, ledger] = await Promise.all([
+  const [dash, ledger, people] = await Promise.all([
     api<Dashboard>("/dashboard"),
     api<Paged<Gift>>(
       `/donations/?limit=${PAGE}&sort=given_on&order=desc&skip=${(page - 1) * PAGE}`,
     ),
+    // For the entry form. A gift is always filed against a giver, even
+    // an anonymous one — see `recordGift`.
+    api<Paged<Person>>("/users/?limit=2000&sort=full_name&order=asc"),
   ]);
 
   /*
@@ -147,6 +153,32 @@ export default async function GivingPage({
             {total.toLocaleString()} recorded
           </p>
         </div>
+
+        {/*
+          The ledger could be read and never written to, which made this
+          page a report on a table nothing in the product could fill.
+          Online giving writes its own rows; this is the plate, the
+          transfer and the envelope.
+
+          `today` is resolved here rather than in the form: `new Date()`
+          in a client render disagrees between the server pass and the
+          hydration pass, and React throws away the subtree to fix it.
+        */}
+        {canWrite(me, "donation") && (
+        <GiftEditor
+          action={recordGift}
+          currency={currency}
+          today={new Date().toISOString().slice(0, 10)}
+          people={
+            people.ok
+              ? people.data.items.map((p) => ({
+                  value: p.id,
+                  label: `${p.full_name} · ${p.email}`,
+                }))
+              : []
+          }
+        />
+        )}
       </header>
 
       {/* ---------------- the shape of it ---------------- */}

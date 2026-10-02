@@ -320,14 +320,37 @@ export function Ring({
   label: string;
   height?: number;
 }) {
+  /*
+   * The figure is the thing; the word under it is the caption.
+   *
+   * They used to be 20px and 10.5px, which is not enough of a gap — a
+   * ring read as a number and a subtitle of roughly equal weight, and
+   * the eye had to pick. The figure now takes as much of the hole as
+   * the ring's own size allows, and the caption drops back to the size
+   * of metadata.
+   *
+   * Scaled off `height` because the hole is a fraction of it: a fixed
+   * size that fits a 132px ring is lost inside a 186px one. Long values
+   * step down — "GHS 12.4k" cannot be set at the size "47" can, and a
+   * figure that overflows its own ring is worse than a smaller one.
+   */
+  const room = Math.min(30, Math.round(height * 0.2));
+  const size =
+    value.length > 7 ? Math.round(room * 0.74)
+    : value.length > 5 ? Math.round(room * 0.86)
+    : room;
+
   return (
     <div className="dial" style={{ height }}>
       {chart}
       <span className="dial-centre">
-        <span className="figure text-[20px]">{value}</span>
-        <span className="mt-1 text-[10.5px] uppercase tracking-[0.11em] text-ink-3">
-          {label}
+        <span
+          className="figure leading-none"
+          style={{ fontSize: size, letterSpacing: "-0.03em" }}
+        >
+          {value}
         </span>
+        <span className="dial-caption">{label}</span>
       </span>
     </div>
   );
