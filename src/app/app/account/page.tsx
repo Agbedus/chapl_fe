@@ -14,7 +14,7 @@ import {
 } from "@/components/panels";
 import { api } from "@/lib/api";
 import { currentChurchId, requireMe } from "@/lib/session";
-import type { Church, Person, PersonProfile } from "@/lib/types";
+import type { Church, PersonProfile } from "@/lib/types";
 import { ROLE_BLURB, ROLE_LABEL } from "@/lib/types";
 
 export const metadata = { title: "Your account — Chapl" };
@@ -124,19 +124,13 @@ export default async function AccountPage() {
   const me = await requireMe("/app/account");
   const churchId = await currentChurchId();
 
-  /*
-   * `/auth/me` is deliberately slim — it is read on every request, so it
-   * carries what the shell needs and nothing more. The fuller record and
-   * the figures are two extra calls made only here.
-   */
-  const [recordResult, profileResult, churchResult] = await Promise.all([
-    api<Person>(`/users/${me.id}`),
-    api<PersonProfile>(`/users/${me.id}/profile`),
+  const [profileResult, churchResult] = await Promise.all([
+    churchId ? api<PersonProfile>(`/users/${me.id}/profile`) : Promise.resolve(null),
     churchId ? api<Church>(`/churches/${churchId}`) : Promise.resolve(null),
   ]);
 
-  const record = recordResult.ok ? recordResult.data : null;
-  const stats = profileResult.ok ? profileResult.data : null;
+  const record = me;
+  const stats = profileResult?.ok ? profileResult.data : null;
   const currency = churchResult?.ok ? churchResult.data.currency : "GHS";
 
   const giving = stats?.giving ?? null;
@@ -203,12 +197,13 @@ export default async function AccountPage() {
         >
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden /> Overview
         </Link>
-        <div className="flex items-center gap-2">
+        <div id="complete-profile" className="flex items-center gap-2">
           <PasswordEditor action={changePassword} />
           {record && <SelfEditor action={saveMyDetails} person={record} />}
         </div>
       </div>
 
+      {me.profile_completion.complete && <Link href={me.churches.length ? "/app" : "/app/start"} className="btn btn-quiet btn-sm self-start">Continue to {me.churches.length ? "your church" : "church setup"}</Link>}
       {/* Your record on the right, your life in the church on the left —
           the same shape as a person's page, because it is the same page
           seen from the inside. Both columns end level: each is a flex

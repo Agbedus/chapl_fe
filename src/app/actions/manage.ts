@@ -798,3 +798,14 @@ export async function deleteRecord(_prev: FormState, data: FormData): Promise<Fo
   revalidatePath("/app", "layout");
   return { message: "Deleted." };
 }
+
+export async function eventSignup(_prev: FormState, data: FormData): Promise<FormState> {
+  const id = str(data, "id");
+  const cancel = str(data, "cancel") === "true";
+  const result = await api(`/events/${encodeURIComponent(id)}/registrations`, {
+    method: cancel ? "DELETE" : "POST", churchId: str(data, "church_id") || undefined,
+  });
+  if (!result.ok) return fail(result.error);
+  revalidatePath("/app/events");
+  return { message: cancel ? "Registration cancelled." : "You are registered." };
+}

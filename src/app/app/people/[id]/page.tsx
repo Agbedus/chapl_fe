@@ -1,3 +1,5 @@
+import { MembershipHistory } from "@/components/membership-history";
+import type { Schemas } from "@/lib/generated/api";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -126,7 +128,7 @@ export default async function PersonPage({
   const churchId = await currentChurchId();
   const { id } = await params;
 
-  const [personResult, placement, branchList, cellList, grants, profileResult, churchResult] =
+  const [personResult, placement, branchList, cellList, grants, profileResult, churchResult, movement] =
     await Promise.all([
       api<Person>(`/users/${id}`),
       api<Membership>(`/users/${id}/membership`),
@@ -135,6 +137,7 @@ export default async function PersonPage({
       api<Paged<Assignment>>("/assignments/?limit=200"),
       api<PersonProfile>(`/users/${id}/profile`),
       churchId ? api<Church>(`/churches/${churchId}`) : Promise.resolve(null),
+      api<Schemas["MembershipHistoryRead"][]>(`/users/${id}/membership-history`),
     ]);
 
   if (!personResult.ok) {
@@ -239,6 +242,8 @@ export default async function PersonPage({
 
   return (
     <Page>
+      {movement.ok && <MembershipHistory changes={movement.data} branches={branches} cells={cells} />}
+
       <div className="flex items-center justify-between gap-4">
         <Link
           href="/app/people"

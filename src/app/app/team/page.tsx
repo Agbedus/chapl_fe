@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AccountLink } from "@/components/account-link";
 import { ShieldCheck, X } from "lucide-react";
 
 import { grantRole, revokeRole } from "@/app/actions/manage";
@@ -112,13 +112,7 @@ export default async function TeamPage() {
     .map((grant) => ({
       id: grant.id,
       cells: [
-        <Link
-          key="p"
-          href={`/app/people/${grant.user_id}`}
-          className="font-medium text-ink hover:underline"
-        >
-          {names.get(grant.user_id) ?? "Unknown person"}
-        </Link>,
+        <AccountLink key="p" id={grant.user_id} name={grant.user_id ? names.get(grant.user_id) : undefined} />,
         <span
           key="r"
           className="chip"
@@ -156,7 +150,7 @@ export default async function TeamPage() {
           icon={<X className="h-3 w-3" aria-hidden />}
           tone="danger"
           confirm={`Revoke ${ROLE_LABEL[grant.role]} from ${
-            names.get(grant.user_id) ?? "this person"
+            (grant.user_id ? names.get(grant.user_id) : null) ?? "this person"
           }?`}
         />,
       ],

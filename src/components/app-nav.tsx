@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 import type { Resource } from "@/lib/access";
 
+import { ProfileDot } from "@/components/profile-completion";
 import { Tooltip } from "@/components/tooltip";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
@@ -151,6 +152,7 @@ export function AppNav({
   signOutAction,
   allowed,
   isPlatform = false,
+  profileIncomplete = false,
 }: {
   churchName: string | null;
   userName: string;
@@ -158,6 +160,7 @@ export function AppNav({
   signOutAction: () => Promise<void>;
   /** Platform staff see the verification queue; nobody else does. */
   isPlatform?: boolean;
+  profileIncomplete?: boolean;
   /**
    * Resources this person can read, worked out on the server.
    *
@@ -339,7 +342,7 @@ export function AppNav({
                           transform: collapsed ? "translateX(-4px)" : "none",
                         }}
                       >
-                        {item.label}
+                        {item.label} {item.href === "/app/account" && <ProfileDot incomplete={profileIncomplete} />}
                       </span>
                       <span
                         aria-hidden
@@ -362,7 +365,7 @@ export function AppNav({
 
       {/* who */}
       <div className="border-t border-line px-3 py-3">
-        <div className="flex items-center gap-3 rounded-xl px-3 py-2">
+        <Link href="/app/account#complete-profile" className="flex items-center gap-3 rounded-xl px-3 py-2" aria-label={profileIncomplete ? "Complete your profile" : "Your profile"}>
           <span
             className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[11px] font-semibold"
             style={{
@@ -370,7 +373,7 @@ export function AppNav({
               color: "var(--violet)",
             }}
           >
-            {userName.slice(0, 1).toUpperCase()}
+            {userName.slice(0, 1).toUpperCase()}<ProfileDot incomplete={profileIncomplete} />
           </span>
           <span
             className="min-w-0 flex-1 overflow-hidden transition-opacity duration-200
@@ -380,7 +383,7 @@ export function AppNav({
             <span className="block truncate text-[12.5px] font-medium text-ink">{userName}</span>
             <span className="block truncate text-[11px] text-ink-3">{userEmail}</span>
           </span>
-        </div>
+        </Link>
 
         <form action={signOutAction}>
           <button

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { signOut } from "@/app/actions/auth";
 import { search } from "@/app/actions/search";
 import { markAllRead, realtimeTicket, unreadCount } from "@/app/actions/manage";
+import { ProfileCompletionPrompt } from "@/components/profile-completion";
 import { AppNav } from "@/components/app-nav";
 import { AppTopbar } from "@/components/app-topbar";
 import { readable } from "@/lib/access";
@@ -50,6 +51,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         signOutAction={signOut}
         allowed={[...readable(me)]}
         isPlatform={me.is_platform_staff}
+        profileIncomplete={!me.profile_completion.complete}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -67,7 +69,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             read, and a measure on a wide monitor just moves the work into a
             scroll. The inset is equal on every side so a page reads as a
             sheet of paper rather than a panel bolted to a rail. */}
-        <div className="page-pad min-w-0 flex-1">{children}</div>
+        <div className="page-pad min-w-0 flex-1"><ProfileCompletionPrompt profile={me.profile_completion} />{children}</div>
       </div>
     </div>
   );

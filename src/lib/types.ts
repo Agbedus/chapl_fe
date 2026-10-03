@@ -1,89 +1,22 @@
+import type { Schemas } from "@/lib/generated/api";
+
 /** Shapes the Chapl API returns. Kept narrow — only what the UI reads. */
 
-export type Role =
-  | "super_admin"
-  | "platform_admin"
-  | "church_admin"
-  | "senior_pastor"
-  | "branch_pastor"
-  | "branch_admin"
-  | "cell_leader"
-  | "cell_assistant"
-  | "department_head";
+export type Role = Required<Schemas["Role"]>;
 
-export type ScopeType = "platform" | "church" | "branch" | "cell" | "department";
+export type ScopeType = Required<Schemas["ScopeType"]>;
 
-export type MembershipRef = {
-  church_id: string;
-  church_name: string | null;
-  branch_id: string;
-  branch_name: string | null;
-  cell_id: string | null;
-  cell_name: string | null;
-};
+export type MembershipRef = Required<Schemas["MembershipRef"]>;
 
-export type ScopeRef = { role: Role; scope_type: ScopeType; scope_id: string | null; church_id: string | null };
+export type ScopeRef = Required<Schemas["ScopeRef"]>;
 
-export type Me = {
-  is_verified: boolean;
-  churches: Pick<Church, "id" | "name" | "status" | "is_active">[];
-  capabilities: Record<string, string[]>;
-  id: string;
-  email: string;
-  full_name: string;
-  phone_number: string | null;
-  location: string | null;
-  avatar_url: string | null;
-  date_of_birth: string | null;
-  gender: string | null;
-  is_active: boolean;
-  last_login_at: string | null;
-  joined_date: string;
-  memberships: MembershipRef[];
-  assignments: ScopeRef[];
-  is_platform_staff: boolean;
-};
+export type Me = Required<Schemas["UserMe"]>;
 
-export type Token = { access_token: string; token_type: string; user: Me; church_id?: string | null };
+export type Token = Omit<Required<Schemas["Token"]>, "user"> & { user: Me };
 
-export type Church = {
-  id: string;
-  code: string;
-  name: string;
-  legal_name: string | null;
-  timezone: string;
-  currency: string;
-  logo_url: string | null;
-  contact_email: string | null;
-  contact_phone: string | null;
-  website: string | null;
-  address: string | null;
-  city: string | null;
-  country: string | null;
-  denomination: string | null;
-  founded_date: string | null;
-  about: string | null;
-  is_active: boolean;
-  /**
-   * Where a church is in its life, which `is_active` cannot express:
-   * "a real congregation the platform has checked" and "somebody filled
-   * in a form ten minutes ago" are different states.
-   */
-  status: ChurchStatus;
-  verified_at: string | null;
-  verified_by: string | null;
-  /** Why it was turned down, owed to whoever registered it. */
-  review_note: string | null;
-  /**
-   * The one account that answers for this tenant. Not the same as
-   * `church_admin`, which is a grant several people can hold.
-   */
-  owner_id: string | null;
-  created_at: string;
-  updated_at: string;
-};
+export type Church = Required<Schemas["ChurchRead"]>;
 
-export type ChurchStatus = "pending" | "active" | "rejected" | "suspended";
+export type ChurchStatus = Required<Schemas["ChurchStatus"]>;
 
 export const CHURCH_STATUS_LABEL: Record<ChurchStatus, string> = {
   pending: "Awaiting verification",
@@ -100,38 +33,11 @@ export const CHURCH_STATUS_TONE: Record<ChurchStatus, string> = {
   suspended: "var(--ink-3)",
 };
 
-export type ChurchStats = Church & {
-  branch_count: number;
-  cell_count: number;
-  member_count: number;
-};
+export type ChurchStats = Required<Schemas["ChurchStats"]>;
 
-export type Branch = {
-  id: string;
-  church_id: string;
-  code: string;
-  name: string;
-  location: string | null;
-  address: string | null;
-  contact_email: string | null;
-  contact_phone: string | null;
-  service_times: string | null;
-  capacity: number | null;
-  latitude: number | null;
-  longitude: number | null;
-  opened_date: string | null;
-  is_active: boolean;
-};
+export type Branch = Required<Schemas["BranchRead"]>;
 
-export type InvitationPreview = {
-  church_name: string;
-  branch_name: string;
-  cell_name: string | null;
-  email: string;
-  role: Role | null;
-  expires_at: string;
-  needs_account: boolean;
-};
+export type InvitationPreview = Required<Schemas["InvitationPreview"]>;
 
 export type Paged<T> = { items: T[]; total: number };
 
@@ -277,100 +183,24 @@ export type Dashboard = {
 
 /* --- the tenant tree --------------------------------------------------- */
 
-export type Cell = {
-  id: string;
-  church_id: string;
-  branch_id: string;
-  code: string;
-  name: string;
-  motto: string | null;
-  description: string | null;
-  meeting_day: string | null;
-  meeting_time: string | null;
-  meeting_frequency: string | null;
-  host_location: string | null;
-  target_size: number | null;
-  is_active: boolean;
-};
+export type Cell = Required<Schemas["CellRead"]>;
 
-export type Person = {
-  id: string;
-  email: string;
-  full_name: string;
-  /** Uploads are not wired up; this is a URL someone typed or an import set. */
-  avatar_url: string | null;
-  phone_number: string | null;
-  location: string | null;
-  address: string | null;
-  date_of_birth: string | null;
-  gender: string | null;
-  marital_status: string | null;
-  occupation: string | null;
-  emergency_contact_name: string | null;
-  emergency_contact_phone: string | null;
-  baptism_date: string | null;
-  confirmation_date: string | null;
-  notes: string | null;
-  is_active: boolean;
-  is_verified: boolean;
-  last_login_at: string | null;
-  joined_date: string;
-};
+export type Person = Required<Schemas["UserRead"]>;
 
-export type Membership = {
-  id: string;
-  user_id: string;
-  church_id: string;
-  branch_id: string;
-  cell_id: string | null;
-  status: string;
-  is_active: boolean;
-  membership_number: string | null;
-  joined_date: string | null;
-  left_date: string | null;
-};
+export type Membership = Required<Schemas["MembershipRead"]>;
 
 /* --- invitations ------------------------------------------------------- */
 
-export type InvitationStatus = "pending" | "accepted" | "revoked" | "expired";
+export type InvitationStatus = Schemas["InvitationStatus"] | "expired";
 
-export type Invitation = {
-  id: string;
-  church_id: string;
-  branch_id: string;
-  cell_id: string | null;
-  email: string;
-  full_name: string | null;
-  role: Role | null;
-  status: InvitationStatus;
-  expires_at: string;
-  invited_by: string | null;
-  accepted_at: string | null;
-  accepted_by: string | null;
-  created_at: string;
-};
+export type Invitation = Required<Schemas["InvitationRead"]>;
 
 /** The token comes back exactly once, on create or resend. */
-export type InvitationCreated = Invitation & {
-  token: string;
-  accept_url: string;
-  invite_url: string;
-  email_queued: boolean;
-};
+export type InvitationCreated = Required<Schemas["InvitationCreated"]>;
 
 /* --- authority --------------------------------------------------------- */
 
-export type Assignment = {
-  id: string;
-  user_id: string;
-  church_id: string | null;
-  role: Role;
-  scope_type: ScopeType;
-  scope_id: string | null;
-  is_active: boolean;
-  granted_by: string | null;
-  granted_at: string;
-};
+export type Assignment = Required<Schemas["AssignmentRead"]>;
 
 export type GrantableRole = {
   role: Role;
@@ -406,59 +236,15 @@ export const ROLE_BLURB: Record<Role, string> = {
 
 
 /** A ministry team: choir, ushers, media. Off the branch/cell tree. */
-export type Department = {
-  id: string;
-  church_id: string;
-  branch_id: string | null;
-  name: string;
-  description: string | null;
-  meeting_day: string | null;
-  meeting_time: string | null;
-  is_active: boolean;
-};
+export type Department = Required<Schemas["DepartmentRead"]>;
 
-export type DepartmentMembership = {
-  id: string;
-  department_id: string;
-  user_id: string;
-  role_in_department: string | null;
-  is_active: boolean;
-};
+export type DepartmentMembership = Required<Schemas["DepartmentMembershipRead"]>;
 
 /** A gathering: service, rehearsal, outreach. */
-export type ChurchEvent = {
-  id: string;
-  church_id: string;
-  branch_id: string | null;
-  cell_id: string | null;
-  department_id: string | null;
-  title: string;
-  description: string | null;
-  event_type: string;
-  start_date: string;
-  end_date: string | null;
-  location: string | null;
-  is_all_day: boolean;
-  registration_required: boolean;
-  max_attendees: number | null;
-  is_published: boolean;
-};
+export type ChurchEvent = Required<Schemas["EventRead"]>;
 
 /** A bulletin posted to a scope. */
-export type Notice = {
-  id: string;
-  church_id: string;
-  branch_id: string | null;
-  cell_id: string | null;
-  title: string;
-  content: string;
-  priority: "normal" | "important" | "urgent";
-  is_pinned: boolean;
-  publish_at: string | null;
-  expires_at: string | null;
-  is_active: boolean;
-  created_at: string;
-};
+export type Notice = Required<Schemas["NoticeRead"]>;
 
 /** One member, measured — `GET /users/{id}/profile`. */
 export type PersonProfile = {
@@ -508,3 +294,5 @@ export type ServiceDetail = {
   cells: CellRow[];
   absentees: Absentee[];
 };
+
+export type EventRegistration = Required<Schemas["EventRegistrationRead"]>;

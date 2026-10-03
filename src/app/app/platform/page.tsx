@@ -125,6 +125,8 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
         lede="Churches anybody registered, waiting to be checked. Oldest first."
       />
 
+      {everything.some(c => !c.owner_id) && <Panel title="Churches needing an owner" accent="var(--gold)"><ul className="space-y-2">{everything.filter(c => !c.owner_id).map(c => <li key={c.id}><Link href={`/app/church?id=${c.id}`} className="text-[13px] hover:underline">{c.name} · Assign an owner</Link></li>)}</ul></Panel>}
+
       <section className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Waiting"

@@ -92,7 +92,7 @@ export default async function RegisterPage({
   const cellName = new Map(cells.ok ? cells.data.items.map((c) => [c.id, c.name]) : []);
 
   const roll: RegisterPerson[] = roster.data.items
-    .filter((m) => m.is_active && named.has(m.user_id))
+    .filter((m): m is typeof m & { user_id: string } => m.is_active && m.user_id !== null && named.has(m.user_id))
     .map((m) => ({
       id: m.user_id,
       full_name: named.get(m.user_id) as string,

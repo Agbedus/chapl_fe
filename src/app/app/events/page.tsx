@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { canWrite } from "@/lib/access";
 import { saveEvent } from "@/app/actions/manage";
 import { Calendar, type CalendarEvent } from "@/components/calendar";
@@ -135,6 +136,8 @@ export default async function EventsPage() {
           footnote="people must confirm they are coming"
         />
       </section>
+
+      {upcoming.some(e => e.registration_required && e.is_published) && <Panel title="Event sign-up" accent="var(--gold)"><ul className="space-y-2">{upcoming.filter(e => e.registration_required && e.is_published).map(e => <li key={e.id}><Link href={`/app/events/${e.id}`} className="text-[13px] font-medium hover:underline">{e.title} · View registration</Link></li>)}</ul></Panel>}
 
       <Panel
         fill

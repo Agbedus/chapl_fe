@@ -9,7 +9,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "types": "cd ../chapl && .venv/bin/python -m scripts.export_types --output ../chapl_fe/src/lib/generated/api.ts",
+    "types:check": "cd ../chapl && .venv/bin/python -m scripts.export_types --output ../chapl_fe/src/lib/generated/api.ts --check"
   },
   "dependencies": {
     "@tanstack/charts": "^0.9.0",

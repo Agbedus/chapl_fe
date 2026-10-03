@@ -30,6 +30,7 @@ const str = (data: FormData, key: string) => String(data.get(key) ?? "").trim();
 
 /** Where to land after signing in, given what this person can reach. */
 function landingFor(me: Me): string {
+  if (!me.profile_completion.complete) return "/app/account#complete-profile";
   if (me.is_platform_staff) return "/app";
   if (me.churches?.length > 0) return me.churches.length > 1 ? "/app/select" : me.churches[0].status === "active" ? "/app" : "/app/church";
   // An identity with no church yet: the only useful next step is to make
