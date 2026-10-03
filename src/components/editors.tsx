@@ -1502,7 +1502,7 @@ export function GrantEditor({
                   </span>
                 </div>
 
-                {scope === "church" ? (
+                {scope === "platform" ? <Notice kind="info">This role applies across the platform.</Notice> : scope === "church" ? (
                   <>
                     {/* Church roles still carry a scope: the API stores the
                         church the grant is written against, and refuses a

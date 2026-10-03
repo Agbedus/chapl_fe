@@ -56,6 +56,7 @@ const SECTIONS: { heading: string; items: Item[] }[] = [
     // The tree, top down: the church, its sites, the groups inside them.
     heading: "Church",
     items: [
+      { href: "/app/select", label: "Choose church", icon: Church, tone: "var(--violet)" },
       { href: "/app/church", label: "Church", icon: Church, tone: "var(--violet)", needs: "church" },
       { href: "/app/branches", label: "Branches", icon: Building2, tone: "var(--violet)", needs: "branch" },
       { href: "/app/cells", label: "Cells", icon: Compass, tone: "var(--teal)", needs: "cell" },

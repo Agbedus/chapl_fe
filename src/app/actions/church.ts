@@ -47,7 +47,7 @@ export async function createChurch(
     if (result.error.status === 403) {
       return {
         error:
-          "Creating a church is a platform-level action. Ask a Chapl administrator.",
+          "Confirm your account and check your access before creating a church.",
       };
     }
     return { error: result.error.detail, fieldErrors: result.error.fieldErrors };
@@ -83,7 +83,7 @@ export async function updateChurch(
     about: str(data, "about") || null,
   };
 
-  const result = await api<Church>(`/churches/${id}`, { method: "PATCH", body });
+  const result = await api<Church>(`/churches/${id}`, { method: "PATCH", body, churchId: id });
   if (!result.ok) {
     return { error: result.error.detail, fieldErrors: result.error.fieldErrors };
   }
@@ -136,7 +136,7 @@ export async function inviteMember(
   const role = str(data, "role");
   const cell_id = str(data, "cell_id");
 
-  const result = await api<{ token: string; email: string }>("/invitations/", {
+  const result = await api<{ token: string; email: string; email_queued: boolean; invite_url: string }>("/invitations/", {
     method: "POST",
     body: {
       email,
@@ -158,10 +158,10 @@ export async function inviteMember(
   // The API's accept_url points at its own route; the page that renders an
   // invitation lives in this app, so build that link instead.
   //
-  // Mail is not wired up yet, so the link is shown here rather than
-  // pretending an email went out.
+  // Delivery runs in the backend queue; preserve a shareable fallback.
   return {
-    message: `Invitation ready for ${result.data.email}. Send them this link: /invite/${result.data.token}`,
+    message: result.data.email_queued ? `Invitation queued for ${result.data.email}.` : "Invitation created. Email is unavailable; share the link below.",
+    link: result.data.invite_url,
   };
 }
 
@@ -199,9 +199,8 @@ export async function acceptInvitation(
 
   const { access_token, user } = result.data;
   await import("@/lib/session").then(({ startSession }) => startSession(access_token));
-  if (user.memberships.length > 0) {
-    await setChurch(user.memberships[user.memberships.length - 1].church_id);
-  }
+  if (result.data.church_id) await setChurch(result.data.church_id);
+  else if (user.churches?.length === 1) await setChurch(user.churches[0].id);
 
   revalidatePath("/app", "layout");
   redirect("/app?welcome=1");
@@ -273,4 +272,21 @@ export async function handOverChurch(
   revalidatePath("/app/church");
   revalidatePath("/app/platform");
   return { message: "Ownership handed over." };
+}
+
+
+export async function resubmitChurch(_prev: FormState, data: FormData): Promise<FormState> {
+  const result = await api<Church>(`/churches/${str(data, "id")}/resubmit`, { method: "POST" });
+  if (!result.ok) return { error: result.error.detail };
+  revalidatePath("/app", "layout");
+  return { message: "Submitted for review." };
+}
+
+export async function deleteChurch(_prev: FormState, data: FormData): Promise<FormState> {
+  const id = str(data, "id");
+  const result = await api<Church>(`/churches/${id}`, { method: "DELETE" });
+  if (!result.ok) return { error: result.error.detail };
+  await setChurch("all");
+  revalidatePath("/app", "layout");
+  redirect("/app/platform");
 }

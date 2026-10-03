@@ -1,15 +1,16 @@
-import { saveBranch } from "@/app/actions/manage";
+import { saveBranch, deleteRecord } from "@/app/actions/manage";
 import { Sparkline } from "@/components/charts";
 import {
   DataTable, type TableColumn, type TableRow,
 } from "@/components/data-table";
-import { BranchEditor } from "@/components/editors";
+import { BranchEditor, ActionButton } from "@/components/editors";
 import {
   DotRow, Leaderboard, Page, PageHead, Panel, StatCard,
 } from "@/components/panels";
 import { api } from "@/lib/api";
 import { turnoutColour } from "@/lib/palette";
-import { canAdminChurch, currentChurchId, requireMe } from "@/lib/session";
+import { canWrite as canWriteResource } from "@/lib/access";
+import { currentChurchId, requireMe } from "@/lib/session";
 import type { Branch, BranchRow, Dashboard, Paged } from "@/lib/types";
 
 export const metadata = { title: "Branches — Chapl" };
@@ -60,7 +61,8 @@ export default async function BranchesPage() {
       }))
     : [];
 
-  const canWrite = canAdminChurch(me, churchId);
+  const canWrite = canWriteResource(me, "branch");
+  const isSuper = me.assignments.some((a) => a.role === "super_admin");
 
   const columns: TableColumn[] = [
     { key: "name", label: "Branch" },
@@ -72,6 +74,7 @@ export default async function BranchesPage() {
     { key: "capacity", label: "Seats", align: "right" },
     { key: "turnout", label: "Turnout", align: "right", width: "136px" },
     { key: "is_active", label: "Active" },
+    ...(isSuper ? [{ key: "actions", label: "Actions" }] : []),
   ];
 
   const dash_ = <span className="text-ink-3">—</span>;
@@ -148,6 +151,7 @@ export default async function BranchesPage() {
             no
           </span>
         ),
+        ...(isSuper ? [<ActionButton key="delete" action={deleteRecord} fields={{ resource: "branches", id: r.id, church_id: r.church_id }} label="Delete" confirm={`Delete ${r.name}? Records with dependencies or role history must be deactivated instead.`} />] : []),
       ],
       fields: canWrite
         ? [
@@ -182,6 +186,7 @@ export default async function BranchesPage() {
       */
       hidden: {
         id: r.id,
+        church_id: r.church_id,
         address: r.address ?? "",
         contact_email: r.contact_email ?? "",
         latitude: r.latitude != null ? String(r.latitude) : "",
@@ -196,7 +201,7 @@ export default async function BranchesPage() {
         eyebrow="Structure"
         title="Branches"
         lede="Where your church meets. Everyone belongs to one."
-        action={<BranchEditor action={saveBranch} />}
+        action={canWrite && churchId ? <BranchEditor action={saveBranch} /> : undefined}
       />
 
       <section className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">

@@ -61,7 +61,7 @@ const READABLE: Record<Role, Resource[]> = {
 
 /** Every resource this person can read, across all their grants. */
 export function readable(me: Me): Set<Resource> {
-  if (me.is_platform_staff) return new Set(ALL);
+  if (me.capabilities) return new Set(Object.entries(me.capabilities).filter(([, actions]) => actions.includes("read")).map(([resource]) => resource as Resource));
   const out = new Set<Resource>();
   for (const grant of me.assignments) {
     for (const resource of READABLE[grant.role] ?? []) out.add(resource);
@@ -109,6 +109,7 @@ const WRITERS: Partial<Record<Resource, Role[]>> = {
 };
 
 export function canWrite(me: Me, resource: Resource): boolean {
+  if (me.capabilities) return me.capabilities[resource]?.includes("write") ?? false;
   const allowed = WRITERS[resource];
   // Not listed means read and write travel together for this resource,
   // so whoever may read it may write it.

@@ -4,9 +4,9 @@ import { AtSign, CalendarDays, Check, Globe, MapPin, Phone, ShieldCheck, Wallet 
 import { updateChurch } from "@/app/actions/church";
 import { DonutChart, StackedChart, TrendChart } from "@/components/charts";
 import { ChurchEditor } from "@/components/editors";
-import { Empty, Page, Panel, RingPanel, StatCard } from "@/components/panels";
+import { Empty, Page, PageHead, Panel, RingPanel, StatCard } from "@/components/panels";
 import { Notice } from "@/components/ui/form";
-import { decideChurch, handOverChurch } from "@/app/actions/church";
+import { decideChurch, handOverChurch, resubmitChurch, deleteChurch } from "@/app/actions/church";
 import { ActionButton, DeclineChurch, OwnerEditor } from "@/components/editors";
 import { api } from "@/lib/api";
 import { canAdminChurch, currentChurchId, requireMe } from "@/lib/session";
@@ -111,10 +111,10 @@ export default async function ChurchPage({
 
   const [churchResult, dash, deptList, people] = await Promise.all([
     api<ChurchStats>(`/churches/${churchId}`),
-    api<Dashboard>("/dashboard"),
-    api<Paged<Department>>("/departments/?limit=1"),
+    api<Dashboard>("/dashboard", { churchId }),
+    api<Paged<Department>>("/departments/?limit=1", { churchId }),
     // For naming the owner and for handing the church over.
-    api<Paged<Person>>("/users/?limit=2000&sort=full_name&order=asc"),
+    api<Paged<Person>>("/users/?limit=2000&sort=full_name&order=asc", { churchId: me.is_platform_staff ? "all" : churchId }),
   ]);
 
   if (!churchResult.ok) {
@@ -126,7 +126,9 @@ export default async function ChurchPage({
   }
 
   const church = churchResult.data;
-  const editable = canAdminChurch(me, churchId);
+  const editable = canAdminChurch(me, churchId) && (church.status !== "suspended" || me.is_platform_staff);
+  const superAdmin = me.assignments.some((a) => a.role === "super_admin");
+  const impact = superAdmin ? await api<Record<string, number>>(`/churches/${churchId}/deletion-impact`) : null;
 
   const directory = people.ok
     ? people.data.items.map((p) => ({ value: p.id, label: `${p.full_name} · ${p.email}` }))
@@ -139,6 +141,16 @@ export default async function ChurchPage({
   // anybody's. A church admin who is not the owner may not.
   const canHandOver = me.is_platform_staff || church.owner_id === me.id;
   const currency = church.currency || "GHS";
+  if (!me.is_platform_staff && (church.status !== "active" || !church.is_active)) {
+    return <Page><PageHead eyebrow="Church" title={church.name} />
+      <Notice kind={church.status === "pending" ? "info" : "error"}>{CHURCH_STATUS_LABEL[church.status]}. {church.review_note ?? "Complete your church details while the platform reviews your registration. Church operations open after approval."}</Notice>
+      <section className="sheet space-y-3"><p className="text-[12px] text-ink-2">{church.legal_name ?? church.name} · {church.contact_email ?? me.email}</p>
+        {editable && <ChurchEditor action={updateChurch} church={church} />}
+        {church.status === "rejected" && church.owner_id === me.id && <ActionButton action={resubmitChurch} fields={{ id: church.id }} label="Resubmit for review" confirm="Submit the updated details for another review?" />}
+      </section>
+    </Page>;
+  }
+
 
   /*
    * Everything below is the mother church, whole.
@@ -227,7 +239,7 @@ export default async function ChurchPage({
     <Page>
       {params.created && (
         <Notice kind="success">
-          Church created. Add its first branch — every member belongs to one.
+          Church submitted. Complete its details while it awaits verification.
         </Notice>
       )}
 
@@ -235,16 +247,14 @@ export default async function ChurchPage({
         Verification, said plainly.
 
         A pending church works — the person who registered it can run it
-        from the first minute. What it lacks is the platform vouching for
+        after approval. What it lacks is the platform vouching for
         it, and that is worth stating rather than leaving somebody to
         wonder whether something is broken. A rejection carries the
         reason, because the alternative is a dead end.
       */}
       {church.status === "pending" && (
         <Notice kind="info">
-          <strong>{CHURCH_STATUS_LABEL.pending}.</strong> Everything here works
-          already — this is the platform confirming the church is real, not a
-          gate on using it.
+          <strong>{CHURCH_STATUS_LABEL.pending}.</strong> Complete your church details while the platform reviews your registration. Invitations and church operations open after approval.
         </Notice>
       )}
       {church.status === "rejected" && (
@@ -260,22 +270,26 @@ export default async function ChurchPage({
         </Notice>
       )}
 
+      {church.status === "rejected" && church.owner_id === me.id && <ActionButton action={resubmitChurch} fields={{ id: church.id }} label="Resubmit for review" confirm="Submit the updated church details for another review?" />}
       {/* The platform's own controls, only for platform staff. */}
-      {me.is_platform_staff && church.status === "pending" && (
+      {me.is_platform_staff && (
         <div className="sheet flex flex-wrap items-center gap-3">
           <ShieldCheck className="h-4 w-4" style={{ color: "var(--gold)" }} aria-hidden />
           <span className="text-[12.5px] text-ink-2">
-            This church is waiting on you.
+            Manage this church’s verification status.
           </span>
           <span className="ml-auto flex items-center gap-2">
             <ActionButton
               action={decideChurch}
               fields={{ id: church.id, status: "active" }}
-              label="Verify it"
+              label={church.status === "active" ? "Verified" : "Approve / restore"}
               icon={<Check className="h-3 w-3" aria-hidden />}
               confirm={`Verify ${church.name}? The owner is told straight away.`}
             />
             <DeclineChurch action={decideChurch} church={{ id: church.id, name: church.name }} />
+            {superAdmin && <ActionButton action={deleteChurch} fields={{ id: church.id }} label="Delete church"
+              confirm={`Permanently delete ${church.name} and its church records? ${impact?.ok ? Object.entries(impact.data).filter(([, count]) => count > 0).map(([name, count]) => `${count} ${name.replaceAll("_", " ")}`).join(", ") : "Shared accounts and audit history are retained."}`} />}
+
           </span>
         </div>
       )}

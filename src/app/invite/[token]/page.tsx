@@ -94,12 +94,16 @@ export default async function InvitePage({
           </Notice>
         )}
 
-        <AcceptForm
+        {!me && !invite.needs_account ? (
+          <Link className="btn btn-primary" href={`/signin?next=${encodeURIComponent(`/invite/${token}`)}`}>Sign in to accept</Link>
+        ) : me && me.email.toLowerCase() !== invite.email.toLowerCase() ? (
+          <Notice kind="error">Sign out and sign in as {invite.email} to accept this invitation.</Notice>
+        ) : <AcceptForm
           action={acceptInvitation}
           token={token}
           needsAccount={needsAccount}
           defaultName={me?.full_name ?? ""}
-        />
+        />}
       </div>
     </AuthShell>
   );

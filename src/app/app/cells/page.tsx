@@ -1,17 +1,18 @@
 import Link from "next/link";
 import { X } from "lucide-react";
 
-import { saveCell } from "@/app/actions/manage";
+import { saveCell, deleteRecord } from "@/app/actions/manage";
 import { Sparkline } from "@/components/charts";
 import {
   DataTable, type TableColumn, type TableRow,
 } from "@/components/data-table";
-import { CellEditor } from "@/components/editors";
+import { CellEditor, ActionButton } from "@/components/editors";
 import {
   DotRow, Leaderboard, Page, PageHead, Panel, StatCard,
 } from "@/components/panels";
 import { api } from "@/lib/api";
-import { canAdminChurch, currentChurchId, requireMe } from "@/lib/session";
+import { canWrite as canWriteResource } from "@/lib/access";
+import { requireMe } from "@/lib/session";
 import type { Branch, Cell, CellRow, Dashboard, Paged } from "@/lib/types";
 
 export const metadata = { title: "Cells — Chapl" };
@@ -37,7 +38,6 @@ export default async function CellsPage({
   searchParams: Promise<{ branch?: string }>;
 }) {
   const me = await requireMe("/app/cells");
-  const churchId = await currentChurchId();
   const params = await searchParams;
 
   const [list, branchList, dash] = await Promise.all([
@@ -95,7 +95,8 @@ export default async function CellsPage({
       }))
     : [];
 
-  const canWrite = canAdminChurch(me, churchId);
+  const canWrite = canWriteResource(me, "cell");
+  const isSuper = me.assignments.some((a) => a.role === "super_admin");
   const dash_ = <span className="text-ink-3">—</span>;
 
   const columns: TableColumn[] = [
@@ -109,6 +110,7 @@ export default async function CellsPage({
     { key: "target_size", label: "Target", align: "right" },
     { key: "turnout", label: "Turnout", align: "right", width: "136px" },
     { key: "is_active", label: "Active" },
+    ...(isSuper ? [{ key: "actions", label: "Actions" }] : []),
   ];
 
   const tableRows: TableRow[] = rows.map((r) => {
@@ -184,6 +186,7 @@ export default async function CellsPage({
         ) : (
           <span key="a" className="chip bg-sunk text-ink-3">no</span>
         ),
+        ...(isSuper ? [<ActionButton key="delete" action={deleteRecord} fields={{ resource: "cells", id: r.id, church_id: r.church_id }} label="Delete" confirm={`Delete ${r.name}? Records with dependencies or role history must be deactivated instead.`} />] : []),
       ],
       fields: canWrite
         ? [
@@ -234,6 +237,7 @@ export default async function CellsPage({
          does not show would arrive as null and be cleared. */
       hidden: {
         id: r.id,
+        church_id: r.church_id,
         motto: r.motto ?? "",
         description: r.description ?? "",
       },
@@ -260,10 +264,10 @@ export default async function CellsPage({
                 Every branch
               </Link>
             )}
-            <CellEditor
+            {canWrite && <CellEditor
               action={saveCell}
               branches={branches.map((b) => ({ value: b.id, label: b.name }))}
-            />
+            />}
           </div>
         }
       />

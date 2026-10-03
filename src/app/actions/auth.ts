@@ -31,7 +31,7 @@ const str = (data: FormData, key: string) => String(data.get(key) ?? "").trim();
 /** Where to land after signing in, given what this person can reach. */
 function landingFor(me: Me): string {
   if (me.is_platform_staff) return "/app";
-  if (me.memberships.length > 0) return "/app";
+  if (me.churches?.length > 0) return me.churches.length > 1 ? "/app/select" : me.churches[0].status === "active" ? "/app" : "/app/church";
   // An identity with no church yet: the only useful next step is to make
   // one, or to accept an invitation.
   return "/app/start";
@@ -57,6 +57,9 @@ export async function signIn(
   });
 
   if (!result.ok) {
+    if (result.error.status === 403) {
+      redirect(`/verify?email=${encodeURIComponent(email)}`);
+    }
     if (result.error.status === 429) {
       return { error: result.error.detail };
     }
@@ -66,11 +69,11 @@ export async function signIn(
   await startSession(result.data.access_token);
 
   const me = result.data.user;
-  if (me.memberships.length === 1) {
-    await setChurch(me.memberships[0].church_id);
+  if (me.churches?.length === 1) {
+    await setChurch(me.churches[0].id);
   }
 
-  redirect(next || landingFor(me));
+  redirect(next.startsWith("/") && !next.startsWith("//") && !next.includes("\\") ? next : landingFor(me));
 }
 
 export async function register(
@@ -112,7 +115,7 @@ export async function verifyOtp(
   const otp = str(data, "otp");
   const purpose = str(data, "purpose") || "activation";
 
-  if (otp.length < 4) {
+  if (!/^\d{6}$/.test(otp)) {
     return { error: "Enter the code from your email.", email };
   }
 
@@ -156,10 +159,12 @@ export async function requestReset(
   const email = str(data, "email");
   if (!email) return { error: "Enter your email address." };
 
-  await api<{ msg: string }>(`/auth/password-recovery/${encodeURIComponent(email)}`, {
+  const result = await api<{ msg: string }>(`/auth/password-recovery/${encodeURIComponent(email)}`, {
     method: "POST",
     auth: false,
   });
+
+  if (!result.ok) return { error: result.error.detail, email };
 
   // Always the same answer, whether or not the address exists — the API
   // behaves this way too, and the UI must not undo it.
@@ -244,6 +249,12 @@ export async function signOut() {
 }
 
 export async function chooseChurch(churchId: string) {
+  const result = await api<Me>("/auth/me");
+  if (!result.ok) redirect("/signin");
+  if (churchId !== "all" || !result.data.is_platform_staff) {
+    const church = await api<{ id: string }>(`/churches/${encodeURIComponent(churchId)}`);
+    if (!church.ok) redirect("/app/select");
+  }
   await setChurch(churchId);
   revalidatePath("/app", "layout");
   redirect("/app");

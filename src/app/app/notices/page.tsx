@@ -1,3 +1,4 @@
+import { canWrite } from "@/lib/access";
 import { Pin } from "lucide-react";
 
 import { saveNotice } from "@/app/actions/manage";
@@ -128,7 +129,7 @@ export default async function NoticesPage() {
         title="Notices"
         lede="Bulletins, and who they reached."
         action={
-          audiences.length > 0 ? (
+          canWrite(me, "notice") && audiences.length > 0 ? (
             <NoticeEditor action={saveNotice} audiences={audiences} />
           ) : undefined
         }

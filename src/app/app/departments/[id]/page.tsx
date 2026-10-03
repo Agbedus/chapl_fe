@@ -1,3 +1,4 @@
+import { canWrite } from "@/lib/access";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Clock, UserMinus } from "lucide-react";
@@ -38,7 +39,7 @@ export default async function DepartmentPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireMe("/app/departments");
+  const me = await requireMe("/app/departments");
   const { id } = await params;
 
   const [department, roster, branches, people] = await Promise.all([
@@ -144,7 +145,7 @@ export default async function DepartmentPage({
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
               All teams
             </Link>
-            <DepartmentEditor
+            {canWrite(me, "department") && <DepartmentEditor
               action={saveDepartment}
               department={{
                 id: team.id,
@@ -156,8 +157,8 @@ export default async function DepartmentPage({
                 is_active: team.is_active,
               }}
               branches={branchOptions}
-            />
-            <RosterEditor action={addToRoster} departmentId={id} candidates={candidates} />
+            />}
+            {canWrite(me, "department") && <RosterEditor action={addToRoster} departmentId={id} candidates={candidates} />}
           </span>
         }
       />

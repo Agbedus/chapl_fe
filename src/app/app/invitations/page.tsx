@@ -4,6 +4,7 @@ import { revokeInvitation, resendInvitation, sendInvitation } from "@/app/action
 import { ActionButton, InviteEditor } from "@/components/editors";
 import { DataTable, type TableColumn, type TableRow } from "@/components/data-table";
 import { Page, PageHead, Panel, StatCard } from "@/components/panels";
+import { canWrite } from "@/lib/access";
 import { api } from "@/lib/api";
 import { requireMe } from "@/lib/session";
 import type { Branch, Cell, Invitation, Paged, Role } from "@/lib/types";
@@ -28,11 +29,11 @@ const INVITE_ROLES: Role[] = [
 ];
 
 function daysLeft(expires: string): number {
-  return Math.ceil((new Date(expires).getTime() - Date.now()) / 86_400_000);
+  return Math.ceil((new Date(expires).getTime() - new Date().getTime()) / 86_400_000);
 }
 
 export default async function InvitationsPage() {
-  await requireMe("/app/invitations");
+  const me = await requireMe("/app/invitations");
 
   const [invites, branches, cells] = await Promise.all([
     api<Paged<Invitation>>("/invitations/?limit=100"),
@@ -59,8 +60,8 @@ export default async function InvitationsPage() {
     : [];
 
   const items = invites.data.items;
-  const pending = items.filter((i) => i.status === "pending");
-  const settled = items.filter((i) => i.status !== "pending");
+  const pending = items.filter((i) => i.status === "pending" && new Date(i.expires_at).getTime() > new Date().getTime());
+  const settled = items.filter((i) => i.status !== "pending" || new Date(i.expires_at).getTime() <= new Date().getTime());
 
   const dash_ = <span className="text-ink-3">—</span>;
   const branchName = new Map(
@@ -143,7 +144,7 @@ export default async function InvitationsPage() {
       branchName.get(invite.branch_id ?? "") ?? dash_,
       invite.role ? ROLE_LABEL[invite.role] : <span className="text-ink-3">member</span>,
       <span key="s" className="chip bg-sunk capitalize text-ink-3">
-        {invite.status}
+        {invite.status === "pending" ? "expired" : invite.status}
       </span>,
     ],
   }));
@@ -159,7 +160,7 @@ export default async function InvitationsPage() {
             action={sendInvitation}
             branches={branchOptions}
             cells={cellOptions}
-            roles={INVITE_ROLES.map((r) => ({ value: r, label: ROLE_LABEL[r] }))}
+            roles={(canWrite(me, "assignment") ? INVITE_ROLES.filter((r) => r !== "church_admin" || me.assignments.some((a) => a.role === "church_admin" || a.role === "super_admin")) : []).map((r) => ({ value: r, label: ROLE_LABEL[r] }))}
           />
         }
       />

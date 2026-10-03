@@ -1,3 +1,4 @@
+import { canWrite } from "@/lib/access";
 import Link from "next/link";
 import { Search, UserPlus } from "lucide-react";
 
@@ -31,7 +32,7 @@ export default async function PeoplePage({
 }: {
   searchParams: Promise<{ q?: string; page?: string }>;
 }) {
-  await requireMe("/app/people");
+  const me = await requireMe("/app/people");
   const params = await searchParams;
   const q = (params.q ?? "").trim();
   const page = Math.max(1, Number(params.page ?? 1) || 1);
@@ -158,9 +159,9 @@ export default async function PeoplePage({
         title={`${total.toLocaleString()} ${total === 1 ? "person" : "people"}`}
         lede="Everyone you can see. Search runs against the database."
         action={
-          <Action href="/app/invitations" icon={<UserPlus className="h-4 w-4" aria-hidden />}>
+          canWrite(me, "membership") ? <Action href="/app/invitations" icon={<UserPlus className="h-4 w-4" aria-hidden />}>
             Invite someone
-          </Action>
+          </Action> : null
         }
       />
 

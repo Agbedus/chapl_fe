@@ -22,7 +22,7 @@ export function VerifyForm({
   return (
     <div className="space-y-5">
       <form action={formAction} className="space-y-4">
-        <input type="hidden" name="email" value={email} />
+        {email && <input type="hidden" name="email" value={email} />}
         <input type="hidden" name="purpose" value={purpose} />
 
         {state.error && <Notice kind="error">{state.error}</Notice>}
@@ -43,8 +43,9 @@ export function VerifyForm({
       </form>
 
       <form action={resendFormAction} className="space-y-3">
-        <input type="hidden" name="email" value={email} />
+        {email && <input type="hidden" name="email" value={email} />}
         <input type="hidden" name="purpose" value={purpose} />
+        {!email && <Field label="Email" name="email" type="email" required autoComplete="email" />}
         {resend.error && <Notice kind="error">{resend.error}</Notice>}
         {resend.message && <Notice kind="success">{resend.message}</Notice>}
         <button type="submit" className="text-[13px] text-ink-3 hover:text-ink">

@@ -26,8 +26,7 @@ export default async function NewChurchPage() {
       {!me.is_platform_staff && (
         <div className="mt-6">
           <Notice kind="info">
-            Creating a church is a platform-level action. If this is refused,
-            ask a Chapl administrator to create it and make you its admin.
+            Your church will await platform verification. You can complete its details while it is reviewed.
           </Notice>
         </div>
       )}

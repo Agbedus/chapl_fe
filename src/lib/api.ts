@@ -102,6 +102,7 @@ export async function api<T>(
       headers,
       body: payload,
       cache,
+      signal: AbortSignal.timeout(20000),
     });
   } catch {
     return {

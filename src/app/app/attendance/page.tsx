@@ -1,3 +1,4 @@
+import { canWrite } from "@/lib/access";
 import Link from "next/link";
 import { ClipboardCheck } from "lucide-react";
 
@@ -29,7 +30,7 @@ export default async function AttendancePage({
 }: {
   searchParams: Promise<{ date?: string }>;
 }) {
-  await requireMe("/app/attendance");
+  const me = await requireMe("/app/attendance");
   const params = await searchParams;
 
   const [serviceResult, dash] = await Promise.all([
@@ -134,10 +135,10 @@ export default async function AttendancePage({
               current={service.date}
               label={serviceLabel}
             />
-            <Link href="/app/attendance/register" className="btn btn-primary btn-sm">
+            {canWrite(me, "attendance") && <Link href="/app/attendance/register" className="btn btn-primary btn-sm">
             <ClipboardCheck className="h-3.5 w-3.5" aria-hidden />
             Take the register
-          </Link>
+          </Link>}
           </span>
         }
       />

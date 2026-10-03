@@ -22,9 +22,12 @@ export type MembershipRef = {
   cell_name: string | null;
 };
 
-export type ScopeRef = { role: Role; scope_type: ScopeType; scope_id: string | null };
+export type ScopeRef = { role: Role; scope_type: ScopeType; scope_id: string | null; church_id: string | null };
 
 export type Me = {
+  is_verified: boolean;
+  churches: Pick<Church, "id" | "name" | "status" | "is_active">[];
+  capabilities: Record<string, string[]>;
   id: string;
   email: string;
   full_name: string;
@@ -41,7 +44,7 @@ export type Me = {
   is_platform_staff: boolean;
 };
 
-export type Token = { access_token: string; token_type: string; user: Me };
+export type Token = { access_token: string; token_type: string; user: Me; church_id?: string | null };
 
 export type Church = {
   id: string;
@@ -351,6 +354,8 @@ export type Invitation = {
 export type InvitationCreated = Invitation & {
   token: string;
   accept_url: string;
+  invite_url: string;
+  email_queued: boolean;
 };
 
 /* --- authority --------------------------------------------------------- */

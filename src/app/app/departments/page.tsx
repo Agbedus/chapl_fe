@@ -1,3 +1,4 @@
+import { canWrite } from "@/lib/access";
 import Link from "next/link";
 
 import { saveDepartment } from "@/app/actions/manage";
@@ -18,7 +19,7 @@ const TONES = [
 ];
 
 export default async function DepartmentsPage() {
-  await requireMe("/app/departments");
+  const me = await requireMe("/app/departments");
 
   const [list, rosters, branchList] = await Promise.all([
     api<Paged<Department>>("/departments/?limit=200&sort=name&order=asc"),
@@ -151,7 +152,7 @@ export default async function DepartmentsPage() {
         title="Departments"
         lede="Ministry teams, off the branch and cell tree."
         action={
-          <DepartmentEditor action={saveDepartment} branches={branchChoices} />
+          canWrite(me, "department") ? <DepartmentEditor action={saveDepartment} branches={branchChoices} /> : null
         }
       />
 

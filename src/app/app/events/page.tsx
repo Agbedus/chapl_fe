@@ -1,3 +1,4 @@
+import { canWrite } from "@/lib/access";
 import { saveEvent } from "@/app/actions/manage";
 import { Calendar, type CalendarEvent } from "@/components/calendar";
 import { EventEditor } from "@/components/editors";
@@ -95,7 +96,7 @@ export default async function EventsPage() {
         title="Calendar"
         lede="Everything the church has on."
         action={
-          audiences.length > 0 ? (
+          canWrite(me, "event") && audiences.length > 0 ? (
             <EventEditor action={saveEvent} audiences={audiences} />
           ) : undefined
         }

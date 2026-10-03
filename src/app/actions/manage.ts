@@ -75,7 +75,7 @@ export async function saveBranch(_prev: FormState, data: FormData): Promise<Form
   if (!id) body.code = toCode(str(data, "code"), name);
 
   const result = id
-    ? await api<Branch>(`/branches/${id}`, { method: "PATCH", body })
+    ? await api<Branch>(`/branches/${id}`, { method: "PATCH", body, churchId: str(data, "church_id") || undefined })
     : await api<Branch>("/branches/", { method: "POST", body });
 
   if (!result.ok) {
@@ -120,7 +120,7 @@ export async function saveCell(_prev: FormState, data: FormData): Promise<FormSt
   }
 
   const result = id
-    ? await api<Cell>(`/cells/${id}`, { method: "PATCH", body })
+    ? await api<Cell>(`/cells/${id}`, { method: "PATCH", body, churchId: str(data, "church_id") || undefined })
     : await api<Cell>("/cells/", { method: "POST", body });
 
   if (!result.ok) {
@@ -167,11 +167,10 @@ export async function sendInvitation(_prev: FormState, data: FormData): Promise<
   }
 
   revalidatePath("/app/invitations");
-  // Nothing sends mail yet, so the link is handed back rather than a
-  // message claiming an email went out that never will.
+  // Keep a copyable link as a fallback while SMTP delivery is pending.
   return {
-    message: `Invitation ready for ${result.data.email}`,
-    link: `/invite/${result.data.token}`,
+    message: result.data.email_queued ? `Invitation queued for ${result.data.email}` : "Invitation created. Email is unavailable; share the link below.",
+    link: result.data.invite_url,
   };
 }
 
@@ -187,7 +186,7 @@ export async function resendInvitation(_prev: FormState, data: FormData): Promis
   // already sent stops working — worth saying plainly.
   return {
     message: `New link for ${result.data.email}. The previous one no longer works.`,
-    link: `/invite/${result.data.token}`,
+    link: result.data.invite_url,
   };
 }
 
@@ -289,10 +288,7 @@ export async function grantRole(_prev: FormState, data: FormData): Promise<FormS
 
   const scope_type = ROLE_SCOPE[role];
   if (!scope_type) return { error: "That is not a role this church can grant." };
-  if (scope_type === "platform") {
-    return { error: "Platform roles are not a church's to grant." };
-  }
-  if (!scope_id) {
+  if (scope_type !== "platform" && !scope_id) {
     return {
       error: `A ${ROLE_LABEL[role].toLowerCase()} is granted over one ${scope_type}. Choose which.`,
       fieldErrors: { scope_id: "Required" },
@@ -301,7 +297,7 @@ export async function grantRole(_prev: FormState, data: FormData): Promise<FormS
 
   const result = await api<Assignment>("/assignments/", {
     method: "POST",
-    body: { user_id, role, scope_type, scope_id },
+    body: { user_id, role, scope_type, scope_id: scope_type === "platform" ? null : scope_id },
   });
 
   if (!result.ok) {
@@ -766,4 +762,39 @@ export async function takeRegister(_prev: FormState, data: FormData): Promise<Fo
       (skipped.length ? `, ${skipped.length} skipped` : "") +
       ".",
   };
+}
+
+
+export async function accountAction(_prev: FormState, data: FormData): Promise<FormState> {
+  const id = str(data, "id"), operation = str(data, "operation");
+  const options: Record<string, { path: string; method: string; body?: unknown }> = {
+    verify: { path: `/users/${id}`, method: "PATCH", body: { is_verified: true } },
+    resend: { path: `/users/${id}/verification-email`, method: "POST" },
+    deactivate: { path: `/users/${id}`, method: "DELETE" },
+    reactivate: { path: `/users/${id}/reactivate`, method: "POST" },
+    delete: { path: `/users/${id}/purge`, method: "DELETE" },
+  };
+  const action = options[operation];
+  if (!action) return { error: "Invalid account action." };
+  const result = await api<unknown>(action.path, { ...action, churchId: "all" });
+  if (!result.ok) return fail(result.error);
+  revalidatePath("/app", "layout");
+  return { message: "Account updated." };
+}
+
+export async function retryMail(_prev: FormState, data: FormData): Promise<FormState> {
+  const result = await api<unknown>(`/system/mail/${str(data, "id")}/retry`, { method: "POST" });
+  if (!result.ok) return fail(result.error);
+  revalidatePath("/app/platform");
+  return { message: "Email queued again." };
+}
+
+
+export async function deleteRecord(_prev: FormState, data: FormData): Promise<FormState> {
+  const resource = str(data, "resource"), id = str(data, "id"), churchId = str(data, "church_id");
+  if (!["branches", "cells", "departments", "events", "sermons"].includes(resource)) return { error: "Invalid record type." };
+  const result = await api<unknown>(`/${resource}/${id}`, { method: "DELETE", churchId: churchId || undefined });
+  if (!result.ok) return fail(result.error);
+  revalidatePath("/app", "layout");
+  return { message: "Deleted." };
 }

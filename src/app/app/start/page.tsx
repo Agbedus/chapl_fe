@@ -34,8 +34,7 @@ export default async function StartPage() {
           <Building2 className="h-5 w-5" style={{ color: "var(--violet)" }} strokeWidth={1.8} />
           <p className="mt-4 text-[15px] font-semibold">Start a church</p>
           <p className="mt-1.5 text-[13.5px] leading-[1.6] text-ink-2">
-            Set one up yourself. Creating a church is a platform-level action,
-            so it may need a Chapl administrator.
+            Submit your church for verification. Chapl will notify you when the review is complete.
           </p>
         </Link>
       </div>

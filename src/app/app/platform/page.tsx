@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Check, Clock, ShieldCheck, X } from "lucide-react";
 
+import { accountAction, retryMail } from "@/app/actions/manage";
 import { decideChurch } from "@/app/actions/church";
 import { ActionButton } from "@/components/editors";
 import { DataTable, type TableColumn, type TableRow } from "@/components/data-table";
@@ -27,7 +28,10 @@ export const metadata = { title: "Verification — Chapl" };
  * Oldest first. A review queue sorted newest-first is one where the
  * person who has waited longest is hardest to find.
  */
-export default async function PlatformPage() {
+export default async function PlatformPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+  const params = await searchParams;
+  const q = params.q ?? "";
+  const skip = Math.max(0, Number(params.skip) || 0);
   const me = await requireMe("/app/platform");
   // Not a 403 page: a church leader has no business knowing this route
   // exists, and a 404 says less than a refusal does.
@@ -36,7 +40,7 @@ export default async function PlatformPage() {
   const [queue, all, people] = await Promise.all([
     api<Paged<Church>>("/churches/pending?limit=100"),
     api<Paged<Church>>("/churches/?limit=200"),
-    api<Paged<Person>>("/users/?limit=2000&sort=full_name&order=asc"),
+    api<Paged<Person>>("/users/?limit=2000&sort=full_name&order=asc", { churchId: "all" }),
   ]);
 
   if (!queue.ok) {
@@ -51,7 +55,13 @@ export default async function PlatformPage() {
   const waiting = queue.data.items;
   const everything = all.ok ? all.data.items : [];
   const named = new Map(people.ok ? people.data.items.map((p) => [p.id, p.full_name]) : []);
-  const byStatus = (s: string) => everything.filter((c) => c.status === s).length;
+  const [summary, accounts, delivery] = await Promise.all([
+    api<Record<string, number>>("/system/church-summary"),
+    api<Paged<Person>>(`/users/?limit=45&skip=${skip}&q=${encodeURIComponent(q)}&sort=full_name&order=asc`, { churchId: "all" }),
+    api<{ configured: boolean; counts: Record<string, number>; failures: { id: string; subject: string; status: string; error: string | null }[] }>("/system/mail"),
+  ]);
+  const isSuper = me.assignments.some((a) => a.role === "super_admin");
+  const byStatus = (s: string) => summary.ok ? summary.data[s] ?? 0 : everything.filter((c) => c.status === s).length;
 
   const columns: TableColumn[] = [
     { key: "church", label: "Church" },
@@ -126,7 +136,7 @@ export default async function PlatformPage() {
                   colour="var(--emerald)" footnote="checked and live" />
         <StatCard label="Declined" value={String(byStatus("rejected"))}
                   colour="var(--ruby)" footnote="kept, not deleted" />
-        <StatCard label="All tenants" value={String(everything.length)}
+        <StatCard label="All tenants" value={String(all.ok ? all.data.total : 0)}
                   colour="var(--cobalt)" footnote="on the platform" />
       </section>
 
@@ -141,6 +151,30 @@ export default async function PlatformPage() {
           empty="Nothing waiting. Every church on the platform has been looked at."
         />
       </Panel>
+
+      {delivery.ok && <Panel title="Email delivery" lede={delivery.data.configured ? "SMTP configured · delivery is retried automatically" : "SMTP is unavailable"}>
+        <p className="text-[12px] text-ink-2">{Object.entries(delivery.data.counts).map(([state, count]) => `${state}: ${count}`).join(" · ") || "No messages queued"}</p>
+        <DataTable columns={[{ key: "subject", label: "Email" }, { key: "status", label: "Status" }, { key: "action", label: "" }]}
+          rows={delivery.data.failures.map((job) => ({ id: job.id, cells: [job.subject, `${job.status} · ${job.error ?? "expired"}`, job.status !== "expired" ? <ActionButton key="retry" action={retryMail} fields={{ id: job.id }} label="Retry" /> : <span key="expired">Request a new email</span>] }))} empty="No delivery failures" />
+      </Panel>}
+      {isSuper && <Panel title="Accounts" lede="Account verification and access across all churches">
+        <form className="mb-3 flex gap-2"><input name="q" defaultValue={q} placeholder="Name or email" aria-label="Search accounts" className="rounded-lg border border-line bg-paper px-3 py-2 text-[12px]" /><button className="btn btn-quiet btn-sm">Search</button></form>
+        {accounts.ok ? <>
+          <DataTable columns={[{ key: "name", label: "Person" }, { key: "email", label: "Email" }, { key: "status", label: "Status" }, { key: "actions", label: "Actions" }]}
+            rows={accounts.data.items.map((person) => ({ id: person.id, cells: [<Link key="name" href={`/app/people/${person.id}`}>{person.full_name}</Link>, person.email,
+              `${person.is_active ? "Active" : "Inactive"} · ${person.is_verified ? "Verified" : "Unverified"}`,
+              <span key="actions" className="flex flex-wrap gap-1">
+                {!person.is_verified && <><ActionButton action={accountAction} fields={{ id: person.id, operation: "resend" }} label="Resend code" /><ActionButton action={accountAction} fields={{ id: person.id, operation: "verify" }} label="Verify" confirm={`Manually verify ${person.email}? Confirm you have verified their identity.`} /></>}
+                {person.id !== me.id && <><ActionButton action={accountAction} fields={{ id: person.id, operation: person.is_active ? "deactivate" : "reactivate" }} label={person.is_active ? "Deactivate" : "Reactivate"} confirm="Change this account's access across all churches?" />
+                  <ActionButton action={accountAction} fields={{ id: person.id, operation: "delete" }} label="Delete" confirm={`Permanently delete ${person.email}? Accounts with church records must be deactivated instead.`} /></>}
+              </span>]}))} empty="No matching accounts" />
+          <div className="mt-3 flex gap-3 text-[12px]">
+            {skip > 0 && <Link href={`/app/platform?q=${encodeURIComponent(q)}&skip=${Math.max(0, skip - 45)}`}>Previous</Link>}
+            <span>{accounts.data.total} accounts</span>
+            {skip + 45 < accounts.data.total && <Link href={`/app/platform?q=${encodeURIComponent(q)}&skip=${skip + 45}`}>Next</Link>}
+          </div>
+        </> : <Notice kind="error">{accounts.error.detail}</Notice>}
+      </Panel>}
 
       <Panel title="Every church" lede="Across the whole platform" accent="var(--cobalt)">
         <DataTable

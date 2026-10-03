@@ -11,7 +11,7 @@ import { currentChurchId, requireMe } from "@/lib/session";
 import type { Church, Dashboard } from "@/lib/types";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
-  const me = await requireMe("/app");
+  const me = await requireMe();
   const churchId = await currentChurchId();
 
   // Which tenant the shell is labelled with. Platform staff with nothing
@@ -20,8 +20,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   if (churchId) {
     const result = await api<Church>(`/churches/${churchId}`);
     if (result.ok) churchName = result.data.name;
-  } else if (me.memberships.length === 1) {
-    churchName = me.memberships[0].church_name;
+  } else if (me.churches?.length === 1) {
+    churchName = me.churches[0].name;
   }
 
   // Platform staff get live system state in the bar. A church admin has no

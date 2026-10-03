@@ -6,6 +6,7 @@ import { ActionButton, GrantEditor } from "@/components/editors";
 import { DataTable, type TableColumn, type TableRow } from "@/components/data-table";
 import { Page, PageHead, Panel, StatCard } from "@/components/panels";
 import { api } from "@/lib/api";
+import { canWrite } from "@/lib/access";
 import { currentChurchId, requireMe } from "@/lib/session";
 import type {
   Assignment, Branch, Cell, Church, Department, Paged, Person, Role,
@@ -31,11 +32,13 @@ const GRANTABLE: Role[] = [
 
 export default async function TeamPage() {
   const me = await requireMe("/app/team");
+  const isSuper = me.assignments.some((a) => a.role === "super_admin");
+  const grantable: Role[] = isSuper ? ["super_admin", "platform_admin", ...GRANTABLE] : me.assignments.some((a) => a.role === "church_admin") ? GRANTABLE : GRANTABLE.filter((r) => r !== "church_admin");
 
   // A church-scoped role is still granted *over* something — the church
   // itself — so the form needs the church's id and its name to say what
   // it is about to do.
-  const churchId = (await currentChurchId()) ?? me.memberships[0]?.church_id ?? null;
+  const churchId = (await currentChurchId()) ?? me.churches?.[0]?.id ?? null;
 
   const [grants, people, branches, cells, departments, church] = await Promise.all([
     api<Paged<Assignment>>("/assignments/?limit=200"),
@@ -166,10 +169,10 @@ export default async function TeamPage() {
         title="Team & roles"
         lede="Who may do what, and on which rung."
         action={
-          <GrantEditor
+          canWrite(me, "assignment") ? <GrantEditor
             action={grantRole}
             people={peopleOptions}
-            roles={GRANTABLE.map((r) => ({
+            roles={grantable.map((r) => ({
               role: r,
               label: ROLE_LABEL[r],
               blurb: ROLE_BLURB[r],
@@ -182,7 +185,7 @@ export default async function TeamPage() {
               id: churchId ?? "",
               name: church?.ok ? church.data.name : "This church",
             }}
-          />
+          /> : null
         }
       />
 
