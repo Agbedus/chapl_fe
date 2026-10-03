@@ -244,17 +244,25 @@ export default async function ChurchPage({
       )}
 
       {/*
-        Verification, said plainly.
-
-        A pending church works — the person who registered it can run it
-        after approval. What it lacks is the platform vouching for
-        it, and that is worth stating rather than leaving somebody to
-        wonder whether something is broken. A rejection carries the
-        reason, because the alternative is a dead end.
+        Verification, as the platform sees it.
+      
+        Only platform staff reach this block. Anyone else looking at a
+        church that is not active is returned early above, with a page that
+        says where it stands, because the API refuses them every request
+        until it is approved (`enforce_church_access`).
+      
+        So the text here is addressed to the reviewer. It used to be written
+        for the church's owner — "complete your details while the platform
+        reviews your registration" — which was accurate when a pending
+        church was usable straight away, and reads as nonsense to the
+        person doing the reviewing. A rejection still carries its reason,
+        because the alternative is a dead end.
       */}
       {church.status === "pending" && (
         <Notice kind="info">
-          <strong>{CHURCH_STATUS_LABEL.pending}.</strong> Complete your church details while the platform reviews your registration. Invitations and church operations open after approval.
+          <strong>{CHURCH_STATUS_LABEL.pending}.</strong> Until you verify it, the
+          owner cannot invite anyone or use the church — the API refuses every
+          request from non-staff.
         </Notice>
       )}
       {church.status === "rejected" && (
