@@ -29,7 +29,7 @@ import {
   History,
 } from "lucide-react";
 
-type Item = {
+export type Item = {
   href: string;
   label: string;
   icon: typeof Home;
@@ -48,7 +48,7 @@ type Item = {
   platformOnly?: boolean;
 };
 
-const SECTIONS: { heading: string; items: Item[] }[] = [
+export const SECTIONS: { heading: string; items: Item[] }[] = [
   {
     heading: "Overview",
     items: [{ href: "/app", label: "Dashboard", icon: Home, tone: "var(--cobalt)" }],
@@ -100,6 +100,26 @@ const SECTIONS: { heading: string; items: Item[] }[] = [
     items: [{ href: "/app/account", label: "Account", icon: UserCircle, tone: "var(--ink-3)" }],
   },
 ];
+
+/**
+ * What this person is offered, in sections.
+ *
+ * Shared by the side nav and the phone's tab bar so the two can never
+ * disagree about what somebody may open. Sections whose every item was
+ * filtered out disappear with their heading — a "People" heading over
+ * nothing reads as a loading bug.
+ */
+export function permittedSections(allowed: Resource[], isPlatform: boolean) {
+  const permitted = new Set(allowed);
+  return SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter(
+      (item) =>
+        (!item.needs || permitted.has(item.needs)) &&
+        (!item.platformOnly || isPlatform),
+    ),
+  })).filter((section) => section.items.length > 0);
+}
 
 const COLLAPSE_KEY = "chapl-nav-collapsed";
 
@@ -172,17 +192,7 @@ export function AppNav({
 }) {
   const pathname = usePathname();
 
-  // Sections whose every item was filtered out disappear with their
-  // heading — a "People" heading over nothing reads as a loading bug.
-  const permitted = new Set(allowed);
-  const sections = SECTIONS.map((section) => ({
-    ...section,
-    items: section.items.filter(
-      (item) =>
-        (!item.needs || permitted.has(item.needs)) &&
-        (!item.platformOnly || isPlatform),
-    ),
-  })).filter((section) => section.items.length > 0);
+  const sections = permittedSections(allowed, isPlatform);
 
   const collapsed = useSyncExternalStore(
     collapseStore.subscribe,

@@ -133,8 +133,9 @@ export function AppTopbar({
         underneath rather than running past it.
       */}
       <header
-        className="sticky top-4 z-30 mx-7 mt-4 flex h-14 items-center gap-4 rounded-2xl
-                   border border-line-soft bg-paper/70 px-4 backdrop-blur-xl"
+        className="sticky top-2 z-30 mx-4 mt-2 flex h-14 items-center gap-2 rounded-2xl
+                   border border-line-soft bg-paper/70 px-3 backdrop-blur-xl
+                   sm:top-4 sm:mx-7 sm:mt-4 sm:gap-4 sm:px-4"
       >
         <div className="flex min-w-0 items-center gap-3">
           <span className="truncate text-[14px] font-semibold text-ink">
@@ -156,19 +157,23 @@ export function AppTopbar({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="ml-auto flex w-full max-w-[420px] items-center gap-2.5 rounded-2xl border border-line
-                     bg-mist/80 px-3.5 py-2 text-left text-[13px] text-ink-3
+          aria-label="Search"
+          // A phone has no room for a search *box*: it is a 36px button
+          // that opens the same palette, and the box returns from `sm` up.
+          className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center gap-2.5 rounded-full border border-line
+                     bg-mist/80 text-left text-[13px] text-ink-3
+                     sm:h-auto sm:w-full sm:max-w-[420px] sm:justify-start sm:rounded-2xl sm:px-3.5 sm:py-2
                      transition-all hover:border-line-strong hover:bg-mist hover:text-ink-2
                      focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
         >
           <Search className="h-4 w-4 shrink-0" strokeWidth={1.9} />
-          <span className="min-w-0 flex-1 truncate">Search churches, branches, people…</span>
+          <span className="hidden min-w-0 flex-1 truncate sm:block">Search churches, branches, people…</span>
           <kbd className="hidden shrink-0 rounded border border-line px-1.5 py-0.5 font-mono text-[10px] sm:block">
             ⌘K
           </kbd>
         </button>
 
-        <div className="flex shrink-0 items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           {health && (
             <span
               className="hidden items-center gap-2 text-[12px] text-ink-3 md:flex"

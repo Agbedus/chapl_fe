@@ -5,6 +5,7 @@ import { search } from "@/app/actions/search";
 import { markAllRead, realtimeTicket, unreadCount } from "@/app/actions/manage";
 import { ProfileCompletionPrompt } from "@/components/profile-completion";
 import { AppNav } from "@/components/app-nav";
+import { MobileNav } from "@/components/mobile-nav";
 import { AppTopbar } from "@/components/app-topbar";
 import { readable } from "@/lib/access";
 import { api } from "@/lib/api";
@@ -30,11 +31,14 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   let health: "ok" | "warn" | "down" | null = null;
   let environment: string | null = null;
   let runtime: string | null = null;
+  // Churches waiting on the platform, for the badge on the phone's tab bar.
+  let waiting = 0;
 
   if (me.is_platform_staff) {
     const dash = await api<Dashboard>("/dashboard?church_id=all");
     if (dash.ok) {
       health = dash.data.health ?? null;
+      waiting = dash.data.staff?.church_status.pending ?? 0;
       environment = dash.data.runtime?.app_env ?? null;
       runtime = dash.data.runtime
         ? `${dash.data.runtime.dialect} · up ${dash.data.runtime.uptime}`
@@ -43,7 +47,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="app-ambient flex min-h-screen w-full gap-2 px-2">
+    // Below `lg` the tab bar is fixed to the bottom, so the page keeps clear of it.
+    <div className="app-ambient flex min-h-screen w-full gap-2 px-2 pb-[calc(4.25rem+env(safe-area-inset-bottom))] lg:pb-0">
       <AppNav
         churchName={churchName}
         userName={me.full_name}
@@ -52,6 +57,17 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         allowed={[...readable(me)]}
         isPlatform={me.is_platform_staff}
         profileIncomplete={!me.profile_completion.complete}
+      />
+
+      <MobileNav
+        allowed={[...readable(me)]}
+        isPlatform={me.is_platform_staff}
+        churchName={churchName}
+        userName={me.full_name}
+        userEmail={me.email}
+        signOutAction={signOut}
+        profileIncomplete={!me.profile_completion.complete}
+        badges={waiting > 0 ? { "/app/platform": waiting } : {}}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">

@@ -1445,6 +1445,142 @@ input::-ms-clear {
   }
 }
 
+/* ---------------------------------------------------------------
+   The one-time code: one digit to a box. Sized off the container so six
+   of them fill the auth card on a phone and stay compact on a desktop.
+   --------------------------------------------------------------- */
+
+.otp-box {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 3.6rem;
+  height: 3.4rem;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--paper);
+  color: var(--ink);
+  text-align: center;
+  font-size: 1.4rem;
+  font-variant-numeric: tabular-nums;
+  caret-color: var(--accent);
+  transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+}
+.otp-box:hover {
+  border-color: var(--line-strong);
+}
+.otp-box:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.otp-box[aria-invalid="true"] {
+  border-color: var(--ruby);
+}
+.otp-box[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 2px var(--ruby);
+}
+
+/* ---------------------------------------------------------------
+   The phone's tab bar and its "More" sheet. See components/mobile-nav.tsx.
+   Hidden from `lg` up, where the side nav takes over.
+   --------------------------------------------------------------- */
+
+.tab {
+  position: relative;
+  display: flex;
+  min-height: 3.5rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0.4rem 0.15rem 0.35rem;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--ink-3);
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s;
+}
+.tab > span:last-child {
+  max-width: 100%;
+}
+/* The one thing that says where you are besides colour. */
+.tab::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 28%;
+  right: 28%;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: var(--tab-tone, var(--ink));
+  transform: scaleX(0);
+  transition: transform 0.2s var(--ease-out);
+}
+.tab[data-active] {
+  color: var(--tab-tone, var(--ink));
+  font-weight: 600;
+}
+.tab[data-active]::before {
+  transform: scaleX(1);
+}
+.tab:active > span:first-child {
+  transform: scale(0.9);
+}
+.tab > span:first-child {
+  transition: transform 0.12s var(--ease-out);
+}
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -3px;
+  border-radius: 0.75rem;
+}
+
+.tab-badge {
+  position: absolute;
+  top: -0.4rem;
+  right: -0.7rem;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.28rem;
+  border-radius: 999px;
+  background: var(--ruby);
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.tab-badge-inline {
+  position: static;
+}
+
+.sheet-scrim {
+  animation: scrim-in 0.16s ease-out;
+}
+.sheet-rise {
+  animation: sheet-rise 0.28s var(--ease-out);
+}
+@keyframes sheet-rise {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet-rise,
+  .sheet-scrim {
+    animation: none;
+  }
+  .tab::before,
+  .tab > span:first-child {
+    transition: none;
+  }
+}
+
 @keyframes scrim-in {
   from { opacity: 0; }
   to   { opacity: 1; }

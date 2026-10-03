@@ -121,7 +121,7 @@ export function Calendar({
     <div className="flex min-h-0 flex-1 flex-col">
       {/* ---------------- switcher ---------------- */}
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
           {view === "calendar" ? (
             <>
               <button

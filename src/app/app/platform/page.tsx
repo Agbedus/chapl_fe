@@ -2,9 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Check, Clock, ShieldCheck, X } from "lucide-react";
 
-import { accountAction, retryMail } from "@/app/actions/manage";
+import { accountAction, grantPlatformRole, retryMail, revokeRole } from "@/app/actions/manage";
 import { decideChurch } from "@/app/actions/church";
 import { ActionButton } from "@/components/editors";
+import { PlatformGrantForm } from "@/components/platform-team";
 import { DataTable, type TableColumn, type TableRow } from "@/components/data-table";
 import { Page, PageHead, Panel, StatCard } from "@/components/panels";
 import { Notice } from "@/components/ui/form";
@@ -58,9 +59,25 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
   const [summary, accounts, delivery] = await Promise.all([
     api<Record<string, number>>("/system/church-summary"),
     api<Paged<Person>>(`/users/?limit=45&skip=${skip}&q=${encodeURIComponent(q)}&sort=full_name&order=asc`, { churchId: "all" }),
-    api<{ configured: boolean; missing: string[]; counts: Record<string, number>; failures: { id: string; subject: string; status: string; error: string | null }[] }>("/system/mail"),
+    api<{ configured: boolean; missing: string[]; host: string | null; port: number; tls: string; hint: string | null; counts: Record<string, number>; failures: { id: string; subject: string; status: string; error: string | null }[] }>("/system/mail"),
   ]);
   const isSuper = me.assignments.some((a) => a.role === "super_admin");
+  // Who holds platform authority. Names come from one lookup per person:
+  // staff belong to no church, so they are missing from any church roll.
+  const staffGrants = isSuper
+    ? await api<Paged<{ id: string; user_id: string; role: string; is_active: boolean }>>("/assignments/?limit=200", { churchId: "all" })
+    : null;
+  const platformGrants = staffGrants?.ok
+    ? staffGrants.data.items.filter((g) => (g.role === "super_admin" || g.role === "platform_admin") && g.is_active)
+    : [];
+  const staffPeople = new Map(
+    await Promise.all(
+      [...new Set(platformGrants.map((g) => g.user_id))].map(async (id) => {
+        const who = await api<Person>(`/users/${id}`, { churchId: "all" });
+        return [id, who.ok ? who.data : null] as const;
+      }),
+    ),
+  );
   const byStatus = (s: string) => summary.ok ? summary.data[s] ?? 0 : everything.filter((c) => c.status === s).length;
 
   const columns: TableColumn[] = [
@@ -142,6 +159,7 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
                   colour="var(--cobalt)" footnote="on the platform" />
       </section>
 
+      <div id="queue" className="scroll-mt-4" />
       <Panel
         title="Awaiting verification"
         lede="Verifying tells the owner immediately, by notification and email"
@@ -154,11 +172,14 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
         />
       </Panel>
 
-      {delivery.ok && <Panel title="Email delivery" lede={delivery.data.configured ? "SMTP configured · delivery is retried automatically" : `Missing mail settings: ${delivery.data.missing.join(", ")}`}>
+      <div id="delivery" className="scroll-mt-4" />
+      {delivery.ok && <Panel title="Email delivery" lede={delivery.data.configured ? `Sending through ${delivery.data.host}:${delivery.data.port} (${delivery.data.tls}) · retried automatically` : `Missing mail settings: ${delivery.data.missing.join(", ")}`}>
+        {delivery.data.hint && <div className="mb-2"><Notice kind="error">{delivery.data.hint}</Notice></div>}
         <p className="text-[12px] text-ink-2">{Object.entries(delivery.data.counts).map(([state, count]) => `${state}: ${count}`).join(" · ") || "No messages queued"}</p>
         <DataTable columns={[{ key: "subject", label: "Email" }, { key: "status", label: "Status" }, { key: "action", label: "" }]}
           rows={delivery.data.failures.map((job) => ({ id: job.id, cells: [job.subject, `${job.status} · ${job.error ?? "expired"}`, job.status !== "expired" ? <ActionButton key="retry" action={retryMail} fields={{ id: job.id }} label="Retry" /> : <span key="expired">Request a new email</span>] }))} empty="No delivery failures" />
       </Panel>}
+      <div id="accounts" className="scroll-mt-4" />
       {isSuper && <Panel title="Accounts" lede="Account verification and access across all churches">
         <form className="mb-3 flex gap-2"><input name="q" defaultValue={q} placeholder="Name or email" aria-label="Search accounts" className="rounded-lg border border-line bg-paper px-3 py-2 text-[12px]" /><button className="btn btn-quiet btn-sm">Search</button></form>
         {accounts.ok ? <>
@@ -168,7 +189,7 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
               <span key="actions" className="flex flex-wrap gap-1">
                 {!person.is_verified && <><ActionButton action={accountAction} fields={{ id: person.id, operation: "resend" }} label="Resend code" /><ActionButton action={accountAction} fields={{ id: person.id, operation: "verify" }} label="Verify" confirm={`Manually verify ${person.email}? Confirm you have verified their identity.`} /></>}
                 {person.id !== me.id && <><ActionButton action={accountAction} fields={{ id: person.id, operation: person.is_active ? "deactivate" : "reactivate" }} label={person.is_active ? "Deactivate" : "Reactivate"} confirm="Change this account's access across all churches?" />
-                  <ActionButton action={accountAction} fields={{ id: person.id, operation: "delete" }} label="Delete" confirm={`Permanently delete ${person.email}? Accounts with church records must be deactivated instead.`} /></>}
+</>}
               </span>]}))} empty="No matching accounts" />
           <div className="mt-3 flex gap-3 text-[12px]">
             {skip > 0 && <Link href={`/app/platform?q=${encodeURIComponent(q)}&skip=${Math.max(0, skip - 45)}`}>Previous</Link>}
@@ -178,6 +199,48 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
         </> : <Notice kind="error">{accounts.error.detail}</Notice>}
       </Panel>}
 
+      {isSuper && (
+        <Panel title="Platform team" lede="Who holds authority above every church" accent="var(--violet)">
+          <DataTable
+            columns={[
+              { key: "person", label: "Person" },
+              { key: "role", label: "Role" },
+              { key: "act", label: "", align: "right", width: "1%" },
+            ]}
+            rows={platformGrants.map((grant) => {
+              const who = staffPeople.get(grant.user_id);
+              return {
+                id: grant.id,
+                cells: [
+                  <span key="p">
+                    <span className="font-medium text-ink">{who?.full_name ?? "Unknown"}</span>
+                    {who && <span className="block text-[11.5px] text-ink-3">{who.email}</span>}
+                  </span>,
+                  grant.role === "super_admin" ? "Super admin" : "Platform admin",
+                  grant.user_id === me.id ? (
+                    <span key="a" className="text-[11.5px] text-ink-3">You</span>
+                  ) : (
+                    <ActionButton
+                      key="a"
+                      action={revokeRole}
+                      fields={{ id: grant.id }}
+                      label="Revoke"
+                      tone="danger"
+                      confirm={`Remove ${who?.full_name ?? "this person"}'s platform access?`}
+                    />
+                  ),
+                ],
+              };
+            })}
+            empty="No platform grants found."
+          />
+          <div className="mt-4 border-t border-line pt-3">
+            <PlatformGrantForm action={grantPlatformRole} />
+          </div>
+        </Panel>
+      )}
+
+      <div id="churches" className="scroll-mt-4" />
       <Panel title="Every church" lede="Across the whole platform" accent="var(--cobalt)">
         <DataTable
           columns={[

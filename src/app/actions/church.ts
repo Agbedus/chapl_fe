@@ -281,12 +281,3 @@ export async function resubmitChurch(_prev: FormState, data: FormData): Promise<
   revalidatePath("/app", "layout");
   return { message: "Submitted for review." };
 }
-
-export async function deleteChurch(_prev: FormState, data: FormData): Promise<FormState> {
-  const id = str(data, "id");
-  const result = await api<Church>(`/churches/${id}`, { method: "DELETE" });
-  if (!result.ok) return { error: result.error.detail };
-  await setChurch("all");
-  revalidatePath("/app", "layout");
-  redirect("/app/platform");
-}

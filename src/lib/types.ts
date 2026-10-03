@@ -133,6 +133,23 @@ export type ChurchRow = {
   share: number;
 };
 
+export type StaffOverview = {
+  church_status: Record<ChurchStatus, number>;
+  /** New churches per week, oldest first. */
+  registrations: { label: string; value: number }[];
+  new_churches_week: number;
+  accounts: { total: number; unverified: number; stale: number; new_week: number };
+  attention: {
+    key: string;
+    label: string;
+    count: number;
+    tone: "gold" | "ruby" | "ink";
+    /** Where it gets handled; empty when that place is the back-end admin. */
+    href: string;
+    detail: string;
+  }[];
+};
+
 export type Dashboard = {
   platform?: boolean;
   church: { id: string | null; name: string | null; currency: string };
@@ -169,6 +186,12 @@ export type Dashboard = {
     status: string;
   }[];
   health?: "ok" | "warn" | "down";
+  /**
+   * Platform staff only: the work queue and the platform's own numbers.
+   * `null` for anyone else the API happened to answer — see
+   * `services/platform.py` on the API.
+   */
+  staff?: StaffOverview | null;
   /** Platform staff only — the top bar shows it, nothing else reads it. */
   runtime?: {
     app_env: string;

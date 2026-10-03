@@ -190,14 +190,14 @@ export default async function AccountPage() {
 
   return (
     <Page>
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <Link
           href="/app"
           className="inline-flex items-center gap-1.5 text-[12px] font-medium text-ink-3 transition-colors hover:text-ink"
         >
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden /> Overview
         </Link>
-        <div id="complete-profile" className="flex items-center gap-2">
+        <div id="complete-profile" className="flex flex-wrap items-center gap-2">
           <PasswordEditor action={changePassword} avoid={[me.full_name, me.email]} />
           {record && <SelfEditor action={saveMyDetails} person={record} />}
         </div>

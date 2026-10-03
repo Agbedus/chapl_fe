@@ -6,7 +6,8 @@ import { DonutChart, StackedChart, TrendChart } from "@/components/charts";
 import { ChurchEditor } from "@/components/editors";
 import { Empty, Page, PageHead, Panel, RingPanel, StatCard } from "@/components/panels";
 import { Notice } from "@/components/ui/form";
-import { decideChurch, handOverChurch, resubmitChurch, deleteChurch } from "@/app/actions/church";
+import { decideChurch, handOverChurch, resubmitChurch } from "@/app/actions/church";
+import { ChurchReview, type TrailEntry } from "@/components/church-review";
 import { ActionButton, DeclineChurch, OwnerEditor } from "@/components/editors";
 import { api } from "@/lib/api";
 import { canAdminChurch, currentChurchId, requireMe } from "@/lib/session";
@@ -128,7 +129,20 @@ export default async function ChurchPage({
   const church = churchResult.data;
   const editable = canAdminChurch(me, churchId) && (church.status !== "suspended" || me.is_platform_staff);
   const superAdmin = me.assignments.some((a) => a.role === "super_admin");
-  const impact = superAdmin ? await api<Record<string, number>>(`/churches/${churchId}/deletion-impact`) : null;
+
+  // The reviewer's half of the question: who registered this, and what has
+  // already been decided. Neither is fetched for anyone who cannot act on it.
+  const [ownerResult, trailResult] = me.is_platform_staff
+    ? await Promise.all([
+        church.owner_id
+          ? api<Person>(`/users/${church.owner_id}`, { churchId: "all" })
+          : Promise.resolve(null),
+        api<Paged<TrailEntry>>(
+          `/audit_logs/?table_name=churches&record_id=${church.id}&limit=12`,
+          { churchId: church.id },
+        ),
+      ])
+    : [null, null];
 
   const directory = people.ok
     ? people.data.items.map((p) => ({ value: p.id, label: `${p.full_name} · ${p.email}` }))
@@ -279,6 +293,14 @@ export default async function ChurchPage({
       )}
 
       {church.status === "rejected" && church.owner_id === me.id && <ActionButton action={resubmitChurch} fields={{ id: church.id }} label="Resubmit for review" confirm="Submit the updated church details for another review?" />}
+      {me.is_platform_staff && (
+        <ChurchReview
+          church={church}
+          owner={ownerResult?.ok ? ownerResult.data : null}
+          trail={trailResult?.ok ? trailResult.data.items : []}
+          superAdmin={superAdmin}
+        />
+      )}
       {/* The platform's own controls, only for platform staff. */}
       {me.is_platform_staff && (
         <div className="sheet flex flex-wrap items-center gap-3">
@@ -295,8 +317,6 @@ export default async function ChurchPage({
               confirm={`Verify ${church.name}? The owner is told straight away.`}
             />
             <DeclineChurch action={decideChurch} church={{ id: church.id, name: church.name }} />
-            {superAdmin && <ActionButton action={deleteChurch} fields={{ id: church.id }} label="Delete church"
-              confirm={`Permanently delete ${church.name} and its church records? ${impact?.ok ? Object.entries(impact.data).filter(([, count]) => count > 0).map(([name, count]) => `${count} ${name.replaceAll("_", " ")}`).join(", ") : "Shared accounts and audit history are retained."}`} />}
 
           </span>
         </div>

@@ -24,6 +24,7 @@ import type {
   Invitation,
   InvitationCreated,
   Membership,
+  Paged,
   Person,
   Role,
 } from "@/lib/types";
@@ -311,6 +312,39 @@ export async function grantRole(_prev: FormState, data: FormData): Promise<FormS
   return { message: "Role granted." };
 }
 
+/**
+ * Grant a platform role to somebody by their email address.
+ *
+ * Platform roles belong to no church and no scope, so the form needs only
+ * two things — who and which — and the "who" is an email because the
+ * person being made staff is not in anybody's church roll to pick from.
+ * The lookup is exact: a typo that happened to match someone else's
+ * address by prefix is how the wrong person ends up with the keys.
+ */
+export async function grantPlatformRole(_prev: FormState, data: FormData): Promise<FormState> {
+  const email = str(data, "email").toLowerCase();
+  const role = str(data, "role");
+  if (!email) return { error: "Enter their email address.", fieldErrors: { email: "Required" } };
+  if (role !== "platform_admin" && role !== "super_admin") return { error: "Choose a role." };
+
+  const found = await api<Paged<Person>>(`/users/?q=${encodeURIComponent(email)}&limit=10`, { churchId: "all" });
+  if (!found.ok) return fail(found.error);
+  const person = found.data.items.find((p) => p.email.toLowerCase() === email);
+  if (!person) return { error: "No account has that email address.", fieldErrors: { email: "Not found" } };
+
+  const result = await api<Assignment>("/assignments/", {
+    method: "POST",
+    body: { user_id: person.id, role, scope_type: "platform", scope_id: null },
+    churchId: "all",
+  });
+  if (!result.ok) {
+    if (result.error.status === 403) return { error: "Only a super admin can grant platform roles." };
+    return fail(result.error);
+  }
+  revalidatePath("/app/platform");
+  return { message: `${person.full_name} is now ${role === "super_admin" ? "a super admin" : "a platform admin"}.` };
+}
+
 export async function revokeRole(_prev: FormState, data: FormData): Promise<FormState> {
   const id = str(data, "id");
   if (!id) return { error: "No grant named." };
@@ -319,6 +353,7 @@ export async function revokeRole(_prev: FormState, data: FormData): Promise<Form
   if (!result.ok) return fail(result.error);
 
   revalidatePath("/app/team");
+  revalidatePath("/app/platform");
   return { message: "Role revoked." };
 }
 
@@ -772,7 +807,6 @@ export async function accountAction(_prev: FormState, data: FormData): Promise<F
     resend: { path: `/users/${id}/verification-email`, method: "POST" },
     deactivate: { path: `/users/${id}`, method: "DELETE" },
     reactivate: { path: `/users/${id}/reactivate`, method: "POST" },
-    delete: { path: `/users/${id}/purge`, method: "DELETE" },
   };
   const action = options[operation];
   if (!action) return { error: "Invalid account action." };

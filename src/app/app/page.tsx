@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { CalendarCheck, UserPlus } from "lucide-react";
+import { CalendarCheck, History, ShieldCheck, UserPlus } from "lucide-react";
 
 import {
   DonutChart, GaugeChart, MultiRingChart, Sparkline, TrendChart,
 } from "@/components/charts";
 import { CongregationField } from "@/components/congregation";
-import { Empty, Page, Panel, Ring, RingPanel, StatCard } from "@/components/panels";
+import { Empty, Key, Page, Panel, Ring, RingPanel, StatCard } from "@/components/panels";
+import { StaffQueue } from "@/components/staff-queue";
 import { SetupChecklist } from "@/components/setup-checklist";
 import { api } from "@/lib/api";
 import { turnoutColour } from "@/lib/palette";
@@ -14,10 +15,20 @@ import { settleCheckup } from "@/app/actions/manage";
 import { WorkQueue, type QueueItem } from "@/components/work-queue";
 import { isPlainMember } from "@/lib/access";
 import { MemberDashboard } from "@/app/app/member";
-import { ROLE_LABEL } from "@/lib/types";
+import { CHURCH_STATUS_LABEL, CHURCH_STATUS_TONE, ROLE_LABEL } from "@/lib/types";
+import type { ChurchStatus } from "@/lib/types";
 import type { Dashboard, Invitation, Paged } from "@/lib/types";
 
 export const metadata = { title: "Dashboard — Chapl" };
+
+/** One line of the platform's recent activity — see the audit page for the whole trail. */
+type Activity = {
+  id: string;
+  user_name: string | null;
+  action: string;
+  table_name: string | null;
+  created_at: string;
+};
 
 const TONE = { ok: "var(--emerald)", warn: "var(--gold)", down: "var(--ruby)" } as const;
 
@@ -117,12 +128,15 @@ export default async function DashboardPage() {
   }
 
   const unscoped = me.is_platform_staff && !churchId;
-  const [result, invites, grants] = await Promise.all([
+  const [result, invites, grants, trail] = await Promise.all([
     api<Dashboard>(unscoped ? "/dashboard?church_id=all" : "/dashboard"),
     unscoped
       ? Promise.resolve(null)
       : api<Paged<Invitation>>("/invitations/?limit=25&status=pending&sort=created_at&order=asc"),
     unscoped ? Promise.resolve(null) : api<{ total: number }>("/assignments/?limit=1"),
+    // The platform's recent activity. A platform admin without audit
+    // authority gets a refusal here and simply sees no panel.
+    unscoped ? api<Paged<Activity>>("/audit_logs/?limit=8", { churchId: "all" }) : Promise.resolve(null),
   ]);
 
   if (!result.ok) {
@@ -144,6 +158,7 @@ export default async function DashboardPage() {
       invitations={invites?.ok ? invites.data.total : 0}
       pending={invites?.ok ? invites.data.items : []}
       hasTeam={grants?.ok ? grants.data.total > 1 : false}
+      activity={trail?.ok ? trail.data.items : null}
     />
   );
 }
@@ -154,12 +169,14 @@ function View({
   invitations,
   pending,
   hasTeam,
+  activity,
 }: {
   data: Dashboard;
   firstName: string;
   invitations: number;
   pending: Invitation[];
   hasTeam: boolean;
+  activity: Activity[] | null;
 }) {
   const platform = Boolean(data.platform);
   const currency = data.church.currency || "GHS";
@@ -354,6 +371,19 @@ function View({
               {data.health === "ok" ? "All systems operational" : "Needs attention"}
             </span>
           )}
+          {platform && (
+            <>
+              <Link href="/app/audit" className="btn btn-quiet btn-sm">
+                <History className="h-3.5 w-3.5" aria-hidden /> Activity
+              </Link>
+              <Link href="/app/platform" className="btn btn-primary btn-sm">
+                <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
+                {(data.staff?.church_status.pending ?? 0) > 0
+                  ? `Review ${data.staff?.church_status.pending} church${data.staff?.church_status.pending === 1 ? "" : "es"}`
+                  : "Verification"}
+              </Link>
+            </>
+          )}
           {!platform && (
             <>
               <Link href="/app/attendance" className="btn btn-quiet btn-sm">
@@ -379,10 +409,18 @@ function View({
       <section className="grid gap-2 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
         <Panel
           title="Needs you"
-          lede={tasks.length > 0 ? "In the order it will hurt" : undefined}
+          lede={
+            platform
+              ? "Waiting on the platform, worst first"
+              : tasks.length > 0 ? "In the order it will hurt" : undefined
+          }
           accent="var(--ruby)"
         >
-          <WorkQueue items={tasks} settleAction={settleCheckup} />
+          {platform ? (
+            <StaffQueue items={data.staff?.attention ?? []} />
+          ) : (
+            <WorkQueue items={tasks} settleAction={settleCheckup} />
+          )}
         </Panel>
 
         {/*
@@ -443,6 +481,15 @@ function View({
           )}
         </Panel>
       </section>
+
+      {/* ---------------- platform only: the platform itself ----------------
+          The leader's page spends this slot on the congregation, which is a
+          single church drawn at one to one. Staff have no single church, so
+          the slot answers their question instead: how many churches are in
+          which state, how fast they are arriving, and what just happened. */}
+      {platform && data.staff && (
+        <PlatformSection staff={data.staff} activity={activity} />
+      )}
 
       {/* ---------------- the church, at one to one ----------------
           Its own ground: full-bleed on mist, no card. It is the page's
@@ -824,7 +871,12 @@ function View({
           <ul className="rows">
             {(data.churches ?? []).map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-3 py-1.5 first:pt-0">
-                <span className="min-w-0 truncate text-[12px] font-medium">{c.name}</span>
+                <Link
+                  href={`/app/church?id=${c.id}`}
+                  className="min-w-0 truncate text-[12px] font-medium hover:underline"
+                >
+                  {c.name}
+                </Link>
                 <span className="tnum shrink-0 text-[11px] text-ink-3">
                   {c.members.toLocaleString()} · {c.branches} branches
                   <span
@@ -842,4 +894,142 @@ function View({
 
     </Page>
   );
+}
+
+
+/**
+ * The platform's half of the dashboard: church status as a composition,
+ * registrations as a line, accounts as a short key, and the last few
+ * things anybody did. Counts only — nothing here is a church's own data.
+ */
+function PlatformSection({
+  staff,
+  activity,
+}: {
+  staff: NonNullable<Dashboard["staff"]>;
+  activity: Activity[] | null;
+}) {
+  const order: ChurchStatus[] = ["active", "pending", "rejected", "suspended"];
+  const slices = order.map((status) => ({
+    label: CHURCH_STATUS_LABEL[status].toLowerCase(),
+    value: staff.church_status[status] ?? 0,
+    colour: CHURCH_STATUS_TONE[status],
+  }));
+  const total = slices.reduce((sum, s) => sum + s.value, 0);
+  const shown = slices.filter((s) => s.value > 0);
+  const weeks = staff.registrations;
+  const newInWindow = weeks.reduce((sum, w) => sum + w.value, 0);
+
+  return (
+    <section className="grid gap-2 lg:grid-cols-3">
+      <Panel title="Churches" lede="By where they stand" accent="var(--violet)">
+        {total > 0 ? (
+          <RingPanel
+            value={String(total)}
+            label={total === 1 ? "church" : "churches"}
+            chart={
+              <DonutChart
+                data={shown.map((s) => ({ label: s.label, value: s.value }))}
+                colors={shown.map((s) => s.colour)}
+                height={158}
+                thickness={0.28}
+                ariaLabel="Churches by verification status"
+              />
+            }
+            items={slices.map((s) => ({ label: s.label, colour: s.colour, value: String(s.value) }))}
+          />
+        ) : (
+          <Empty>No churches yet.</Empty>
+        )}
+      </Panel>
+
+      <Panel
+        title="Registrations"
+        lede={`New churches per week · last ${weeks.length} weeks`}
+        accent="var(--cobalt)"
+        aside={
+          <span className="figure text-[19px]">
+            {newInWindow}
+          </span>
+        }
+      >
+        {newInWindow > 0 ? (
+          <TrendChart
+            data={weeks}
+            color="var(--cobalt)"
+            height={118}
+            ariaLabel="New church registrations in each of the last weeks"
+          />
+        ) : (
+          <Empty>No registrations in the last {weeks.length} weeks.</Empty>
+        )}
+        <Key
+          columns={1}
+          items={[
+            { label: "accounts", colour: "var(--cobalt)", value: staff.accounts.total.toLocaleString() },
+            { label: "new this week", colour: "var(--emerald)", value: String(staff.accounts.new_week) },
+            {
+              label: "unconfirmed",
+              colour: staff.accounts.stale > 0 ? "var(--gold)" : "var(--ink-3)",
+              value: `${staff.accounts.unverified}${staff.accounts.stale ? ` (${staff.accounts.stale} over a week)` : ""}`,
+            },
+          ]}
+        />
+      </Panel>
+
+      <Panel title="Recent activity" lede="Across every church" accent="var(--ink-3)">
+        {activity && activity.length > 0 ? (
+          <>
+            <ul className="rows">
+              {activity.map((entry) => (
+                <li key={entry.id} className="flex items-baseline justify-between gap-3 py-1.5 first:pt-0">
+                  <span className="min-w-0 truncate text-[12px]">
+                    <span className="font-medium">{entry.user_name ?? "System"}</span>{" "}
+                    <span className="text-ink-3">
+                      {describe(entry.action)}
+                      {entry.table_name ? ` · ${entry.table_name.replace(/_/g, " ")}` : ""}
+                    </span>
+                  </span>
+                  <span className="tnum shrink-0 text-[11px] text-ink-3">{ago(entry.created_at)}</span>
+                </li>
+              ))}
+            </ul>
+            <Link href="/app/audit" className="mt-2 inline-block text-[11.5px] text-ink-3 hover:text-ink">
+              Open the whole trail
+            </Link>
+          </>
+        ) : (
+          <Empty>{activity ? "Nothing recorded yet." : "Reading the trail takes audit authority."}</Empty>
+        )}
+      </Panel>
+    </section>
+  );
+}
+
+/** "VERIFY:active" → "verified"; anything unrecognised keeps its own words. */
+function describe(action: string): string {
+  const map: Record<string, string> = {
+    "VERIFY:active": "verified",
+    "VERIFY:rejected": "turned down",
+    "VERIFY:suspended": "suspended",
+    RESUBMIT: "resubmitted",
+    OWNER: "handed over",
+    GRANT: "granted a role",
+    REVOKE: "revoked a role",
+    CREATE: "created",
+    UPDATE: "edited",
+    DELETE: "deleted",
+  };
+  return map[action] ?? action.toLowerCase().replace(/[:_]/g, " ");
+}
+
+/** Server-rendered, so safe to read the clock; "just now" beats a bare timestamp. */
+function ago(value: string): string {
+  const seconds = Math.max(0, Math.round((Date.now() - new Date(/(Z|[+-]\d\d:?\d\d)$/.test(value) ? value : `${value}Z`).getTime()) / 1000));
+  if (seconds < 90) return "just now";
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 36) return `${hours}h ago`;
+  return `${Math.round(hours / 24)}d ago`;
 }
