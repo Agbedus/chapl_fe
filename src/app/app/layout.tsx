@@ -49,6 +49,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         userEmail={me.email}
         signOutAction={signOut}
         allowed={[...readable(me)]}
+        isPlatform={me.is_platform_staff}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">

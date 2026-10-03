@@ -206,3 +206,71 @@ export async function acceptInvitation(
   revalidatePath("/app", "layout");
   redirect("/app?welcome=1");
 }
+
+/* ------------------------------------------------------------------ */
+/* verification                                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Approve or turn down a church registration.
+ *
+ * Rejection marks rather than deletes, and the note is the whole point
+ * of it: somebody registered a church and is owed a reason. The API
+ * tells the owner by notification and email either way.
+ */
+export async function decideChurch(
+  _prev: FormState,
+  data: FormData,
+): Promise<FormState> {
+  const id = String(data.get("id") ?? "");
+  const status = String(data.get("status") ?? "");
+  const note = String(data.get("note") ?? "").trim();
+
+  if (!id) return { error: "No church named." };
+  if (status !== "active" && status !== "rejected" && status !== "suspended") {
+    return { error: "Choose approve or decline." };
+  }
+  if (status !== "active" && !note) {
+    return {
+      error: "Say why. Somebody registered this and is owed a reason.",
+      fieldErrors: { note: "Required when declining" },
+    };
+  }
+
+  const result = await api<Church>(`/churches/${id}/verify`, {
+    method: "POST",
+    body: { status, note: note || null },
+  });
+  if (!result.ok) return { error: result.error.detail };
+
+  revalidatePath("/app/platform");
+  revalidatePath("/app/church");
+  return {
+    message:
+      status === "active"
+        ? `${result.data.name} is verified.`
+        : `${result.data.name} was ${status}.`,
+  };
+}
+
+/** Hand a church to somebody else. */
+export async function handOverChurch(
+  _prev: FormState,
+  data: FormData,
+): Promise<FormState> {
+  const id = String(data.get("id") ?? "");
+  const user_id = String(data.get("user_id") ?? "");
+  if (!user_id) {
+    return { error: "Choose who it goes to.", fieldErrors: { user_id: "Required" } };
+  }
+
+  const result = await api<Church>(`/churches/${id}/owner`, {
+    method: "POST",
+    body: { user_id },
+  });
+  if (!result.ok) return { error: result.error.detail };
+
+  revalidatePath("/app/church");
+  revalidatePath("/app/platform");
+  return { message: "Ownership handed over." };
+}

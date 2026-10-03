@@ -2005,3 +2005,101 @@ export function GiftEditor({
     />
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* platform verification                                               */
+/* ------------------------------------------------------------------ */
+
+const DECLINE_REASONS = [
+  { value: "rejected", label: "Decline — this is not a real congregation" },
+  { value: "suspended", label: "Suspend — it was active and should not be" },
+];
+
+/**
+ * Turning a church down.
+ *
+ * A form rather than a button, because declining requires a reason and
+ * `decideChurch` refuses one without. Somebody registered a church and
+ * is owed an answer they can act on; "no" on its own is a dead end, and
+ * the API emails them whatever is typed here.
+ */
+export function DeclineChurch({
+  action,
+  church,
+}: {
+  action: Action;
+  church: { id: string; name: string };
+}) {
+  return (
+    <Editor
+      label="Decline"
+      submit="Send the decision"
+      tone="var(--sunk)"
+      icon={<X className="h-3.5 w-3.5" aria-hidden />}
+      action={action}
+      context={`Whatever you write is emailed to whoever registered ${church.name}, so write it to them.`}
+    >
+      {(state) => (
+        <div className="space-y-4">
+          <input type="hidden" name="id" value={church.id} />
+          <Select label="Decision" name="status" required options={DECLINE_REASONS}
+                  defaultValue="rejected"
+                  icon={<AlertTriangle className="h-full w-full" />} />
+          <Area label="Reason" name="note" rows={3} required
+                error={state.fieldErrors?.note}
+                placeholder="Reason · what you checked and what was missing"
+                hint="Required. The record is kept rather than deleted, so the same name arriving twice is visible." />
+        </div>
+      )}
+    </Editor>
+  );
+}
+
+/**
+ * Handing a church to somebody else.
+ *
+ * Ownership is not `church_admin` — that is a grant several people can
+ * hold at once. The owner is the one account that answers for the
+ * tenant, and the API gives the new owner `church_admin` if they do not
+ * already have it, because an owner who cannot administer their own
+ * church is a title and nothing else.
+ */
+export function OwnerEditor({
+  action,
+  churchId,
+  churchName,
+  currentOwner,
+  people,
+}: {
+  action: Action;
+  churchId: string;
+  churchName: string;
+  currentOwner: string | null;
+  people: Option[];
+}) {
+  return (
+    <Editor
+      label="Hand over"
+      submit="Hand it over"
+      tone="var(--sunk)"
+      icon={<ShieldCheck className="h-3.5 w-3.5" aria-hidden />}
+      action={action}
+      context={`Whoever you choose becomes the account that answers for ${churchName}, and gets church admin over it if they do not already hold it.`}
+    >
+      {(state) => (
+        <div className="space-y-4">
+          <input type="hidden" name="id" value={churchId} />
+          {currentOwner && (
+            <p className="text-[12.5px] text-ink-3">
+              Currently <span className="font-medium text-ink-2">{currentOwner}</span>.
+            </p>
+          )}
+          <ComboField label="New owner" name="user_id" required options={people}
+                      placeholder="Person · search by name or email"
+                      icon={<User className="h-full w-full" />}
+                      error={state.fieldErrors?.user_id} />
+        </div>
+      )}
+    </Editor>
+  );
+}

@@ -61,8 +61,40 @@ export type Church = {
   founded_date: string | null;
   about: string | null;
   is_active: boolean;
+  /**
+   * Where a church is in its life, which `is_active` cannot express:
+   * "a real congregation the platform has checked" and "somebody filled
+   * in a form ten minutes ago" are different states.
+   */
+  status: ChurchStatus;
+  verified_at: string | null;
+  verified_by: string | null;
+  /** Why it was turned down, owed to whoever registered it. */
+  review_note: string | null;
+  /**
+   * The one account that answers for this tenant. Not the same as
+   * `church_admin`, which is a grant several people can hold.
+   */
+  owner_id: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type ChurchStatus = "pending" | "active" | "rejected" | "suspended";
+
+export const CHURCH_STATUS_LABEL: Record<ChurchStatus, string> = {
+  pending: "Awaiting verification",
+  active: "Verified",
+  rejected: "Not approved",
+  suspended: "Suspended",
+};
+
+/** Status gets status colour, not a domain hue — it is not about people. */
+export const CHURCH_STATUS_TONE: Record<ChurchStatus, string> = {
+  pending: "var(--gold)",
+  active: "var(--emerald)",
+  rejected: "var(--ruby)",
+  suspended: "var(--ink-3)",
 };
 
 export type ChurchStats = Church & {

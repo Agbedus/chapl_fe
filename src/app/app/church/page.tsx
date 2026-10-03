@@ -1,14 +1,17 @@
 import Link from "next/link";
-import { AtSign, CalendarDays, Globe, MapPin, Phone, Wallet } from "lucide-react";
+import { AtSign, CalendarDays, Check, Globe, MapPin, Phone, ShieldCheck, Wallet } from "lucide-react";
 
 import { updateChurch } from "@/app/actions/church";
 import { DonutChart, StackedChart, TrendChart } from "@/components/charts";
 import { ChurchEditor } from "@/components/editors";
 import { Empty, Page, Panel, RingPanel, StatCard } from "@/components/panels";
 import { Notice } from "@/components/ui/form";
+import { decideChurch, handOverChurch } from "@/app/actions/church";
+import { ActionButton, DeclineChurch, OwnerEditor } from "@/components/editors";
 import { api } from "@/lib/api";
 import { canAdminChurch, currentChurchId, requireMe } from "@/lib/session";
-import type { ChurchStats, Dashboard, Department, Paged } from "@/lib/types";
+import type { ChurchStats, Dashboard, Department, Paged, Person } from "@/lib/types";
+import { CHURCH_STATUS_LABEL, CHURCH_STATUS_TONE } from "@/lib/types";
 
 export const metadata = { title: "Church — Chapl" };
 
@@ -106,10 +109,12 @@ export default async function ChurchPage({
     );
   }
 
-  const [churchResult, dash, deptList] = await Promise.all([
+  const [churchResult, dash, deptList, people] = await Promise.all([
     api<ChurchStats>(`/churches/${churchId}`),
     api<Dashboard>("/dashboard"),
     api<Paged<Department>>("/departments/?limit=1"),
+    // For naming the owner and for handing the church over.
+    api<Paged<Person>>("/users/?limit=2000&sort=full_name&order=asc"),
   ]);
 
   if (!churchResult.ok) {
@@ -122,6 +127,17 @@ export default async function ChurchPage({
 
   const church = churchResult.data;
   const editable = canAdminChurch(me, churchId);
+
+  const directory = people.ok
+    ? people.data.items.map((p) => ({ value: p.id, label: `${p.full_name} · ${p.email}` }))
+    : [];
+  const ownerName =
+    church.owner_id && people.ok
+      ? (people.data.items.find((p) => p.id === church.owner_id)?.full_name ?? null)
+      : null;
+  // The owner may hand their own church on; platform staff may hand on
+  // anybody's. A church admin who is not the owner may not.
+  const canHandOver = me.is_platform_staff || church.owner_id === me.id;
   const currency = church.currency || "GHS";
 
   /*
@@ -213,6 +229,55 @@ export default async function ChurchPage({
         <Notice kind="success">
           Church created. Add its first branch — every member belongs to one.
         </Notice>
+      )}
+
+      {/*
+        Verification, said plainly.
+
+        A pending church works — the person who registered it can run it
+        from the first minute. What it lacks is the platform vouching for
+        it, and that is worth stating rather than leaving somebody to
+        wonder whether something is broken. A rejection carries the
+        reason, because the alternative is a dead end.
+      */}
+      {church.status === "pending" && (
+        <Notice kind="info">
+          <strong>{CHURCH_STATUS_LABEL.pending}.</strong> Everything here works
+          already — this is the platform confirming the church is real, not a
+          gate on using it.
+        </Notice>
+      )}
+      {church.status === "rejected" && (
+        <Notice kind="error">
+          <strong>Not approved.</strong>{" "}
+          {church.review_note ?? "No reason was recorded."}
+        </Notice>
+      )}
+      {church.status === "suspended" && (
+        <Notice kind="error">
+          <strong>Suspended.</strong>{" "}
+          {church.review_note ?? "Contact the platform."}
+        </Notice>
+      )}
+
+      {/* The platform's own controls, only for platform staff. */}
+      {me.is_platform_staff && church.status === "pending" && (
+        <div className="sheet flex flex-wrap items-center gap-3">
+          <ShieldCheck className="h-4 w-4" style={{ color: "var(--gold)" }} aria-hidden />
+          <span className="text-[12.5px] text-ink-2">
+            This church is waiting on you.
+          </span>
+          <span className="ml-auto flex items-center gap-2">
+            <ActionButton
+              action={decideChurch}
+              fields={{ id: church.id, status: "active" }}
+              label="Verify it"
+              icon={<Check className="h-3 w-3" aria-hidden />}
+              confirm={`Verify ${church.name}? The owner is told straight away.`}
+            />
+            <DeclineChurch action={decideChurch} church={{ id: church.id, name: church.name }} />
+          </span>
+        </div>
       )}
 
       {/*
@@ -341,6 +406,40 @@ export default async function ChurchPage({
               </p>
             )}
           </section>
+
+          {/*
+            Who answers for this church.
+
+            Separate from "Team & roles", which lists everyone holding a
+            grant: several people can be church_admin, exactly one is the
+            owner. Only the owner or platform staff may hand it on, which
+            is how a handover happens without anybody filing a ticket.
+          */}
+          <Panel title="Ownership" lede="The one account that answers for this church" accent="var(--cobalt)">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <span className="text-[13px] font-medium text-ink">
+                {church.owner_id ? (ownerName ?? "Someone outside this church") : "Nobody yet"}
+              </span>
+              <span className="chip" style={{ color: CHURCH_STATUS_TONE[church.status] }}>
+                {CHURCH_STATUS_LABEL[church.status]}
+              </span>
+              {canHandOver && (
+                <span className="ml-auto">
+                  <OwnerEditor action={handOverChurch} churchId={church.id}
+                               churchName={church.name} currentOwner={ownerName}
+                               people={directory} />
+                </span>
+              )}
+            </div>
+            {church.verified_at && (
+              <p className="mt-2.5 border-t border-line pt-2.5 text-[11.5px] text-ink-3">
+                Verified {new Date(church.verified_at).toLocaleDateString("en-GB", {
+                  day: "numeric", month: "long", year: "numeric",
+                })}
+                {church.review_note ? ` · ${church.review_note}` : ""}
+              </p>
+            )}
+          </Panel>
 
           {/* The tree in one block. The only structural figures on this
               page, because everything else here is the church whole. */}

@@ -43,6 +43,8 @@ type Item = {
    * at all.
    */
   needs?: Resource;
+  /** Shown only to platform staff, whatever roles they hold. */
+  platformOnly?: boolean;
 };
 
 const SECTIONS: { heading: string; items: Item[] }[] = [
@@ -84,6 +86,10 @@ const SECTIONS: { heading: string; items: Item[] }[] = [
     // cell leader never sees a link they would be refused at.
     heading: "Oversight",
     items: [
+      // Platform staff only, and gated on `platformOnly` rather than a
+      // resource: "may I check other people's churches" is not
+      // something a church role should ever imply.
+      { href: "/app/platform", label: "Verification", icon: ShieldCheck, tone: "var(--gold)", platformOnly: true },
       { href: "/app/audit", label: "Audit log", icon: History, tone: "var(--ink-3)", needs: "audit_log" },
     ],
   },
@@ -143,11 +149,14 @@ export function AppNav({
   userEmail,
   signOutAction,
   allowed,
+  isPlatform = false,
 }: {
   churchName: string | null;
   userName: string;
   userEmail: string;
   signOutAction: () => Promise<void>;
+  /** Platform staff see the verification queue; nobody else does. */
+  isPlatform?: boolean;
   /**
    * Resources this person can read, worked out on the server.
    *
@@ -164,7 +173,11 @@ export function AppNav({
   const permitted = new Set(allowed);
   const sections = SECTIONS.map((section) => ({
     ...section,
-    items: section.items.filter((item) => !item.needs || permitted.has(item.needs)),
+    items: section.items.filter(
+      (item) =>
+        (!item.needs || permitted.has(item.needs)) &&
+        (!item.platformOnly || isPlatform),
+    ),
   })).filter((section) => section.items.length > 0);
 
   const collapsed = useSyncExternalStore(
