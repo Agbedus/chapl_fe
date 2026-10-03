@@ -32,6 +32,7 @@ export default async function VerifyPage({
         resendAction={resendOtp}
         email={email}
         purpose={purpose}
+        next={params.next ?? ""}
       />
     </AuthShell>
   );

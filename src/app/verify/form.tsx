@@ -10,11 +10,13 @@ export function VerifyForm({
   resendAction,
   email,
   purpose,
+  next,
 }: {
   verifyAction: (prev: FormState, data: FormData) => Promise<FormState>;
   resendAction: (prev: FormState, data: FormData) => Promise<FormState>;
   email: string;
   purpose: string;
+  next: string;
 }) {
   const [state, formAction] = useActionState(verifyAction, {});
   const [resend, resendFormAction] = useActionState(resendAction, {});
@@ -22,6 +24,7 @@ export function VerifyForm({
   return (
     <div className="space-y-5">
       <form action={formAction} className="space-y-4">
+        <input type="hidden" name="next" value={next} />
         {email && <input type="hidden" name="email" value={email} />}
         <input type="hidden" name="purpose" value={purpose} />
 

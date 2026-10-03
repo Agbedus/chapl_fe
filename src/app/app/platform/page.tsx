@@ -58,7 +58,7 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
   const [summary, accounts, delivery] = await Promise.all([
     api<Record<string, number>>("/system/church-summary"),
     api<Paged<Person>>(`/users/?limit=45&skip=${skip}&q=${encodeURIComponent(q)}&sort=full_name&order=asc`, { churchId: "all" }),
-    api<{ configured: boolean; counts: Record<string, number>; failures: { id: string; subject: string; status: string; error: string | null }[] }>("/system/mail"),
+    api<{ configured: boolean; missing: string[]; counts: Record<string, number>; failures: { id: string; subject: string; status: string; error: string | null }[] }>("/system/mail"),
   ]);
   const isSuper = me.assignments.some((a) => a.role === "super_admin");
   const byStatus = (s: string) => summary.ok ? summary.data[s] ?? 0 : everything.filter((c) => c.status === s).length;
@@ -152,7 +152,7 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
         />
       </Panel>
 
-      {delivery.ok && <Panel title="Email delivery" lede={delivery.data.configured ? "SMTP configured · delivery is retried automatically" : "SMTP is unavailable"}>
+      {delivery.ok && <Panel title="Email delivery" lede={delivery.data.configured ? "SMTP configured · delivery is retried automatically" : `Missing mail settings: ${delivery.data.missing.join(", ")}`}>
         <p className="text-[12px] text-ink-2">{Object.entries(delivery.data.counts).map(([state, count]) => `${state}: ${count}`).join(" · ") || "No messages queued"}</p>
         <DataTable columns={[{ key: "subject", label: "Email" }, { key: "status", label: "Status" }, { key: "action", label: "" }]}
           rows={delivery.data.failures.map((job) => ({ id: job.id, cells: [job.subject, `${job.status} · ${job.error ?? "expired"}`, job.status !== "expired" ? <ActionButton key="retry" action={retryMail} fields={{ id: job.id }} label="Retry" /> : <span key="expired">Request a new email</span>] }))} empty="No delivery failures" />

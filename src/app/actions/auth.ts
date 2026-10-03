@@ -41,7 +41,7 @@ export async function signIn(
   _prev: FormState,
   data: FormData,
 ): Promise<FormState> {
-  const email = str(data, "email");
+  const email = str(data, "email").toLowerCase();
   const password = String(data.get("password") ?? "");
   const next = str(data, "next");
 
@@ -58,9 +58,9 @@ export async function signIn(
 
   if (!result.ok) {
     if (result.error.status === 403) {
-      redirect(`/verify?email=${encodeURIComponent(email)}`);
+      redirect(`/verify?email=${encodeURIComponent(email)}${next.startsWith("/") && !next.startsWith("//") && !next.includes("\\") ? `&next=${encodeURIComponent(next)}` : ""}`);
     }
-    if (result.error.status === 429) {
+    if (result.error.status === 429 || result.error.status === 0 || result.error.status >= 500) {
       return { error: result.error.detail };
     }
     return { error: "Incorrect email or password." };
@@ -80,7 +80,7 @@ export async function register(
   _prev: FormState,
   data: FormData,
 ): Promise<FormState> {
-  const email = str(data, "email");
+  const email = str(data, "email").toLowerCase();
   const full_name = str(data, "full_name");
   const password = String(data.get("password") ?? "");
 
@@ -111,7 +111,7 @@ export async function verifyOtp(
   _prev: FormState,
   data: FormData,
 ): Promise<FormState> {
-  const email = str(data, "email");
+  const email = str(data, "email").toLowerCase();
   const otp = str(data, "otp");
   const purpose = str(data, "purpose") || "activation";
 
@@ -126,17 +126,18 @@ export async function verifyOtp(
   });
 
   if (!result.ok) {
-    return { error: "That code is not valid, or it has expired.", email };
+    return { error: result.error.detail, email };
   }
 
-  redirect("/signin?verified=1");
+  const next = str(data, "next");
+  redirect(`/signin?verified=1${next.startsWith("/") && !next.startsWith("//") && !next.includes("\\") ? `&next=${encodeURIComponent(next)}` : ""}`);
 }
 
 export async function resendOtp(
   _prev: FormState,
   data: FormData,
 ): Promise<FormState> {
-  const email = str(data, "email");
+  const email = str(data, "email").toLowerCase();
   const purpose = str(data, "purpose") || "activation";
 
   const result = await api<{ msg: string }>("/auth/resend-otp", {
@@ -156,7 +157,7 @@ export async function requestReset(
   _prev: FormState,
   data: FormData,
 ): Promise<FormState> {
-  const email = str(data, "email");
+  const email = str(data, "email").toLowerCase();
   if (!email) return { error: "Enter your email address." };
 
   const result = await api<{ msg: string }>(`/auth/password-recovery/${encodeURIComponent(email)}`, {

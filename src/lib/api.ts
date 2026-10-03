@@ -10,7 +10,7 @@
 import { cookies } from "next/headers";
 
 export const API_URL =
-  process.env.CHAPL_API_URL ?? "http://localhost:8000/api/v1";
+  (process.env.CHAPL_API_URL ?? "http://localhost:8000/api/v1").replace(/\/+$/, "");
 
 export const TOKEN_COOKIE = "chapl_token";
 export const CHURCH_COOKIE = "chapl_church";
@@ -89,7 +89,7 @@ export async function api<T>(
     const token = jar.get(TOKEN_COOKIE)?.value;
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    const church = churchId ?? jar.get(CHURCH_COOKIE)?.value;
+    const church = churchId === undefined ? jar.get(CHURCH_COOKIE)?.value : churchId;
     if (church) headers["X-Church-Id"] = church;
   } else if (churchId) {
     headers["X-Church-Id"] = churchId;

@@ -11,6 +11,7 @@ const TWO_DAYS = 60 * 60 * 24 * 2; // matches the API's token lifetime
 
 export async function startSession(token: string) {
   const jar = await cookies();
+  jar.delete(CHURCH_COOKIE);
   jar.set(TOKEN_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
