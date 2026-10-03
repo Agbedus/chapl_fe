@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import type { FormState } from "@/app/actions/auth";
 import { Field, Notice, Submit } from "@/components/ui/form";
+import { PasswordField } from "@/components/ui/password";
 
 export function AcceptForm({
   action,
@@ -35,20 +36,20 @@ export function AcceptForm({
             autoComplete="name"
             autoFocus
           />
-          <Field
+          <PasswordField
             label="Choose a password"
             name="password"
-            type="password"
-            required
+            variant="new"
             autoComplete="new-password"
             hint="At least 8 characters"
+            avoidFields={["full_name"]}
             error={state.fieldErrors?.password}
           />
-          <Field
+          <PasswordField
             label="Confirm password"
             name="confirm"
-            type="password"
-            required
+            variant="confirm"
+            matches="password"
             autoComplete="new-password"
             error={state.fieldErrors?.confirm}
           />

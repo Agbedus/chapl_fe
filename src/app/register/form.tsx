@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import type { FormState } from "@/app/actions/auth";
 import { Field, Notice, Submit } from "@/components/ui/form";
+import { PasswordField } from "@/components/ui/password";
 
 export function RegisterForm({
   action,
@@ -25,13 +26,13 @@ export function RegisterForm({
         autoComplete="email"
         error={state.fieldErrors?.email}
       />
-      <Field
+      <PasswordField
         label="Password"
         name="password"
-        type="password"
-        required
+        variant="new"
         autoComplete="new-password"
         hint="At least 8 characters"
+        avoidFields={["email", "full_name"]}
         error={state.fieldErrors?.password}
       />
       <Submit>Create account</Submit>

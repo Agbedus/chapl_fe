@@ -4,6 +4,19 @@ import { useFormStatus } from "react-dom";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { ReactNode } from "react";
 
+/**
+ * The text input's look, in one place.
+ *
+ * `PasswordField` is the same control with a button inside it, and had
+ * to either copy this string or share it. Copies drift: the next tweak
+ * to one input's focus ring would have left the password boxes looking
+ * subtly different from every other field on the same screen.
+ */
+export const INPUT_CLASS = `w-full rounded-xl border bg-paper px-3.5 py-2.5 text-[14.5px] text-ink
+  transition-colors placeholder:text-ink-3 hover:border-line-strong
+  focus:border-transparent focus:outline-none focus:ring-2
+  focus:ring-[var(--accent)]`;
+
 export function Field({
   label,
   name,
@@ -68,10 +81,7 @@ export function Field({
         inputMode={inputMode}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${name}-error` : hint ? `${name}-hint` : undefined}
-        className="w-full rounded-xl border bg-paper px-3.5 py-2.5 text-[14.5px] text-ink
-                   transition-colors placeholder:text-ink-3 hover:border-line-strong
-                   focus:border-transparent focus:outline-none focus:ring-2
-                   focus:ring-[var(--accent)]"
+        className={INPUT_CLASS}
         style={{ borderColor: error ? "var(--ruby)" : "var(--line)" }}
       />
       {error ? (

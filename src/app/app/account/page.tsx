@@ -198,7 +198,7 @@ export default async function AccountPage() {
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden /> Overview
         </Link>
         <div id="complete-profile" className="flex items-center gap-2">
-          <PasswordEditor action={changePassword} />
+          <PasswordEditor action={changePassword} avoid={[me.full_name, me.email]} />
           {record && <SelfEditor action={saveMyDetails} person={record} />}
         </div>
       </div>

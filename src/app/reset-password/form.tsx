@@ -3,7 +3,8 @@
 import { useActionState } from "react";
 
 import type { FormState } from "@/app/actions/auth";
-import { Field, Notice, Submit } from "@/components/ui/form";
+import { Notice, Submit } from "@/components/ui/form";
+import { PasswordField } from "@/components/ui/password";
 
 export function ResetForm({
   action,
@@ -19,21 +20,20 @@ export function ResetForm({
       <input type="hidden" name="token" value={token} />
       {state.error && <Notice kind="error">{state.error}</Notice>}
 
-      <Field
+      <PasswordField
         label="New password"
         name="password"
-        type="password"
-        required
+        variant="new"
         autoComplete="new-password"
         hint="At least 8 characters"
         error={state.fieldErrors?.password}
         autoFocus
       />
-      <Field
+      <PasswordField
         label="Confirm password"
         name="confirm"
-        type="password"
-        required
+        variant="confirm"
+        matches="password"
         autoComplete="new-password"
         error={state.fieldErrors?.confirm}
       />

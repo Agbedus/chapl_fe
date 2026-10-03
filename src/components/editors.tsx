@@ -31,6 +31,7 @@ import type { FormState } from "@/app/actions/auth";
 import {
   Area, Field, Fieldset, Notice, Select, Submit, Wide,
 } from "@/components/ui/form";
+import { PasswordField } from "@/components/ui/password";
 import {
   ComboField, DateField, DateTimeField, TimeField,
 } from "@/components/ui/pickers";
@@ -1147,7 +1148,14 @@ export function SelfEditor({ action, person }: { action: Action; person: Person 
  * follows is the real feedback: the API bumps `token_version`, so the
  * cookie this page was rendered with is dead the moment it returns.
  */
-export function PasswordEditor({ action }: { action: Action }) {
+export function PasswordEditor({
+  action,
+  avoid = [],
+}: {
+  action: Action;
+  /** The signed-in person's name and email, to refuse in a new password. */
+  avoid?: string[];
+}) {
   return (
     <Editor
       label="Change password"
@@ -1159,15 +1167,16 @@ export function PasswordEditor({ action }: { action: Action }) {
     >
       {(state) => (
         <div className="space-y-4">
-          <Field label="Current password" name="current" type="password" required
+          <PasswordField label="Current password" name="current" variant="current"
                  autoComplete="current-password" error={state.fieldErrors?.current}
                  icon={<KeyRound className="h-full w-full" />} />
-          <Field label="New password" name="password" type="password" required
+          <PasswordField label="New password" name="password" variant="new"
                  autoComplete="new-password" hint="At least 8 characters"
-                 error={state.fieldErrors?.password}
+                 avoid={avoid} error={state.fieldErrors?.password}
                  icon={<ShieldCheck className="h-full w-full" />} />
-          <Field label="Confirm new password" name="confirm" type="password" required
-                 autoComplete="new-password" error={state.fieldErrors?.confirm}
+          <PasswordField label="Confirm new password" name="confirm" variant="confirm"
+                 matches="password" autoComplete="new-password"
+                 error={state.fieldErrors?.confirm}
                  icon={<ShieldCheck className="h-full w-full" />} />
         </div>
       )}

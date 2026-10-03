@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import type { FormState } from "@/app/actions/auth";
 import { Field, Notice, Submit } from "@/components/ui/form";
+import { PasswordField } from "@/components/ui/password";
 
 export function SignInForm({
   action,
@@ -20,11 +21,10 @@ export function SignInForm({
       {state.error && <Notice kind="error">{state.error}</Notice>}
 
       <Field label="Email" name="email" type="email" required autoComplete="username" autoFocus />
-      <Field
+      <PasswordField
         label="Password"
         name="password"
-        type="password"
-        required
+        variant="current"
         autoComplete="current-password"
       />
       <Submit>Sign in</Submit>

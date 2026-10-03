@@ -1344,6 +1344,107 @@ body {
   padding-left: 2.5rem;
 }
 
+/* ---------------------------------------------------------------
+   The password field
+   ---------------------------------------------------------------
+   Quiet on purpose. The meter is two pixels tall and the colours are
+   status colours pulled back toward the page, so it reads as
+   information rather than as an alarm — nothing here is ever a red
+   box, and nothing turns red while somebody is still typing.
+   --------------------------------------------------------------- */
+
+.pw-reveal {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.5rem;
+  color: var(--ink-3);
+  transition: color 0.15s, background-color 0.15s, transform 0.12s var(--ease-out);
+}
+.pw-reveal:hover {
+  color: var(--ink);
+  background: var(--sunk);
+}
+.pw-reveal[aria-pressed="true"] {
+  color: var(--ink);
+}
+.pw-reveal:active {
+  transform: translateY(-50%) scale(0.92);
+}
+.pw-reveal:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Edge and IE draw their own reveal and clear buttons inside password
+   inputs. Left alone they sit under ours, and there are two eyes. */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
+.pw-meter {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+  margin-top: 0.5rem;
+}
+.pw-meter i {
+  height: 2px;
+  border-radius: 2px;
+  background: var(--line);
+  transition: background-color 0.22s var(--ease-out);
+}
+.pw-meter[data-level="1"] i:nth-child(-n + 1) {
+  background: color-mix(in oklab, var(--ruby) 62%, var(--paper));
+}
+.pw-meter[data-level="2"] i:nth-child(-n + 2) {
+  background: var(--gold);
+}
+.pw-meter[data-level="3"] i:nth-child(-n + 3) {
+  background: color-mix(in oklab, var(--emerald) 78%, var(--paper));
+}
+.pw-meter[data-level="4"] i {
+  background: var(--emerald);
+}
+
+/* A note that needs attention but is not an error: gold, not ruby. */
+.pw-warn {
+  color: var(--gold);
+}
+
+.pw-note {
+  animation: pw-in 0.16s var(--ease-out);
+}
+@keyframes pw-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pw-note {
+    animation: none;
+  }
+  .pw-meter i,
+  .pw-reveal {
+    transition: none;
+  }
+  .pw-reveal:active {
+    transform: translateY(-50%);
+  }
+}
+
 @keyframes scrim-in {
   from { opacity: 0; }
   to   { opacity: 1; }
