@@ -64,145 +64,18 @@ export const ROLE_LABEL: Record<Role, string> = {
  * The backend's Jinja admin screen is a different thing entirely — it
  * carries telemetry and table shortcuts, which no leader has any use for.
  */
-export type TrendPoint = {
-  date: string;
-  marked: number;
-  present: number;
-  absent: number;
-  pct: number;
-};
-
-export type BranchRow = {
-  id: string;
-  code: string;
-  name: string;
-  location: string | null;
-  capacity: number | null;
-  latitude: number | null;
-  longitude: number | null;
-  cells: number;
-  members: number;
-  present: number;
-  turnout: number;
-  fill: number | null;
-};
-
-export type CellRow = {
-  id: string;
-  name: string;
-  code: string;
-  /** Stable — a link filters on this, never on the name. */
-  branch_id: string;
-  branch: string;
-  members: number;
-  turnout: number;
-  last_seen: string | null;
-  band: "thriving" | "steady" | "at risk";
-};
-
-export type Slice = { label: string; value: number };
-
-export type Demographics = {
-  ages: Slice[];
-  genders: Slice[];
-  unknown_age: number;
-};
-
-export type GivingMonth = { month: string; label: string; total: number };
-export type GivingType = { label: string; total: number; gifts: number };
-export type GrowthPoint = {
-  month: string;
-  label: string;
-  joined: number;
-  total: number;
-};
-
-export type ChurchRow = {
-  id: string;
-  code: string;
-  name: string;
-  currency: string;
-  is_active: boolean;
-  branches: number;
-  cells: number;
-  members: number;
-  present: number;
-  turnout: number;
-  last_service: string | null;
-  giving: number;
-  share: number;
-};
-
-export type StaffOverview = {
-  church_status: Record<ChurchStatus, number>;
-  /** New churches per week, oldest first. */
-  registrations: { label: string; value: number }[];
-  new_churches_week: number;
-  accounts: { total: number; unverified: number; stale: number; new_week: number };
-  attention: {
-    key: string;
-    label: string;
-    count: number;
-    tone: "gold" | "ruby" | "ink";
-    /** Where it gets handled; empty when that place is the back-end admin. */
-    href: string;
-    detail: string;
-  }[];
-};
-
-export type Dashboard = {
-  platform?: boolean;
-  church: { id: string | null; name: string | null; currency: string };
-  stats?: { name: string; count: number; resource: string }[];
-  totals?: { name: string; count: number }[];
-  churches?: ChurchRow[];
-  last_service?: string | null;
-  trend: TrendPoint[];
-  branches: BranchRow[];
-  cells: CellRow[];
-  demographics: Demographics;
-  care: Slice[];
-  growth: GrowthPoint[];
-  giving_months: GivingMonth[];
-  giving_types: GivingType[];
-  giving_total: number | null;
-  birthdays?: {
-    id: string;
-    full_name: string;
-    /** Carried so the queue can send the greeting, not only count them. */
-    phone_number: string | null;
-    date_of_birth: string;
-    turns: number;
-  }[];
-  /** How many check-ups are actually open; `needs_followup` is capped. */
-  followup_total?: number;
-  needs_followup?: {
-    /** The check-up's own id. */
-    id: string;
-    member_id: string;
-    full_name: string;
-    phone_number: string | null;
-    checkup_date: string;
-    status: string;
-  }[];
-  health?: "ok" | "warn" | "down";
-  /**
-   * Platform staff only: the work queue and the platform's own numbers.
-   * `null` for anyone else the API happened to answer — see
-   * `services/platform.py` on the API.
-   */
-  staff?: StaffOverview | null;
-  /** Platform staff only — the top bar shows it, nothing else reads it. */
-  runtime?: {
-    app_env: string;
-    dialect: string;
-    driver: string;
-    python: string;
-    sqlalchemy: string;
-    uptime: string;
-    cookie_secure: boolean;
-  };
-};
+export type TrendPoint = Schemas["TrendPoint"];
+export type BranchRow = Schemas["BranchRow"];
+export type CellRow = Schemas["CellRow"];
+export type Slice = Schemas["Slice"];
+export type Demographics = Schemas["Demographics"];
+export type GivingMonth = Schemas["GivingMonth"];
+export type GivingType = Schemas["GivingType"];
+export type GrowthPoint = Schemas["GrowthPoint"];
+export type ChurchRow = Schemas["ChurchRow"];
+export type StaffOverview = Schemas["StaffOverview"];
+/** Audience-specific blocks (`staff`, `churches`, `birthdays`…) may be absent. */
+export type Dashboard = Schemas["Dashboard"];
 
 /* --- the tenant tree --------------------------------------------------- */
 
@@ -225,11 +98,7 @@ export type InvitationCreated = Required<Schemas["InvitationCreated"]>;
 
 export type Assignment = Required<Schemas["AssignmentRead"]>;
 
-export type GrantableRole = {
-  role: Role;
-  scope_type: ScopeType;
-  grantable: boolean;
-};
+export type GrantableRole = Schemas["GrantableRole"];
 
 /** Which rung of the tree each role is granted on. */
 export const ROLE_SCOPE: Record<Role, ScopeType> = {
@@ -270,52 +139,12 @@ export type ChurchEvent = Required<Schemas["EventRead"]>;
 export type Notice = Required<Schemas["NoticeRead"]>;
 
 /** One member, measured — `GET /users/{id}/profile`. */
-export type PersonProfile = {
-  attendance: { date: string; present: boolean }[];
-  marked: number;
-  present: number;
-  pct: number | null;
-  /** Services attended in a row, counted back from the most recent. */
-  streak: number;
-  /** Services missed in a row, same direction. Only one of the two is ever > 0. */
-  missed: number;
-  /** Their cell's rate, for comparison. Null when the cell has no records. */
-  cell_pct: number | null;
-  checkups: { date: string; status: string; notes: string | null }[];
-  departments: { id: string; name: string; role: string | null }[];
-  /** Null when the caller may read the record but not the offering. */
-  giving: {
-    total: number;
-    gifts: number;
-    months: GivingMonth[];
-    types: GivingType[];
-  } | null;
-};
+export type PersonProfile = Schemas["PersonProfile"];
 
 /** Who was not in a seat at one service. */
-export type Absentee = {
-  id: string;
-  full_name: string;
-  phone_number: string | null;
-  branch: string;
-  cell: string | null;
-  /** The last service they were in a seat for. Null means never. */
-  last_present: string | null;
-};
+export type Absentee = Schemas["Absentee"];
 
 /** One service, whole — `GET /attendance/service`. */
-export type ServiceDetail = {
-  /** Every marked service, oldest first. The stepper's range. */
-  dates: string[];
-  date: string | null;
-  marked: number;
-  present: number;
-  absent: number;
-  pct: number;
-  /** Same shapes as the dashboard's, so the congregation field can draw them. */
-  branches: BranchRow[];
-  cells: CellRow[];
-  absentees: Absentee[];
-};
+export type ServiceDetail = Schemas["ServiceDetail"];
 
 export type EventRegistration = Required<Schemas["EventRegistrationRead"]>;
