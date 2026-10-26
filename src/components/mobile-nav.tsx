@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, MoreHorizontal, X } from "lucide-react";
+import { ArrowLeftRight, LogOut, MoreHorizontal, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -48,6 +48,13 @@ const SHORT: Record<string, string> = {
 
 const BAR_SLOTS = 5;
 
+const CHURCHES: Item = {
+  href: "/app/select",
+  label: "Churches",
+  icon: ArrowLeftRight,
+  tone: "var(--violet)",
+};
+
 export function MobileNav({
   allowed,
   isPlatform,
@@ -56,6 +63,7 @@ export function MobileNav({
   userEmail,
   signOutAction,
   profileIncomplete = false,
+  canSwitch = false,
   badges = {},
 }: {
   allowed: Resource[];
@@ -65,6 +73,8 @@ export function MobileNav({
   userEmail: string;
   signOutAction: () => Promise<void>;
   profileIncomplete?: boolean;
+  /** More than one church to work in, so the sheet offers the switch. */
+  canSwitch?: boolean;
   /** Counts to show on a destination, keyed by href. */
   badges?: Record<string, number>;
 }) {
@@ -79,6 +89,9 @@ export function MobileNav({
   const sections = permittedSections(allowed, isPlatform);
   const everything = sections.flatMap((s) => s.items);
   const byHref = new Map(everything.map((item) => [item.href, item]));
+  // Not a nav item any more, but for platform staff the list of churches
+  // is a daily destination, so it keeps its place on their bar.
+  if (isPlatform) byHref.set("/app/select", CHURCHES);
 
   const wanted = isPlatform ? STAFF_TABS : LEADER_TABS;
   const needsMore = everything.length > BAR_SLOTS;
@@ -240,6 +253,17 @@ export function MobileNav({
                   </ul>
                 </div>
               ))}
+
+              {canSwitch && !isPlatform && (
+                <Link
+                  href="/app/select"
+                  className="mx-1 mt-4 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-line
+                             text-[13px] font-medium text-ink-2 active:bg-sunk"
+                >
+                  <ArrowLeftRight className="h-4 w-4" aria-hidden />
+                  Switch church
+                </Link>
+              )}
 
               <form action={signOutAction} className="px-1 pb-2 pt-4">
                 <button

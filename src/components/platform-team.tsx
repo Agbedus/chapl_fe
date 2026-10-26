@@ -4,6 +4,7 @@ import { Shield } from "lucide-react";
 import { useActionState } from "react";
 
 import type { FormState } from "@/app/actions/auth";
+import { useResultToast } from "@/components/toaster";
 import { Field, Notice, Select, Submit } from "@/components/ui/form";
 
 type Action = (prev: FormState, data: FormData) => Promise<FormState>;
@@ -18,6 +19,7 @@ type Action = (prev: FormState, data: FormData) => Promise<FormState>;
  */
 export function PlatformGrantForm({ action }: { action: Action }) {
   const [state, formAction] = useActionState(action, {});
+  useResultToast(state);
 
   return (
     <form action={formAction} className="grid gap-3 sm:grid-cols-[1fr_12rem_auto] sm:items-start">
@@ -47,7 +49,6 @@ export function PlatformGrantForm({ action }: { action: Action }) {
       </div>
       <div className="sm:col-span-3 empty:hidden">
         {state.error && <Notice kind="error">{state.error}</Notice>}
-        {state.message && <Notice kind="success">{state.message}</Notice>}
       </div>
     </form>
   );

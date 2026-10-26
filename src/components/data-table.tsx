@@ -4,6 +4,7 @@ import { Check, Pencil, X } from "lucide-react";
 import { useActionState, useState, type ReactNode } from "react";
 
 import type { FormState } from "@/app/actions/auth";
+import { useResultToast } from "@/components/toaster";
 
 /**
  * A real table: one column per field, one header per column.
@@ -193,6 +194,7 @@ function EditRow({
   onDone: () => void;
 }) {
   const [state, formAction] = useActionState(action, {} as FormState);
+  useResultToast(state);
   const byColumn = new Map((row.fields ?? []).map((f) => [f.key, f]));
   const formId = `row-${row.id}`;
 

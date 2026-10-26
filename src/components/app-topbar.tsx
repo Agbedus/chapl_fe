@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { Loader2, Search, X } from "lucide-react";
+import { ChevronsUpDown, Loader2, Search, X } from "lucide-react";
 
 import type { Hit } from "@/app/actions/search";
 import { NotificationBell } from "@/components/notification-bell";
@@ -19,6 +20,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
  */
 export function AppTopbar({
   churchName,
+  canSwitch = false,
   environment,
   health,
   runtime,
@@ -28,6 +30,8 @@ export function AppTopbar({
   markRead,
 }: {
   churchName: string | null;
+  /** The church name doubles as the way to change it, when there is a choice. */
+  canSwitch?: boolean;
   environment: string | null;
   health: "ok" | "warn" | "down" | null;
   runtime: string | null;
@@ -138,9 +142,21 @@ export function AppTopbar({
                    sm:top-4 sm:mx-7 sm:mt-4 sm:gap-4 sm:px-4"
       >
         <div className="flex min-w-0 items-center gap-3">
-          <span className="truncate text-[14px] font-semibold text-ink">
-            {churchName ?? "All churches"}
-          </span>
+          {canSwitch ? (
+            <Link
+              href="/app/select"
+              title="Switch church"
+              className="group/church flex min-w-0 items-center gap-1.5 truncate rounded-lg text-[14px]
+                         font-semibold text-ink transition-colors hover:text-ink-2"
+            >
+              <span className="truncate">{churchName ?? "All churches"}</span>
+              <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-ink-3" aria-hidden />
+            </Link>
+          ) : (
+            <span className="truncate text-[14px] font-semibold text-ink">
+              {churchName ?? "All churches"}
+            </span>
+          )}
           {environment && (
             <span
               className="hidden shrink-0 rounded-full px-2.5 py-0.5 font-mono text-[10.5px] font-semibold uppercase tracking-wider sm:inline-block"

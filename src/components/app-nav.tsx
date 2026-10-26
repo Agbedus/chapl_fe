@@ -27,6 +27,7 @@ import {
   MailPlus,
   ShieldCheck,
   History,
+  ArrowLeftRight,
 } from "lucide-react";
 
 export type Item = {
@@ -48,20 +49,36 @@ export type Item = {
   platformOnly?: boolean;
 };
 
+/**
+ * Ordered by how widely each section is held, not by the shape of the
+ * tree. Every member can open Worship, so it sits under the dashboard; the
+ * sections below it thin out as authority narrows, and a member sees a
+ * short nav rather than a long one with holes in it.
+ *
+ * Choosing a church is not here. It is a fact about the person — which
+ * churches they belong to — so it lives with them, in the footer and on
+ * the account page, as it does in the phone app.
+ */
 export const SECTIONS: { heading: string; items: Item[] }[] = [
   {
     heading: "Overview",
     items: [{ href: "/app", label: "Dashboard", icon: Home, tone: "var(--cobalt)" }],
   },
   {
-    // The tree, top down: the church, its sites, the groups inside them.
-    heading: "Church",
+    // What a member comes for.
+    heading: "Worship",
     items: [
-      { href: "/app/select", label: "Choose church", icon: Church, tone: "var(--violet)" },
-      { href: "/app/church", label: "Church", icon: Church, tone: "var(--violet)", needs: "church" },
-      { href: "/app/branches", label: "Branches", icon: Building2, tone: "var(--violet)", needs: "branch" },
-      { href: "/app/cells", label: "Cells", icon: Compass, tone: "var(--teal)", needs: "cell" },
-      { href: "/app/departments", label: "Departments", icon: Layers, tone: "var(--emerald)", needs: "department" },
+      { href: "/app/sermons", label: "Sermons", icon: Mic, tone: "var(--ruby)", needs: "sermon" },
+      { href: "/app/events", label: "Events", icon: CalendarDays, tone: "var(--violet)", needs: "event" },
+      { href: "/app/notices", label: "Notices", icon: Megaphone, tone: "var(--cobalt)", needs: "notice" },
+    ],
+  },
+  {
+    // The weekly records a leader keeps.
+    heading: "Records",
+    items: [
+      { href: "/app/attendance", label: "Attendance", icon: Activity, tone: "var(--gold)", needs: "attendance" },
+      { href: "/app/giving", label: "Giving", icon: CreditCard, tone: "var(--emerald)", needs: "donation" },
     ],
   },
   {
@@ -73,19 +90,19 @@ export const SECTIONS: { heading: string; items: Item[] }[] = [
     ],
   },
   {
-    heading: "Activity",
+    // The tree, top down: the church, its sites, the groups inside them.
+    heading: "Church",
     items: [
-      { href: "/app/attendance", label: "Attendance", icon: Activity, tone: "var(--gold)", needs: "attendance" },
-      { href: "/app/giving", label: "Giving", icon: CreditCard, tone: "var(--emerald)", needs: "donation" },
-      { href: "/app/sermons", label: "Sermons", icon: Mic, tone: "var(--ruby)", needs: "sermon" },
-      { href: "/app/events", label: "Events", icon: CalendarDays, tone: "var(--violet)", needs: "event" },
-      { href: "/app/notices", label: "Notices", icon: Megaphone, tone: "var(--cobalt)", needs: "notice" },
+      { href: "/app/church", label: "Church", icon: Church, tone: "var(--violet)", needs: "church" },
+      { href: "/app/branches", label: "Branches", icon: Building2, tone: "var(--violet)", needs: "branch" },
+      { href: "/app/cells", label: "Cells", icon: Compass, tone: "var(--teal)", needs: "cell" },
+      { href: "/app/departments", label: "Departments", icon: Layers, tone: "var(--emerald)", needs: "department" },
     ],
   },
   {
-    // Not "Activity": the trail is not something the church does, it is
-    // the record of what was done to it. Gated on `audit_log`, so a
-    // cell leader never sees a link they would be refused at.
+    // The trail is not something the church does, it is the record of
+    // what was done to it. Gated on `audit_log`, so a cell leader never
+    // sees a link they would be refused at.
     heading: "Oversight",
     items: [
       // Platform staff only, and gated on `platformOnly` rather than a
@@ -173,6 +190,7 @@ export function AppNav({
   allowed,
   isPlatform = false,
   profileIncomplete = false,
+  canSwitch = false,
 }: {
   churchName: string | null;
   userName: string;
@@ -181,6 +199,8 @@ export function AppNav({
   /** Platform staff see the verification queue; nobody else does. */
   isPlatform?: boolean;
   profileIncomplete?: boolean;
+  /** More than one church to work in, so the footer offers the switch. */
+  canSwitch?: boolean;
   /**
    * Resources this person can read, worked out on the server.
    *
@@ -395,11 +415,29 @@ export function AppNav({
           </span>
         </Link>
 
+        {canSwitch && (
+          <Tooltip label="Switch church" disabled={!collapsed}>
+            <Link
+              href="/app/select"
+              className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px]
+                         font-medium text-ink-2 transition-colors hover:bg-sunk hover:text-ink"
+            >
+              <ArrowLeftRight className="h-[18px] w-[18px] shrink-0" strokeWidth={1.9} />
+              <span
+                className="truncate transition-opacity duration-200 motion-reduce:transition-none"
+                style={{ opacity: collapsed ? 0 : 1 }}
+              >
+                Switch church
+              </span>
+            </Link>
+          </Tooltip>
+        )}
+
         <form action={signOutAction}>
           <button
             type="submit"
             title={collapsed ? "Sign out" : undefined}
-            className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px]
+            className=" flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px]
                        font-medium text-ink-2 transition-colors hover:bg-sunk hover:text-ink"
           >
             <LogOut className="h-[18px] w-[18px] shrink-0" strokeWidth={1.9} />

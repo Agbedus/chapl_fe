@@ -7,6 +7,7 @@ import { ProfileCompletionPrompt } from "@/components/profile-completion";
 import { AppNav } from "@/components/app-nav";
 import { MobileNav } from "@/components/mobile-nav";
 import { AppTopbar } from "@/components/app-topbar";
+import { Toaster } from "@/components/toaster";
 import { readable } from "@/lib/access";
 import { api } from "@/lib/api";
 import { currentChurchId, requireMe } from "@/lib/session";
@@ -19,6 +20,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // Which tenant the shell is labelled with. Platform staff with nothing
   // selected are working across all of them, and it says so.
   let churchName: string | null = null;
+  const canSwitch = (me.churches?.length ?? 0) > 1 || me.is_platform_staff;
   if (churchId) {
     const result = await api<Church>(`/churches/${churchId}`);
     if (result.ok) churchName = result.data.name;
@@ -57,6 +59,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         allowed={[...readable(me)]}
         isPlatform={me.is_platform_staff}
         profileIncomplete={!me.profile_completion.complete}
+        canSwitch={canSwitch}
       />
 
       <MobileNav
@@ -67,12 +70,14 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         userEmail={me.email}
         signOutAction={signOut}
         profileIncomplete={!me.profile_completion.complete}
+        canSwitch={canSwitch}
         badges={waiting > 0 ? { "/app/platform": waiting } : {}}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <AppTopbar
           churchName={churchName}
+          canSwitch={canSwitch}
           environment={environment}
           health={health}
           runtime={runtime}
@@ -87,6 +92,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             sheet of paper rather than a panel bolted to a rail. */}
         <div className="page-pad min-w-0 flex-1"><ProfileCompletionPrompt profile={me.profile_completion} />{children}</div>
       </div>
+      <Toaster />
     </div>
   );
 }

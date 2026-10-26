@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 
 import type { FormState } from "@/app/actions/auth";
+import { useResultToast } from "@/components/toaster";
 import { Field, Notice, Submit } from "@/components/ui/form";
 
 export function PasswordForm({
@@ -11,6 +12,7 @@ export function PasswordForm({
   action: (prev: FormState, data: FormData) => Promise<FormState>;
 }) {
   const [state, formAction] = useActionState(action, {});
+  useResultToast(state);
 
   return (
     <form action={formAction} className="space-y-4">

@@ -32,6 +32,7 @@ import { useActionState, useMemo, useState } from "react";
 
 import { takeRegister } from "@/app/actions/manage";
 import type { FormState } from "@/app/actions/auth";
+import { useResultToast } from "@/components/toaster";
 import { Notice, Submit } from "@/components/ui/form";
 
 export type RegisterPerson = {
@@ -53,6 +54,7 @@ export function Register({
   serviceDay: string;
 }) {
   const [state, formAction] = useActionState(takeRegister, EMPTY);
+  useResultToast(state);
   const [present, setPresent] = useState<Set<string>>(
     () => new Set(people.map((p) => p.id)),
   );
@@ -116,7 +118,6 @@ export function Register({
       ))}
 
       {state.error && <Notice kind="error">{state.error}</Notice>}
-      {state.message && <Notice kind="success">{state.message}</Notice>}
 
       {/* The running count, pinned. Whoever is holding the sheet wants
           to know the number without scrolling back to the top. */}

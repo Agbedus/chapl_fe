@@ -32,6 +32,7 @@ import {
   Area, Field, Fieldset, Notice, Select, Submit, Wide,
 } from "@/components/ui/form";
 import { PasswordField } from "@/components/ui/password";
+import { toast } from "@/components/toaster";
 import {
   ComboField, DateField, DateTimeField, TimeField,
 } from "@/components/ui/pickers";
@@ -198,6 +199,12 @@ function Editor({
     if (settled) setOpen(false);
   }
 
+  // The save is announced as the form closes, where the eye goes next.
+  // A form that stays open (an invitation's link) shows its own result.
+  useEffect(() => {
+    if (closeOnSuccess && state.message && !state.link) toast(state.message);
+  }, [state, closeOnSuccess]);
+
   /*
    * A rejected write opens the step that was rejected.
    *
@@ -313,12 +320,6 @@ function Editor({
         {label}
       </button>
 
-      {settled && !open && (
-        <p className="mt-2 text-[12.5px]" style={{ color: "var(--emerald)" }}>
-          {state.message}
-        </p>
-      )}
-
       {open && (
         /*
           A create form is a detour, not a place. It arrives over the page
@@ -428,17 +429,23 @@ function Editor({
 /**
  * The invitation link, with a copy button.
  *
- * No mail is sent yet, so this link is the whole delivery mechanism.
- * Printing it inside a sentence would mean asking someone to select a
- * sixty-character token by hand.
+ * The API emails the invitation, but delivery is not a guarantee, so the
+ * link is shown too. Printing it inside a sentence would mean asking
+ * someone to select a sixty-character token by hand.
+ *
+ * The API's `invite_url` is already absolute (`PUBLIC_APP_URL` plus
+ * `/invite/<token>`). Prefixing this page's origin as well produced
+ * `https://…apphttps://…app/invite/…`, a link that opened a blank page,
+ * so the origin is added only to a bare path.
  */
 export function LinkResult({ message, link }: { message: string; link: string }) {
   const [copied, setCopied] = useState(false);
   const [origin, setOrigin] = useState("");
+  const absolute = /^https?:\/\//i.test(link);
   // Read after mount: `window` does not exist during the server render,
   // and reading it inline would make the two renders disagree.
-  if (typeof window !== "undefined" && !origin) setOrigin(window.location.origin);
-  const full = `${origin}${link}`;
+  if (!absolute && typeof window !== "undefined" && !origin) setOrigin(window.location.origin);
+  const full = absolute ? link : `${origin}${link}`;
 
   return (
     <div
@@ -450,7 +457,7 @@ export function LinkResult({ message, link }: { message: string; link: string })
         {message}
       </p>
       <p className="mt-1 text-[12px] text-ink-2">
-        Nothing sends mail yet — pass this link on yourself. It works once.
+        If the email does not arrive, share this link yourself. It works once.
       </p>
       <div className="mt-2.5 flex items-center gap-2">
         <code
@@ -500,6 +507,11 @@ export function ActionButton({
 }) {
   const [state, formAction] = useActionState(action, EMPTY);
   const colour = tone === "danger" ? "var(--ruby)" : "var(--ink-2)";
+  // Success as a toast; a refusal stays beside the row it belongs to. A
+  // new link is shown in place instead, where it can be copied.
+  useEffect(() => {
+    if (state.message && !state.link) toast(state.message);
+  }, [state]);
 
   return (
     <div className="flex flex-col items-end gap-1.5">
@@ -524,14 +536,10 @@ export function ActionButton({
       {state.error && (
         <span className="text-[11.5px]" style={{ color: "var(--ruby)" }}>{state.error}</span>
       )}
-      {state.link ? (
+      {state.link && (
         <div className="w-full max-w-md">
           <LinkResult message={state.message ?? "New link"} link={state.link} />
         </div>
-      ) : (
-        state.message && (
-          <span className="text-[11.5px]" style={{ color: "var(--emerald)" }}>{state.message}</span>
-        )
       )}
     </div>
   );

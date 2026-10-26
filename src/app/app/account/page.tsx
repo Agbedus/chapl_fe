@@ -1,6 +1,6 @@
 import Link from "next/link";
 import {
-  ArrowLeft, Briefcase, Cake, Building2, Compass, Droplets, Heart, Mail,
+  ArrowLeft, ArrowLeftRight, Briefcase, Cake, Building2, Compass, Droplets, Heart, Mail,
   MapPin, Shield, Sparkles, Users,
 } from "lucide-react";
 
@@ -198,6 +198,13 @@ export default async function AccountPage() {
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden /> Overview
         </Link>
         <div id="complete-profile" className="flex flex-wrap items-center gap-2">
+          {/* Which church you are working in is a fact about you, so the
+              switch lives here rather than in the nav. */}
+          {(me.churches.length > 1 || me.is_platform_staff) && (
+            <Link href="/app/select" className="btn btn-quiet btn-sm">
+              <ArrowLeftRight className="h-3.5 w-3.5" aria-hidden /> Switch church
+            </Link>
+          )}
           <PasswordEditor action={changePassword} avoid={[me.full_name, me.email]} />
           {record && <SelfEditor action={saveMyDetails} person={record} />}
         </div>
