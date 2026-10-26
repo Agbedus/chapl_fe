@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, CalendarDays, List, GanttChart } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 /**
@@ -28,6 +29,10 @@ export type CalendarEvent = {
   scope: string;
   published: boolean;
   needsSignup: boolean;
+  /** Where clicking it leads. One per occurrence, so a weekly service
+   *  shares the event's page across every week. */
+  href?: string;
+  repeats?: boolean;
 };
 
 type View = "calendar" | "timeline" | "table";
@@ -291,7 +296,11 @@ export function Calendar({
                               {time(event.start).replace(/\s?[ap]m/i, "")}
                             </span>
                           )}
-                          <span className="truncate">{event.title}</span>
+                          {event.href ? (
+                            <Link href={event.href} className="truncate hover:underline">{event.title}</Link>
+                          ) : (
+                            <span className="truncate">{event.title}</span>
+                          )}
                         </span>
                       </li>
                     ))}
@@ -353,7 +362,12 @@ export function Calendar({
                       </p>
                     )}
                     <div className="sheet sheet-mist flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                      <span className="text-[13px] font-medium text-ink">{event.title}</span>
+                      {event.href ? (
+                        <Link href={event.href} className="text-[13px] font-medium text-ink hover:underline">{event.title}</Link>
+                      ) : (
+                        <span className="text-[13px] font-medium text-ink">{event.title}</span>
+                      )}
+                      {event.repeats && <span className="text-[11px] text-ink-3">repeats</span>}
                       <span className="text-[11.5px] capitalize" style={{ color: event.tone }}>
                         {event.type}
                       </span>
@@ -424,7 +438,11 @@ export function Calendar({
                           style={{ color: event.tone }}
                           aria-hidden
                         />
-                        <span className="font-medium text-ink">{event.title}</span>
+                        {event.href ? (
+                          <Link href={event.href} className="font-medium text-ink hover:underline">{event.title}</Link>
+                        ) : (
+                          <span className="font-medium text-ink">{event.title}</span>
+                        )}
                       </span>
                     </td>
                     <td

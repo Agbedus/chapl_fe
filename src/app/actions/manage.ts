@@ -14,6 +14,7 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import type { FormState } from "@/app/actions/auth";
 import { api } from "@/lib/api";
@@ -841,5 +842,219 @@ export async function eventSignup(_prev: FormState, data: FormData): Promise<For
   });
   if (!result.ok) return fail(result.error);
   revalidatePath("/app/events");
-  return { message: cancel ? "Registration cancelled." : "You are registered." };
+  revalidatePath(`/app/events/${id}`);
+  return { message: cancel ? "Registration cancelled." : "You are registered — we will remind you a day before." };
+}
+
+/* ------------------------------------------------------------------ */
+/* care inbox                                                          */
+/* ------------------------------------------------------------------ */
+
+/** Pick up a care request, or close it once it has been dealt with. */
+export async function respondToCare(_prev: FormState, data: FormData): Promise<FormState> {
+  const id = str(data, "id");
+  const step = str(data, "step") === "close" ? "close" : "acknowledge";
+  const result = await api(`/care/requests/${id}/${step}`, { method: "POST" });
+  if (!result.ok) return fail(result.error);
+  revalidatePath("/app/care");
+  revalidatePath("/app");
+  return { message: step === "close" ? "Closed." : "Picked up — they have been told." };
+}
+
+/* ------------------------------------------------------------------ */
+/* sermons                                                             */
+/* ------------------------------------------------------------------ */
+
+export async function saveSermon(_prev: FormState, data: FormData): Promise<FormState> {
+  const id = str(data, "id");
+  const title = str(data, "title");
+  const sermon_date = str(data, "sermon_date");
+  if (!title) return { error: "Give the sermon a title.", fieldErrors: { title: "Required" } };
+  if (!sermon_date) return { error: "When was it preached?", fieldErrors: { sermon_date: "Required" } };
+  const video_url = orNull(data, "video_url");
+  const audio_url = orNull(data, "audio_url");
+  if (!id && !video_url && !audio_url) {
+    return {
+      error: "Add a video or an audio link, so there is something to play.",
+      fieldErrors: { video_url: "Video or audio needed" },
+    };
+  }
+
+  const body = {
+    title,
+    sermon_date,
+    preacher_name: orNull(data, "preacher_name"),
+    series: orNull(data, "series"),
+    part: num(data, "part"),
+    scripture_reference: orNull(data, "scripture_reference"),
+    description: orNull(data, "description"),
+    branch_id: orNull(data, "branch_id"),
+    video_url,
+    audio_url,
+    is_published: str(data, "is_published") !== "false",
+  };
+  const result = id
+    ? await api(`/sermons/${id}`, { method: "PATCH", body })
+    : await api("/sermons/", { method: "POST", body });
+  if (!result.ok) return fail(result.error);
+  revalidatePath("/app/sermons");
+  return { message: id ? "Sermon saved." : body.is_published ? "Sermon published — the church has been told." : "Sermon saved as a draft." };
+}
+
+/* ------------------------------------------------------------------ */
+/* check-ups                                                           */
+/* ------------------------------------------------------------------ */
+
+/** Record that somebody was rung, and how it went. */
+export async function logCheckup(_prev: FormState, data: FormData): Promise<FormState> {
+  const member_id = str(data, "member_id");
+  const result = await api("/checkups", {
+    method: "POST",
+    body: {
+      member_id,
+      checkup_date: str(data, "checkup_date") || new Date().toISOString().slice(0, 10),
+      status: str(data, "status") || "reached",
+      notes: orNull(data, "notes"),
+    },
+  });
+  if (!result.ok) return fail(result.error);
+  revalidatePath(`/app/people/${member_id}`);
+  revalidatePath("/app");
+  return { message: "Check-up logged." };
+}
+
+/* ------------------------------------------------------------------ */
+/* check-in                                                            */
+/* ------------------------------------------------------------------ */
+
+export async function openCheckIn(_prev: FormState, data: FormData): Promise<FormState> {
+  const result = await api<{ code: string }>("/attendance/check-in/sessions", {
+    method: "POST",
+    body: {
+      branch_id: orNull(data, "branch_id"),
+      attendance_date: orNull(data, "attendance_date"),
+      service_day: orNull(data, "service_day"),
+      minutes_open: num(data, "minutes_open") ?? 180,
+      announce: str(data, "announce") !== "false",
+    },
+  });
+  if (!result.ok) return fail(result.error);
+  revalidatePath("/app/check-in");
+  return { message: `Check-in is open. The code is ${result.data.code}.` };
+}
+
+export async function closeCheckIn(_prev: FormState, data: FormData): Promise<FormState> {
+  const result = await api(`/attendance/check-in/sessions/${str(data, "id")}/close`, { method: "POST" });
+  if (!result.ok) return fail(result.error);
+  revalidatePath("/app/check-in");
+  return { message: "Check-in closed." };
+}
+
+export async function checkIn(_prev: FormState, data: FormData): Promise<FormState> {
+  const code = str(data, "code");
+  if (!code) return { error: "Type the code shown at church.", fieldErrors: { code: "Required" } };
+  const result = await api<{ status: string; branch_name: string | null }>("/attendance/check-in", {
+    method: "POST",
+    body: { code },
+  });
+  if (!result.ok) return { error: result.error.detail, fieldErrors: { code: result.error.detail } };
+  revalidatePath("/app/check-in");
+  revalidatePath("/app");
+  return {
+    message: result.data.status === "already" ? "You were already checked in." : "You are checked in. Welcome!",
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* reminders                                                           */
+/* ------------------------------------------------------------------ */
+
+export async function setReminder(_prev: FormState, data: FormData): Promise<FormState> {
+  const id = str(data, "event_id");
+  const cancel = str(data, "cancel") === "true";
+  const minutes = num(data, "minutes_before") ?? 60;
+  const result = cancel
+    ? await api(`/events/${id}/reminders`, { method: "DELETE" })
+    : await api(`/events/${id}/reminders`, {
+        method: "POST",
+        body: { minutes_before: minutes, starts_at: orNull(data, "starts_at") },
+      });
+  if (!result.ok) return fail(result.error);
+  revalidatePath(`/app/events/${id}`);
+  if (cancel) return { message: "Reminder removed." };
+  const label = minutes >= 1440 ? `${minutes / 1440} day${minutes === 1440 ? "" : "s"}` : minutes >= 60 ? `${minutes / 60} hour${minutes === 60 ? "" : "s"}` : `${minutes} minutes`;
+  return { message: `We will remind you ${label} before.` };
+}
+
+/* ------------------------------------------------------------------ */
+/* households                                                          */
+/* ------------------------------------------------------------------ */
+
+export async function saveHousehold(_prev: FormState, data: FormData): Promise<FormState> {
+  const id = str(data, "id");
+  const name = str(data, "name");
+  if (!name) return { error: "Give the household a name.", fieldErrors: { name: "Required" } };
+  const fields = {
+    name,
+    address: orNull(data, "address"),
+    phone_number: orNull(data, "phone_number"),
+    notes: orNull(data, "notes"),
+  };
+  const first = str(data, "user_id");
+  const result = id
+    ? await api<{ id: string }>(`/households/${id}`, { method: "PATCH", body: fields })
+    : await api<{ id: string }>("/households/", {
+        method: "POST",
+        body: { ...fields, members: first ? [{ user_id: first, role: str(data, "role") || "head" }] : [] },
+      });
+  if (!result.ok) return fail(result.error);
+  revalidatePath("/app/households");
+  revalidatePath(`/app/households/${result.data.id}`);
+  if (first) revalidatePath(`/app/people/${first}`);
+  return { message: id ? "Household saved." : "Household added." };
+}
+
+export async function addToHousehold(_prev: FormState, data: FormData): Promise<FormState> {
+  const household = str(data, "household_id");
+  const user_id = str(data, "user_id");
+  if (!user_id) return { error: "Choose somebody.", fieldErrors: { user_id: "Required" } };
+  const result = await api(`/households/${household}/members`, {
+    method: "POST",
+    body: { user_id, role: str(data, "role") || "other" },
+  });
+  if (!result.ok) return fail(result.error);
+  revalidatePath(`/app/households/${household}`);
+  revalidatePath("/app/households");
+  revalidatePath(`/app/people/${user_id}`);
+  return { message: "Added to the household." };
+}
+
+export async function removeFromHousehold(_prev: FormState, data: FormData): Promise<FormState> {
+  const household = str(data, "household_id");
+  const user_id = str(data, "user_id");
+  const result = await api(`/households/${household}/members/${user_id}`, { method: "DELETE" });
+  if (!result.ok) return fail(result.error);
+  revalidatePath(`/app/households/${household}`);
+  revalidatePath("/app/households");
+  revalidatePath(`/app/people/${user_id}`);
+  return { message: "Taken out of the household." };
+}
+
+export async function deleteHousehold(_prev: FormState, data: FormData): Promise<FormState> {
+  const result = await api(`/households/${str(data, "id")}`, { method: "DELETE" });
+  if (!result.ok) return fail(result.error);
+  revalidatePath("/app/households");
+  // The page it was pressed on no longer exists.
+  redirect("/app/households");
+}
+
+/* ------------------------------------------------------------------ */
+/* phones                                                              */
+/* ------------------------------------------------------------------ */
+
+export async function forgetDevice(_prev: FormState, data: FormData): Promise<FormState> {
+  const result = await api(`/users/me/devices/${str(data, "id")}`, { method: "DELETE" });
+  if (!result.ok) return fail(result.error);
+  revalidatePath("/app/account");
+  return { message: "That phone will not be notified any more." };
 }

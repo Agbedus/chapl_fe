@@ -2120,3 +2120,368 @@ export function OwnerEditor({
     </Editor>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* sermons                                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Adding a sermon to the library.
+ *
+ * The sermons page could list and never add, so the library was filled
+ * from somewhere else or not at all. Publishing tells the church, the
+ * way an event does — a draft tells nobody.
+ */
+export function SermonEditor({
+  action,
+  sermon,
+  branches,
+}: {
+  action: Action;
+  sermon?: {
+    id: string;
+    title: string;
+    sermon_date: string;
+    preacher_name: string | null;
+    series: string | null;
+    part: number | null;
+    scripture_reference: string | null;
+    description: string | null;
+    branch_id: string | null;
+    video_url: string | null;
+    audio_url: string | null;
+    is_published: boolean;
+  };
+  branches: Option[];
+}) {
+  return (
+    <Editor
+      label={sermon ? "Edit" : "Add a sermon"}
+      submit={sermon ? "Save" : "Add sermon"}
+      context="A link to the video or audio is what members play. Published, it tells the church it is there."
+      action={action}
+      tone={sermon ? "var(--sunk)" : "var(--ruby)"}
+      icon={sermon ? <Pencil className="h-3.5 w-3.5" aria-hidden /> : undefined}
+    >
+      {(state) => (
+        <div className="space-y-4">
+          {sermon && <input type="hidden" name="id" value={sermon.id} />}
+          <Field label="Title" name="title" required defaultValue={sermon?.title}
+                 error={state.fieldErrors?.title} example="Walking in the light"
+                 icon={<Megaphone className="h-full w-full" />} />
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            <DateField label="Preached on" name="sermon_date" required
+                       defaultValue={sermon?.sermon_date?.slice(0, 10)}
+                       error={state.fieldErrors?.sermon_date} />
+            <Field label="Preacher" name="preacher_name" defaultValue={sermon?.preacher_name ?? ""}
+                   example="Pastor Mensah" icon={<User className="h-full w-full" />} />
+            <Field label="Series" name="series" defaultValue={sermon?.series ?? ""}
+                   placeholder="Series · optional" icon={<Layers className="h-full w-full" />} />
+            <Field label="Part" name="part" type="number" defaultValue={sermon?.part != null ? String(sermon.part) : ""}
+                   placeholder="Part · optional" icon={<Hash className="h-full w-full" />} />
+          </div>
+          <Field label="Scripture" name="scripture_reference" defaultValue={sermon?.scripture_reference ?? ""}
+                 placeholder="Scripture · e.g. John 1:1–14" icon={<Tag className="h-full w-full" />} />
+          <Field label="Video link" name="video_url" type="url" defaultValue={sermon?.video_url ?? ""}
+                 placeholder="Video link · YouTube or similar" error={state.fieldErrors?.video_url}
+                 icon={<Link2 className="h-full w-full" />} />
+          <Field label="Audio link" name="audio_url" type="url" defaultValue={sermon?.audio_url ?? ""}
+                 placeholder="Audio link · optional" icon={<Link2 className="h-full w-full" />} />
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            <Select label="Branch" name="branch_id" options={branches}
+                    defaultValue={sermon?.branch_id ?? ""}
+                    placeholder="Branch · leave empty for the whole church"
+                    icon={<Building2 className="h-full w-full" />} />
+            <Select label="Status" name="is_published" required
+                    defaultValue={sermon ? String(sermon.is_published) : "true"}
+                    icon={<ToggleLeft className="h-full w-full" />}
+                    options={[
+                      { value: "true", label: "Published — tell the church" },
+                      { value: "false", label: "Draft" },
+                    ]} />
+          </div>
+          <Area label="Summary" name="description" rows={3} defaultValue={sermon?.description ?? ""}
+                placeholder="Summary · optional" />
+        </div>
+      )}
+    </Editor>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* check-ups                                                           */
+/* ------------------------------------------------------------------ */
+
+/** Logging a call made to somebody, from their page. */
+export function CheckupEditor({
+  action,
+  memberId,
+  name,
+}: {
+  action: Action;
+  memberId: string;
+  name: string;
+}) {
+  return (
+    <Editor
+      label="Log a check-up"
+      submit="Log it"
+      context={`A call or visit to ${name}. Needing a follow-up puts them in the dashboard's queue.`}
+      action={action}
+      tone="var(--ruby)"
+      icon={<Phone className="h-3.5 w-3.5" aria-hidden />}
+    >
+      {() => (
+        <div className="space-y-4">
+          <input type="hidden" name="member_id" value={memberId} />
+          <DateField label="When" name="checkup_date" required />
+          <Select label="How it went" name="status" required defaultValue="reached"
+                  icon={<Check className="h-full w-full" />}
+                  options={[
+                    { value: "reached", label: "Reached them" },
+                    { value: "not_reached", label: "Could not reach them" },
+                    { value: "follow_up_needed", label: "Needs a follow-up" },
+                    { value: "resolved", label: "Resolved" },
+                  ]} />
+          <Area label="Notes" name="notes" rows={3} placeholder="Notes · what was said, what is needed" />
+        </div>
+      )}
+    </Editor>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* check-in                                                            */
+/* ------------------------------------------------------------------ */
+
+/** Opening a service for members to check themselves in. */
+export function CheckInOpenEditor({
+  action,
+  branches,
+  wholeChurch,
+}: {
+  action: Action;
+  branches: Option[];
+  /** May open a church-wide check-in, rather than only a branch's. */
+  wholeChurch: boolean;
+}) {
+  return (
+    <Editor
+      label="Open check-in"
+      submit="Open it"
+      context="You get a short code to put on the screen. Members type it on their phone to mark themselves present."
+      action={action}
+      tone="var(--gold)"
+      icon={<Check className="h-3.5 w-3.5" aria-hidden />}
+    >
+      {(state) => (
+        <div className="space-y-4">
+          <Select label="Where" name="branch_id" options={branches}
+                  required={!wholeChurch}
+                  defaultValue={branches.length === 1 && !wholeChurch ? branches[0].value : ""}
+                  placeholder={wholeChurch ? "Branch · leave empty for the whole church" : "Branch"}
+                  error={state.fieldErrors?.branch_id}
+                  icon={<Building2 className="h-full w-full" />} />
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            <DateField label="Service date" name="attendance_date" hint="Leave empty for today" />
+            <Select label="Service" name="service_day" options={DAYS}
+                    placeholder="Service · the day of the date"
+                    icon={<CalendarDays className="h-full w-full" />} />
+          </div>
+          <Select label="Open for" name="minutes_open" required defaultValue="180"
+                  icon={<Clock className="h-full w-full" />}
+                  options={[
+                    { value: "60", label: "One hour" },
+                    { value: "120", label: "Two hours" },
+                    { value: "180", label: "Three hours" },
+                    { value: "360", label: "Six hours" },
+                  ]} />
+          <Select label="Tell members" name="announce" required defaultValue="true"
+                  icon={<Megaphone className="h-full w-full" />}
+                  options={[
+                    { value: "true", label: "Yes — notify them it is open" },
+                    { value: "false", label: "No, keep it quiet" },
+                  ]} />
+        </div>
+      )}
+    </Editor>
+  );
+}
+
+/**
+ * The member's half: type the code from the screen.
+ *
+ * Inline rather than in a modal — it is one field, and the person is
+ * standing in church holding their phone.
+ */
+export function CheckInBox({ action }: { action: Action }) {
+  const [state, formAction] = useActionState(action, EMPTY);
+  useEffect(() => {
+    if (state.message) toast(state.message);
+  }, [state]);
+  return (
+    <form action={formAction} className="flex flex-wrap items-start gap-2">
+      <div className="min-w-[12rem] flex-1">
+        <Field label="Code" name="code" required autoComplete="off"
+               placeholder="Code shown at church · e.g. K7M2QX"
+               error={state.fieldErrors?.code}
+               icon={<Hash className="h-full w-full" />} />
+      </div>
+      <Submit full={false}>Check in</Submit>
+    </form>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* reminders                                                           */
+/* ------------------------------------------------------------------ */
+
+/** "Remind me" on an event, inline. */
+export function ReminderControl({
+  action,
+  eventId,
+  startsAt,
+  current,
+}: {
+  action: Action;
+  eventId: string;
+  /** The occurrence, for a repeating event. */
+  startsAt?: string;
+  /** When the waiting reminder fires, if there is one. */
+  current?: string | null;
+}) {
+  const [state, formAction] = useActionState(action, EMPTY);
+  useEffect(() => {
+    if (state.message) toast(state.message);
+  }, [state]);
+  return (
+    <div className="space-y-2">
+      <form action={formAction} className="flex flex-wrap items-center gap-2">
+        <input type="hidden" name="event_id" value={eventId} />
+        {startsAt && <input type="hidden" name="starts_at" value={startsAt} />}
+        <div className="min-w-[12rem]">
+          <Select label="How long before" name="minutes_before" required defaultValue="60"
+                  icon={<Clock className="h-full w-full" />}
+                  options={[
+                    { value: "30", label: "30 minutes before" },
+                    { value: "60", label: "1 hour before" },
+                    { value: "180", label: "3 hours before" },
+                    { value: "1440", label: "1 day before" },
+                    { value: "2880", label: "2 days before" },
+                  ]} />
+        </div>
+        <Submit full={false}>{current ? "Change reminder" : "Remind me"}</Submit>
+      </form>
+      {current && (
+        <form action={formAction}>
+          <input type="hidden" name="event_id" value={eventId} />
+          <input type="hidden" name="cancel" value="true" />
+          <button type="submit" className="btn btn-quiet btn-sm">Remove reminder</button>
+        </form>
+      )}
+      {state.error && <Notice kind="error">{state.error}</Notice>}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* households                                                          */
+/* ------------------------------------------------------------------ */
+
+export const HOUSEHOLD_ROLES = [
+  { value: "head", label: "Head of household" },
+  { value: "spouse", label: "Spouse" },
+  { value: "child", label: "Child" },
+  { value: "relative", label: "Relative" },
+  { value: "other", label: "Other" },
+];
+
+/** Starting or editing a household. A new one can take its first person. */
+export function HouseholdEditor({
+  action,
+  household,
+  people,
+  person,
+}: {
+  action: Action;
+  household?: {
+    id: string;
+    name: string;
+    address: string | null;
+    phone_number: string | null;
+    notes: string | null;
+  };
+  /** Candidates for the first person, when starting one. */
+  people?: Option[];
+  /** Start it around this person — from their page. */
+  person?: { id: string; name: string };
+}) {
+  return (
+    <Editor
+      label={household ? "Edit" : person ? "Start a household" : "Add a household"}
+      submit={household ? "Save" : "Add household"}
+      context="A household is a family — who lives with whom. It is separate from cells, so a family can span several."
+      action={action}
+      tone={household ? "var(--sunk)" : "var(--cobalt)"}
+      icon={household ? <Pencil className="h-3.5 w-3.5" aria-hidden /> : undefined}
+    >
+      {(state) => (
+        <div className="space-y-4">
+          {household && <input type="hidden" name="id" value={household.id} />}
+          <Field label="Name" name="name" required defaultValue={household?.name ?? (person ? `The ${person.name.split(" ").slice(-1)[0]} family` : "")}
+                 error={state.fieldErrors?.name} example="The Mensah family"
+                 icon={<Users className="h-full w-full" />} />
+          {!household && person && <input type="hidden" name="user_id" value={person.id} />}
+          {!household && !person && people && (
+            <ComboField label="First person" name="user_id" options={people}
+                        placeholder="First person · optional"
+                        icon={<User className="h-full w-full" />} />
+          )}
+          {!household && (
+            <Select label="Their place" name="role" defaultValue="head" options={HOUSEHOLD_ROLES}
+                    icon={<ShieldCheck className="h-full w-full" />} />
+          )}
+          <Field label="Address" name="address" defaultValue={household?.address ?? ""}
+                 placeholder="Address · optional" icon={<MapPin className="h-full w-full" />} />
+          <Field label="Home phone" name="phone_number" type="tel" defaultValue={household?.phone_number ?? ""}
+                 placeholder="Home phone · optional" icon={<Phone className="h-full w-full" />} />
+          <Area label="Notes" name="notes" rows={2} defaultValue={household?.notes ?? ""}
+                placeholder="Notes · optional" />
+        </div>
+      )}
+    </Editor>
+  );
+}
+
+/** Adding somebody to a household, or changing their place in it. */
+export function HouseholdMemberEditor({
+  action,
+  householdId,
+  candidates,
+}: {
+  action: Action;
+  householdId: string;
+  candidates: Option[];
+}) {
+  return (
+    <Editor
+      label="Add someone"
+      submit="Add to household"
+      context="Someone already in another household is moved here — a person lives in one home."
+      action={action}
+      tone="var(--cobalt)"
+    >
+      {(state) => (
+        <div className="space-y-4">
+          <input type="hidden" name="household_id" value={householdId} />
+          <ComboField label="Person" name="user_id" required options={candidates}
+                      placeholder="Person · search by name or email"
+                      error={state.fieldErrors?.user_id}
+                      icon={<User className="h-full w-full" />} />
+          <Select label="Their place" name="role" required defaultValue="other" options={HOUSEHOLD_ROLES}
+                  icon={<ShieldCheck className="h-full w-full" />} />
+        </div>
+      )}
+    </Editor>
+  );
+}

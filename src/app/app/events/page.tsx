@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { canWrite } from "@/lib/access";
 import { saveEvent } from "@/app/actions/manage";
+import type { Schemas } from "@/lib/generated/api";
 import { Calendar, type CalendarEvent } from "@/components/calendar";
 import { EventEditor } from "@/components/editors";
 import { Page, PageHead, Panel, StatCard } from "@/components/panels";
@@ -38,11 +39,22 @@ export default async function EventsPage() {
   const me = await requireMe("/app/events");
   const churchId = await currentChurchId();
 
-  const [list, branchList, cellList, today] = await Promise.all([
+  // The calendar's window: a couple of months back, ten or so ahead.
+  // The API answers at most 400 days at a time, and asking for more
+  // fails the whole request — the calendar then falls back to showing
+  // each repeating event once.
+  const from = new Date();
+  from.setMonth(from.getMonth() - 2, 1);
+  const to = new Date(from.getTime() + 395 * 24 * 60 * 60 * 1000);
+
+  const [list, branchList, cellList, today, dated] = await Promise.all([
     api<Paged<ChurchEvent>>("/events/?limit=400&sort=start_date&order=asc"),
     api<Paged<Branch>>("/branches/?limit=200&sort=name&order=asc"),
     api<Paged<Cell>>("/cells/?limit=300&sort=code&order=asc"),
     now(),
+    api<Schemas["EventOccurrenceList"]>(
+      `/events/occurrences?start=${from.toISOString().slice(0, 19)}&end=${to.toISOString().slice(0, 19)}`,
+    ),
   ]);
 
   if (!list.ok) {
@@ -70,15 +82,24 @@ export default async function EventsPage() {
   const needsSignup = rows.filter((e) => e.registration_required).length;
   const next = upcoming[0];
 
-  const events: CalendarEvent[] = rows.map((e) => ({
-    id: e.id,
-    title: e.title,
+  // Repeats expanded by the API: a weekly service is on every Sunday,
+  // not just the first. Falls back to the plain list if that fails.
+  const byId = new Map(rows.map((e) => [e.id, e]));
+  const occurrences = dated.ok
+    ? dated.data.items.map((o) => ({ ...byId.get(o.event_id), ...o, id: o.event_id }))
+    : rows.map((e) => ({ ...e, event_id: e.id, starts_at: e.start_date, ends_at: e.end_date, repeats: false }));
+
+  const events: CalendarEvent[] = occurrences.map((e) => ({
+    id: `${e.event_id}@${e.starts_at}`,
+    href: `/app/events/${e.event_id}`,
+    repeats: Boolean(e.repeats),
+    title: e.title ?? "",
     type: e.event_type ?? "other",
-    tone: TYPE_TONE[e.event_type] ?? "var(--ink-3)",
-    start: e.start_date,
-    end: e.end_date,
-    allDay: e.is_all_day,
-    location: e.location,
+    tone: TYPE_TONE[e.event_type ?? "other"] ?? "var(--ink-3)",
+    start: e.starts_at,
+    end: e.ends_at ?? null,
+    allDay: Boolean(e.is_all_day),
+    location: e.location ?? null,
     // The narrowest scope set is the audience, exactly as the fan-out
     // resolves it: a cell beats a branch, a branch beats the church.
     scope: e.cell_id
@@ -86,8 +107,8 @@ export default async function EventsPage() {
       : e.branch_id
         ? (branchName.get(e.branch_id) ?? "One branch")
         : "Everyone",
-    published: e.is_published,
-    needsSignup: e.registration_required,
+    published: Boolean(e.is_published),
+    needsSignup: Boolean((e as { registration_required?: boolean }).registration_required),
   }));
 
   return (

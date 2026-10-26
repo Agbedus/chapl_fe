@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CheckInPrompt } from "@/components/check-in-prompt";
 import { CalendarCheck, History, ShieldCheck, UserPlus } from "lucide-react";
 
 import {
@@ -396,6 +397,8 @@ function View({
           )}
         </div>
       </header>
+
+      <CheckInPrompt />
 
       {!platform && (
         <SetupChecklist data={data} invitations={invitations} hasTeam={hasTeam} />

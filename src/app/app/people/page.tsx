@@ -1,6 +1,6 @@
 import { canWrite } from "@/lib/access";
 import Link from "next/link";
-import { Search, UserPlus } from "lucide-react";
+import { Search, FileUp, UserPlus } from "lucide-react";
 
 import { Sparkline } from "@/components/charts";
 import { DataTable, type TableColumn, type TableRow } from "@/components/data-table";
@@ -159,9 +159,19 @@ export default async function PeoplePage({
         title={`${total.toLocaleString()} ${total === 1 ? "person" : "people"}`}
         lede="Everyone you can see. Search runs against the database."
         action={
-          canWrite(me, "membership") ? <Action href="/app/invitations" icon={<UserPlus className="h-4 w-4" aria-hidden />}>
-            Invite someone
-          </Action> : null
+          <span className="flex flex-wrap items-center gap-2">
+            {canWrite(me, "user") && (
+              <Link href="/app/people/import" className="btn btn-quiet btn-sm">
+                <FileUp className="h-3.5 w-3.5" aria-hidden />
+                Import
+              </Link>
+            )}
+            {canWrite(me, "membership") && (
+              <Action href="/app/invitations" icon={<UserPlus className="h-4 w-4" aria-hidden />}>
+                Invite someone
+              </Action>
+            )}
+          </span>
         }
       />
 

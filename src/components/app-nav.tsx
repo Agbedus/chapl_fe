@@ -28,6 +28,9 @@ import {
   ShieldCheck,
   History,
   ArrowLeftRight,
+  CalendarCheck,
+  HeartHandshake,
+  House as HomeIcon,
 } from "lucide-react";
 
 export type Item = {
@@ -71,6 +74,10 @@ export const SECTIONS: { heading: string; items: Item[] }[] = [
       { href: "/app/sermons", label: "Sermons", icon: Mic, tone: "var(--ruby)", needs: "sermon" },
       { href: "/app/events", label: "Events", icon: CalendarDays, tone: "var(--violet)", needs: "event" },
       { href: "/app/notices", label: "Notices", icon: Megaphone, tone: "var(--cobalt)", needs: "notice" },
+      // Open to everyone: a member checks in and asks for prayer here;
+      // a leader opens the service and answers the requests.
+      { href: "/app/check-in", label: "Check in", icon: CalendarCheck, tone: "var(--gold)" },
+      { href: "/app/care", label: "Care", icon: HeartHandshake, tone: "var(--ruby)" },
     ],
   },
   {
@@ -85,6 +92,7 @@ export const SECTIONS: { heading: string; items: Item[] }[] = [
     heading: "People",
     items: [
       { href: "/app/people", label: "Everyone", icon: Users, tone: "var(--cobalt)", needs: "user" },
+      { href: "/app/households", label: "Households", icon: HomeIcon, tone: "var(--teal)", needs: "user" },
       { href: "/app/invitations", label: "Invitations", icon: MailPlus, tone: "var(--gold)", needs: "membership" },
       { href: "/app/team", label: "Team & roles", icon: ShieldCheck, tone: "var(--ruby)", needs: "assignment" },
     ],

@@ -7,9 +7,14 @@ import {
   Shield, Sparkles, Users,
 } from "lucide-react";
 
-import { savePerson, savePlacement } from "@/app/actions/manage";
+import {
+  addToHousehold, logCheckup, removeFromHousehold, saveHousehold, savePerson, savePlacement,
+} from "@/app/actions/manage";
 import { DonutChart } from "@/components/charts";
-import { PersonEditor, PlacementEditor } from "@/components/editors";
+import {
+  ActionButton, CheckupEditor, HouseholdEditor, HouseholdMemberEditor, PersonEditor, PlacementEditor,
+} from "@/components/editors";
+import { canRead, canWrite } from "@/lib/access";
 import {
   Detail, Empty, Meter, Page, Panel, RingPanel, StatCard,
 } from "@/components/panels";
@@ -139,6 +144,15 @@ export default async function PersonPage({
       churchId ? api<Church>(`/churches/${churchId}`) : Promise.resolve(null),
       api<Schemas["MembershipHistoryRead"][]>(`/users/${id}/membership-history`),
     ]);
+  // Their family, and the directory to add to it from. Asked separately
+  // because a member reading their own page may not read the directory.
+  const [householdResult, directory] = await Promise.all([
+    api<Schemas["HouseholdRead"] | null>(`/households/of/${id}`),
+    canWrite(me, "user")
+      ? api<Paged<Person>>("/users/?limit=2000&sort=full_name&order=asc")
+      : Promise.resolve(null),
+  ]);
+  const household = householdResult.ok ? householdResult.data : null;
 
   if (!personResult.ok) {
     if (personResult.error.status === 404) notFound();
@@ -251,7 +265,12 @@ export default async function PersonPage({
         >
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden /> Everyone
         </Link>
-        {privileged && <PersonEditor action={savePerson} person={person} />}
+        <span className="flex flex-wrap items-center gap-2">
+          {canWrite(me, "checkup") && !isSelf && (
+            <CheckupEditor action={logCheckup} memberId={person.id} name={person.full_name} />
+          )}
+          {privileged && <PersonEditor action={savePerson} person={person} />}
+        </span>
       </div>
 
       {/*
@@ -667,6 +686,64 @@ export default async function PersonPage({
               </ul>
             )}
           </section>
+
+          {(household || canWrite(me, "user")) && (
+            <Panel
+              title="Household"
+              lede={household ? household.name : "Not in a household yet"}
+              accent="var(--cobalt)"
+              aside={
+                household ? (
+                  canWrite(me, "user") && directory?.ok ? (
+                    <HouseholdMemberEditor
+                      action={addToHousehold}
+                      householdId={household.id}
+                      candidates={directory.data.items
+                        .filter((p) => !(household.members ?? []).some((m) => m.user_id === p.id))
+                        .map((p) => ({ value: p.id, label: `${p.full_name} · ${p.email}` }))}
+                    />
+                  ) : undefined
+                ) : (
+                  <HouseholdEditor action={saveHousehold} person={{ id: person.id, name: person.full_name }} />
+                )
+              }
+            >
+              {household ? (
+                <ul className="space-y-1.5">
+                  {(household.members ?? []).map((m) => (
+                    <li key={m.user_id} className="flex items-center justify-between gap-2 text-[12.5px]">
+                      <span className="min-w-0">
+                        {canRead(me, "user") ? (
+                          <Link href={`/app/people/${m.user_id}`} className="font-medium text-ink hover:underline">
+                            {m.full_name}
+                          </Link>
+                        ) : (
+                          <span className="font-medium text-ink">{m.full_name}</span>
+                        )}
+                        <span className="ml-1.5 text-[11px] capitalize text-ink-3">{m.role}</span>
+                      </span>
+                      {canWrite(me, "user") && m.user_id !== person.id && (
+                        <ActionButton
+                          action={removeFromHousehold}
+                          fields={{ household_id: household.id, user_id: m.user_id }}
+                          label="Remove"
+                          tone="danger"
+                          confirm={`Take ${m.full_name} out of ${household.name}?`}
+                        />
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <Empty>Group {person.full_name.split(" ")[0]} with the people they live with.</Empty>
+              )}
+              {household && canRead(me, "user") && (
+                <Link href={`/app/households/${household.id}`} className="mt-2 inline-block text-[11.5px] text-ink-3 hover:underline">
+                  Open household
+                </Link>
+              )}
+            </Panel>
+          )}
 
           {showEmergency && (
             <Panel title="In an emergency" accent="var(--ruby)" quiet>

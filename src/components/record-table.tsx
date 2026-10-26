@@ -34,6 +34,7 @@ export async function RecordTable<T extends { id: string }>({
   columns,
   empty,
   searchParams,
+  action,
 }: {
   eyebrow?: string;
   title: string;
@@ -43,6 +44,8 @@ export async function RecordTable<T extends { id: string }>({
   columns: Column<T>[];
   empty: string;
   searchParams: Promise<{ page?: string }>;
+  /** A control beside the count — "Add a sermon". */
+  action?: React.ReactNode;
 }) {
   const params = await searchParams;
   const page = Math.max(1, Number(params.page ?? 1) || 1);
@@ -63,11 +66,16 @@ export async function RecordTable<T extends { id: string }>({
         title={title}
         lede={lede}
         action={
-          result.ok ? (
-            <p className="tnum text-[13px] text-ink-3">
-              {total.toLocaleString()} record
-              {total === 1 ? "" : "s"}
-            </p>
+          result.ok || action ? (
+            <span className="flex items-center gap-3">
+              {result.ok && (
+                <p className="tnum text-[13px] text-ink-3">
+                  {total.toLocaleString()} record
+                  {total === 1 ? "" : "s"}
+                </p>
+              )}
+              {action}
+            </span>
           ) : undefined
         }
       />

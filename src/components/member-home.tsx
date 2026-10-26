@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CheckInPrompt } from "@/components/check-in-prompt";
 import { CalendarDays, Megaphone, Users as UsersIcon } from "lucide-react";
 
 import { raiseCareRequest } from "@/app/actions/manage";
@@ -81,6 +82,8 @@ export function MemberHome({
           )}
         </div>
       </header>
+
+      <CheckInPrompt />
 
       {/* --- the next thing that happens ---------------------------- */}
       <Panel

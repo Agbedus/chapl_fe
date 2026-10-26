@@ -5,10 +5,11 @@ import {
 } from "lucide-react";
 
 import { changePassword } from "@/app/actions/auth";
-import { saveMyDetails } from "@/app/actions/manage";
+import { forgetDevice, saveMyDetails } from "@/app/actions/manage";
 import { DonutChart } from "@/components/charts";
 import { PhoneLink } from "@/components/contact";
-import { PasswordEditor, SelfEditor } from "@/components/editors";
+import { ActionButton, PasswordEditor, SelfEditor } from "@/components/editors";
+import type { Schemas } from "@/lib/generated/api";
 import {
   Empty, Meter, Page, Panel, RingPanel, StatCard,
 } from "@/components/panels";
@@ -128,6 +129,15 @@ export default async function AccountPage() {
     churchId ? api<PersonProfile>(`/users/${me.id}/profile`) : Promise.resolve(null),
     churchId ? api<Church>(`/churches/${churchId}`) : Promise.resolve(null),
   ]);
+
+  const [devices, householdResult, status] = await Promise.all([
+    api<Schemas["DeviceRead"][]>("/users/me/devices"),
+    churchId ? api<Schemas["HouseholdRead"] | null>("/households/mine") : Promise.resolve(null),
+    api<{ push?: boolean }>("/system/status"),
+  ]);
+  const phones = devices.ok ? devices.data : [];
+  const household = householdResult?.ok ? householdResult.data : null;
+  const pushOn = status.ok ? Boolean(status.data.push) : false;
 
   const record = me;
   const stats = profileResult?.ok ? profileResult.data : null;
@@ -417,6 +427,53 @@ export default async function AccountPage() {
                 </ul>
               ) : (
                 <Empty>Nothing recorded beyond your name and how to reach you.</Empty>
+              )}
+            </Panel>
+
+            <Panel
+              title="Your household"
+              lede={household ? household.name : "Not recorded"}
+              accent="var(--cobalt)"
+            >
+              {household ? (
+                <ul className="space-y-1">
+                  {(household.members ?? []).map((m) => (
+                    <li key={m.user_id} className="flex items-baseline justify-between gap-2 text-[12.5px]">
+                      <span className="font-medium text-ink">{m.full_name}</span>
+                      <span className="text-[11px] capitalize text-ink-3">{m.role}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <Empty>Your church office can group you with the people you live with.</Empty>
+              )}
+            </Panel>
+
+            <Panel
+              title="Phones getting notifications"
+              lede={pushOn ? "Signed in to the Chapl app" : "Phone notifications are not switched on for this server yet"}
+              accent="var(--gold)"
+            >
+              {phones.length === 0 ? (
+                <Empty>None yet. Sign in to the Chapl app on your phone and it will appear here.</Empty>
+              ) : (
+                <ul className="space-y-1.5">
+                  {phones.map((d) => (
+                    <li key={d.id} className="flex items-center justify-between gap-2 text-[12.5px]">
+                      <span>
+                        <span className="font-medium text-ink">{d.label || (d.platform === "ios" ? "iPhone" : d.platform === "android" ? "Android phone" : "Browser")}</span>
+                        <span className="ml-1.5 text-[11px] text-ink-3">last seen {d.last_seen_at.slice(0, 10)}</span>
+                      </span>
+                      <ActionButton
+                        action={forgetDevice}
+                        fields={{ id: d.id }}
+                        label="Remove"
+                        tone="danger"
+                        confirm="Stop sending notifications to this phone?"
+                      />
+                    </li>
+                  ))}
+                </ul>
               )}
             </Panel>
 

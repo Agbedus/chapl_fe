@@ -22,6 +22,7 @@ export interface Schemas {
   "Body_login_api_v1_auth_login_post": { "grant_type"?: (string | null); "username": string; "password": string; "scope"?: string; "client_id"?: (string | null); "client_secret"?: (string | null); };
   "Body_resend_otp_api_v1_auth_resend_otp_post": { "email": string; "purpose"?: "activation"; };
   "Body_reset_password_api_v1_auth_reset_password_post": { "token": string; "new_password": string; };
+  "Body_upload_my_avatar_api_v1_users_me_avatar_put": { "file": string; };
   "Body_verify_otp_api_v1_auth_verify_otp_post": { "email": string; "otp": string; "purpose"?: "activation"; };
   "BranchCreate": { "code": string; "name": string; "location"?: (string | null); "address"?: (string | null); "capacity"?: (number | null); "latitude"?: (number | null); "longitude"?: (number | null); "is_active"?: boolean; "contact_email"?: (string | null); "contact_phone"?: (string | null); "service_times"?: (string | null); "opened_date"?: (string | null); };
   "BranchList": { "items": Array<Schemas["BranchRead"]>; "total": number; };
@@ -40,6 +41,12 @@ export interface Schemas {
   "CellRow": { "id": string; "name": string; "code": string; "branch_id": string; "branch": string; "members": number; "turnout": number; "last_seen": (string | null); "band": "thriving" | "steady" | "at risk"; };
   "CellUpdate": { "name"?: (string | null); "motto"?: (string | null); "description"?: (string | null); "meeting_day"?: (Schemas["ServiceDay"] | null); "meeting_time"?: (string | null); "host_location"?: (string | null); "branch_id"?: (string | null); "is_active"?: (boolean | null); "meeting_frequency"?: (Schemas["MeetingFrequency"] | null); "target_size"?: (number | null); };
   "ChangePassword": { "old_password": string; "new_password": string; };
+  "CheckInAvailable": { "id": string; "branch_name"?: (string | null); "attendance_date": string; "service_day": Schemas["ServiceDay"]; "closes_at": string; "checked_in": boolean; };
+  "CheckInOpen": { "branch_id"?: (string | null); "attendance_date"?: (string | null); "service_day"?: (Schemas["ServiceDay"] | null); "minutes_open"?: number; "announce"?: boolean; };
+  "CheckInRequest": { "code": string; };
+  "CheckInResult": { "status": string; "attendance_date": string; "service_day": Schemas["ServiceDay"]; "branch_name"?: (string | null); };
+  "CheckInSessionList": { "items": Array<Schemas["CheckInSessionRead"]>; };
+  "CheckInSessionRead": { "id": string; "branch_id"?: (string | null); "branch_name"?: (string | null); "attendance_date": string; "service_day": Schemas["ServiceDay"]; "code"?: (string | null); "closes_at": string; "is_open": boolean; "checked_in"?: number; "created_at": string; };
   "CheckupNote": { "date": string; "status": string; "notes": (string | null); };
   "CheckupStatus": "not_reached" | "reached" | "follow_up_needed" | "resolved";
   "ChurchCreate": { "code": string; "name": string; "legal_name"?: (string | null); "timezone"?: string; "currency"?: string; "logo_url"?: (string | null); "contact_email"?: (string | null); "contact_phone"?: (string | null); "is_active"?: boolean; "website"?: (string | null); "address"?: (string | null); "city"?: (string | null); "country"?: (string | null); "denomination"?: (string | null); "founded_date"?: (string | null); "about"?: (string | null); };
@@ -59,6 +66,8 @@ export interface Schemas {
   "DepartmentRead": { "name": string; "description"?: (string | null); "branch_id"?: (string | null); "is_active"?: boolean; "meeting_day"?: (Schemas["ServiceDay"] | null); "meeting_time"?: (string | null); "id": string; "church_id": string; "created_at": string; "updated_at": string; };
   "DepartmentRef": { "id": string; "name": string; "role": (string | null); };
   "DepartmentUpdate": { "name"?: (string | null); "description"?: (string | null); "branch_id"?: (string | null); "is_active"?: (boolean | null); "meeting_day"?: (Schemas["ServiceDay"] | null); "meeting_time"?: (string | null); };
+  "DeviceRead": { "id": string; "platform": string; "label"?: (string | null); "created_at": string; "last_seen_at": string; };
+  "DeviceRegister": { "token": string; "platform": "ios" | "android" | "web"; "label"?: (string | null); };
   "DonationCreate": { "amount": number; "currency"?: string; "donation_type"?: string; "description"?: (string | null); "payment_method"?: (string | null); "payment_provider"?: string; "metadata_json"?: (Record<string, unknown> | null); "is_anonymous"?: boolean; "receipt_number"?: (string | null); "given_on"?: (string | null); "user_id"?: (string | null); };
   "DonationList": { "items": Array<Schemas["DonationRead"]>; "total": number; };
   "DonationRead": { "amount": number; "currency"?: string; "donation_type"?: string; "description"?: (string | null); "payment_method"?: (string | null); "payment_provider"?: string; "metadata_json"?: (Record<string, unknown> | null); "is_anonymous"?: boolean; "receipt_number"?: (string | null); "given_on"?: (string | null); "id": string; "church_id": string; "branch_id"?: (string | null); "user_id"?: (string | null); "status": Schemas["DonationStatus"]; "payment_reference"?: (string | null); "created_at": string; "updated_at": string; "completed_at"?: (string | null); };
@@ -66,9 +75,13 @@ export interface Schemas {
   "DonationUpdate": { "status"?: (Schemas["DonationStatus"] | null); "payment_reference"?: (string | null); "completed_at"?: (string | null); "metadata_json"?: (Record<string, unknown> | null); "is_anonymous"?: (boolean | null); "receipt_number"?: (string | null); "given_on"?: (string | null); };
   "EventCreate": { "title": string; "description"?: (string | null); "event_type"?: Schemas["EventType"]; "start_date": string; "end_date"?: (string | null); "location"?: (string | null); "branch_id"?: (string | null); "cell_id"?: (string | null); "department_id"?: (string | null); "is_published"?: boolean; "max_attendees"?: (number | null); "image_url"?: (string | null); "is_all_day"?: boolean; "registration_required"?: boolean; "registration_closes_at"?: (string | null); "recurrence_rule"?: (string | null); "contact_phone"?: (string | null); };
   "EventList": { "items": Array<Schemas["EventRead"]>; "total": number; };
+  "EventOccurrence": { "event_id": string; "title": string; "event_type": Schemas["EventType"]; "starts_at": string; "ends_at"?: (string | null); "is_all_day"?: boolean; "location"?: (string | null); "branch_id"?: (string | null); "cell_id"?: (string | null); "department_id"?: (string | null); "is_published"?: boolean; "repeats"?: boolean; "recurrence_rule"?: (string | null); };
+  "EventOccurrenceList": { "items": Array<Schemas["EventOccurrence"]>; "start": string; "end": string; };
   "EventRead": { "title": string; "description"?: (string | null); "event_type"?: Schemas["EventType"]; "start_date": string; "end_date"?: (string | null); "location"?: (string | null); "branch_id"?: (string | null); "cell_id"?: (string | null); "department_id"?: (string | null); "is_published"?: boolean; "max_attendees"?: (number | null); "image_url"?: (string | null); "is_all_day"?: boolean; "registration_required"?: boolean; "registration_closes_at"?: (string | null); "recurrence_rule"?: (string | null); "contact_phone"?: (string | null); "id": string; "church_id": string; "created_by"?: (string | null); "created_at": string; "updated_at": string; };
   "EventRegistrationRead": { "id": string; "church_id": string; "event_id": string; "user_id"?: (string | null); "is_active": boolean; "created_at": string; "cancelled_at"?: (string | null); };
   "EventRegistrationSummary": { "registered": boolean; "attendees": number; "capacity"?: (number | null); "registrations"?: Array<Schemas["EventRegistrationRead"]>; };
+  "EventReminderRead": { "id": string; "event_id": string; "reminder_time": string; "notification_title"?: (string | null); "notification_body"?: (string | null); "is_sent": boolean; "sent_at"?: (string | null); "created_at": string; };
+  "EventReminderSet": { "minutes_before"?: number; "starts_at"?: (string | null); };
   "EventType": "service" | "meeting" | "conference" | "prayer" | "outreach" | "other";
   "EventUpdate": { "title"?: (string | null); "description"?: (string | null); "event_type"?: (Schemas["EventType"] | null); "start_date"?: (string | null); "end_date"?: (string | null); "location"?: (string | null); "branch_id"?: (string | null); "cell_id"?: (string | null); "department_id"?: (string | null); "is_published"?: (boolean | null); "max_attendees"?: (number | null); "image_url"?: (string | null); "is_all_day"?: (boolean | null); "registration_required"?: (boolean | null); "registration_closes_at"?: (string | null); "recurrence_rule"?: (string | null); "contact_phone"?: (string | null); };
   "FollowUp": { "id": string; "member_id": string; "full_name": string; "phone_number": (string | null); "checkup_date": string; "status": string; };
@@ -78,6 +91,12 @@ export interface Schemas {
   "GrantableRoles": { "roles": Array<Schemas["GrantableRole"]>; };
   "GrowthPoint": { "month": string; "label": string; "joined": number; "total": number; };
   "HTTPValidationError": { "detail"?: Array<Schemas["ValidationError"]>; };
+  "HouseholdCreate": { "name": string; "address"?: (string | null); "phone_number"?: (string | null); "notes"?: (string | null); "members"?: Array<Schemas["HouseholdMemberAdd"]>; };
+  "HouseholdList": { "items": Array<Schemas["HouseholdRead"]>; "total": number; };
+  "HouseholdMemberAdd": { "user_id": string; "role"?: "head" | "spouse" | "child" | "relative" | "other"; };
+  "HouseholdPerson": { "user_id": string; "full_name": string; "role": "head" | "spouse" | "child" | "relative" | "other"; "email"?: (string | null); "phone_number"?: (string | null); "avatar_url"?: (string | null); "date_of_birth"?: (string | null); "gender"?: (string | null); };
+  "HouseholdRead": { "name": string; "address"?: (string | null); "phone_number"?: (string | null); "notes"?: (string | null); "id": string; "church_id": string; "members"?: Array<Schemas["HouseholdPerson"]>; "created_at": string; "updated_at": string; };
+  "HouseholdUpdate": { "name"?: (string | null); "address"?: (string | null); "phone_number"?: (string | null); "notes"?: (string | null); };
   "InvitationAccept": { "token": string; "full_name"?: (string | null); "password"?: (string | null); };
   "InvitationCreate": { "email": string; "full_name"?: (string | null); "branch_id": string; "cell_id"?: (string | null); "role"?: (Schemas["Role"] | null); };
   "InvitationCreated": { "id": string; "church_id": string; "branch_id": string; "cell_id"?: (string | null); "email": string; "full_name"?: (string | null); "role"?: (Schemas["Role"] | null); "status": Schemas["InvitationStatus"]; "expires_at": string; "invited_by"?: (string | null); "accepted_at"?: (string | null); "accepted_by"?: (string | null); "created_at": string; "token": string; "accept_url": string; "invite_url": string; "email_queued": boolean; };
@@ -105,6 +124,9 @@ export interface Schemas {
   "NoticeUpdate": { "branch_id"?: (string | null); "cell_id"?: (string | null); "title"?: (string | null); "content"?: (string | null); "expires_at"?: (string | null); "is_active"?: (boolean | null); "priority"?: (Schemas["NoticePriority"] | null); "is_pinned"?: (boolean | null); "publish_at"?: (string | null); };
   "NotificationList": { "items": Array<Schemas["NotificationRead"]>; "total": number; };
   "NotificationRead": { "user_id"?: (string | null); "title": string; "message": string; "type": string; "related_event_id"?: (string | null); "related_notice_id"?: (string | null); "id": string; "church_id"?: (string | null); "branch_id"?: (string | null); "cell_id"?: (string | null); "is_read": boolean; "read_at"?: (string | null); "created_at": string; };
+  "PeopleImport": { "csv": string; "default_branch_id"?: (string | null); "dry_run"?: boolean; "send_welcome"?: boolean; };
+  "PeopleImportResult": { "dry_run": boolean; "columns": Array<string>; "rows": number; "created": number; "added": number; "updated": number; "skipped": number; "households": number; "results": Array<Schemas["PeopleImportRow"]>; };
+  "PeopleImportRow": { "line": number; "full_name"?: (string | null); "email"?: (string | null); "action": string; "reason"?: (string | null); "branch"?: (string | null); "cell"?: (string | null); "household"?: (string | null); "household_role"?: (string | null); };
   "PersonProfile": { "attendance": Array<Schemas["AttendanceMark-Output"]>; "marked": number; "present": number; "pct": (number | null); "streak": number; "missed": number; "cell_pct": (number | null); "checkups": Array<Schemas["CheckupNote"]>; "departments": Array<Schemas["DepartmentRef"]>; "giving": (Schemas["ProfileGiving"] | null); };
   "ProfileCompletion": { "complete": boolean; "percent": number; "missing": Record<string, string>; };
   "ProfileGiving": { "total": number; "gifts": number; "months": Array<Schemas["GivingMonth"]>; "types": Array<Schemas["GivingType"]>; };
