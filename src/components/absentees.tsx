@@ -1,10 +1,10 @@
 "use client";
 
 import { Phone, Search } from "lucide-react";
-import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import type { Absentee } from "@/lib/types";
+import { PersonLink } from "@/components/person";
 
 /**
  * Who was not there.
@@ -182,12 +182,12 @@ export function Absentees({
                           the text, so working down a list of a hundred and
                           ninety names never asks you to aim.
                         */}
-                        <Link
-                          href={`/app/people/${person.id}`}
+                        <PersonLink
+                          id={person.id}
+                          name={person.full_name}
+                          showAvatar={false}
                           className="block truncate text-[12px] text-ink-2 hover:text-ink"
-                        >
-                          {person.full_name}
-                        </Link>
+                        />
                       </td>
                       <td className="truncate px-3 py-[7px] text-[11.5px] text-ink-3">
                         {person.cell ?? "no cell"}

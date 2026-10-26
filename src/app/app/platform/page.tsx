@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Tabs } from "@/components/tabs";
 import { notFound } from "next/navigation";
 import { Check, Clock, ShieldCheck, X } from "lucide-react";
 
@@ -134,6 +135,10 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
     ],
   }));
 
+  // Email only earns a tab when there is a failure to retry or mail is
+  // not set up at all.
+  const showMail = delivery.ok && (delivery.data.failures.length > 0 || !delivery.data.configured);
+
   return (
     <Page>
       <PageHead
@@ -158,7 +163,14 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
                   colour="var(--cobalt)" footnote="on the platform" />
       </section>
 
-      <div id="queue" className="scroll-mt-4" />
+      <Tabs
+        tabs={[
+          { id: "queue", label: "Waiting", count: waiting.length },
+          { id: "churches", label: "Every church", count: everything.length },
+          ...(isSuper ? [{ id: "accounts", label: "Accounts" }, { id: "team", label: "Platform team" }] : []),
+          ...(showMail ? [{ id: "delivery", label: "Email", count: delivery.ok ? delivery.data.failures.length : 0 }] : []),
+        ]}
+      >
       <Panel
         title="Awaiting verification"
         accent="var(--gold)"
@@ -170,16 +182,45 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
         />
       </Panel>
 
-      <div id="delivery" className="scroll-mt-4" />
-      {/* Only when there is something to act on: a failed email to retry,
-          or mail not configured at all. A healthy transport needs no panel. */}
-      {delivery.ok && (delivery.data.failures.length > 0 || !delivery.data.configured) && <Panel title="Email delivery" lede={delivery.data.configured ? undefined : `Missing mail settings: ${delivery.data.missing.join(", ")}`}>
-        <DataTable columns={[{ key: "subject", label: "Email" }, { key: "status", label: "Status" }, { key: "action", label: "" }]}
-          rows={delivery.data.failures.map((job) => ({ id: job.id, cells: [job.subject, `${job.status} · ${job.error ?? "expired"}`, job.status !== "expired" ? <ActionButton key="retry" action={retryMail} fields={{ id: job.id }} label="Retry" /> : <span key="expired">Request a new email</span>] }))} empty="No delivery failures" />
-      </Panel>}
-      <div id="accounts" className="scroll-mt-4" />
+      <Panel title="Every church" accent="var(--cobalt)">
+        <DataTable
+          columns={[
+            { key: "name", label: "Church" },
+            { key: "status", label: "Status" },
+            { key: "owner", label: "Owner" },
+            { key: "code", label: "Code", align: "right" },
+          ]}
+          rows={everything.map((church) => ({
+            id: church.id,
+            cells: [
+              <Link key="n" href={`/app/church?id=${church.id}`}
+                    className="font-medium text-ink hover:underline">
+                {church.name}
+              </Link>,
+              <span key="s" className="chip"
+                    style={{ color: CHURCH_STATUS_TONE[church.status] }}>
+                {church.status === "pending" ? (
+                  <Clock className="h-3 w-3" aria-hidden />
+                ) : (
+                  <ShieldCheck className="h-3 w-3" aria-hidden />
+                )}
+                {CHURCH_STATUS_LABEL[church.status]}
+              </span>,
+              church.owner_id ? (
+                <span key="o" className="text-[12px] text-ink-2">
+                  {named.get(church.owner_id) ?? "Unknown"}
+                </span>
+              ) : (
+                <span key="o" className="text-[11.5px] text-ink-3">nobody</span>
+              ),
+              <span key="c" className="text-[11.5px] text-ink-3">{church.code}</span>,
+            ],
+          }))}
+          empty="No churches yet."
+        />
+      </Panel>
       {isSuper && <Panel title="Accounts">
-        <form className="mb-3 flex gap-2"><input name="q" defaultValue={q} placeholder="Name or email" aria-label="Search accounts" className="rounded-lg border border-line bg-paper px-3 py-2 text-[12px]" /><button className="btn btn-quiet btn-sm">Search</button></form>
+        <form className="mb-3 flex gap-2"><input name="q" defaultValue={q} placeholder="Name or email" aria-label="Search accounts" className="h-8 rounded-xl border border-line bg-paper px-3 text-[12px]" /><button className="btn btn-quiet btn-sm">Search</button></form>
         {accounts.ok ? <>
           <DataTable columns={[{ key: "name", label: "Person" }, { key: "email", label: "Email" }, { key: "status", label: "Status" }, { key: "actions", label: "Actions" }]}
             rows={accounts.data.items.map((person) => ({ id: person.id, cells: [<Link key="name" href={`/app/people/${person.id}`}>{person.full_name}</Link>, person.email,
@@ -238,44 +279,13 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
         </Panel>
       )}
 
-      <div id="churches" className="scroll-mt-4" />
-      <Panel title="Every church" accent="var(--cobalt)">
-        <DataTable
-          columns={[
-            { key: "name", label: "Church" },
-            { key: "status", label: "Status" },
-            { key: "owner", label: "Owner" },
-            { key: "code", label: "Code", align: "right" },
-          ]}
-          rows={everything.map((church) => ({
-            id: church.id,
-            cells: [
-              <Link key="n" href={`/app/church?id=${church.id}`}
-                    className="font-medium text-ink hover:underline">
-                {church.name}
-              </Link>,
-              <span key="s" className="chip"
-                    style={{ color: CHURCH_STATUS_TONE[church.status] }}>
-                {church.status === "pending" ? (
-                  <Clock className="h-3 w-3" aria-hidden />
-                ) : (
-                  <ShieldCheck className="h-3 w-3" aria-hidden />
-                )}
-                {CHURCH_STATUS_LABEL[church.status]}
-              </span>,
-              church.owner_id ? (
-                <span key="o" className="text-[12px] text-ink-2">
-                  {named.get(church.owner_id) ?? "Unknown"}
-                </span>
-              ) : (
-                <span key="o" className="text-[11.5px] text-ink-3">nobody</span>
-              ),
-              <span key="c" className="text-[11.5px] text-ink-3">{church.code}</span>,
-            ],
-          }))}
-          empty="No churches yet."
-        />
-      </Panel>
+      {/* Only when there is something to act on: a failed email to retry,
+          or mail not configured at all. A healthy transport needs no panel. */}
+      {showMail && delivery.ok && <Panel title="Email delivery" lede={delivery.data.configured ? undefined : `Missing mail settings: ${delivery.data.missing.join(", ")}`}>
+        <DataTable columns={[{ key: "subject", label: "Email" }, { key: "status", label: "Status" }, { key: "action", label: "" }]}
+          rows={delivery.data.failures.map((job) => ({ id: job.id, cells: [job.subject, `${job.status} · ${job.error ?? "expired"}`, job.status !== "expired" ? <ActionButton key="retry" action={retryMail} fields={{ id: job.id }} label="Retry" /> : <span key="expired">Request a new email</span>] }))} empty="No delivery failures" />
+      </Panel>}
+      </Tabs>
     </Page>
   );
 }

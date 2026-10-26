@@ -8,6 +8,7 @@ import { Action, Page, PageHead, Panel, StatCard } from "@/components/panels";
 import { api } from "@/lib/api";
 import { requireMe } from "@/lib/session";
 import type { Branch, Dashboard, Paged, Person } from "@/lib/types";
+import { PersonLink } from "@/components/person";
 
 export const metadata = { title: "People — Chapl" };
 
@@ -92,23 +93,7 @@ export default async function PeoplePage({
   const rows: TableRow[] = list.data.items.map((person) => ({
     id: person.id,
     cells: [
-      <Link
-        key="n"
-        href={`/app/people/${person.id}`}
-        className="flex items-center gap-2.5 font-medium text-ink hover:underline"
-      >
-        <span
-          className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10px] font-semibold"
-          style={{
-            background: "color-mix(in oklab, var(--cobalt) 11%, transparent)",
-            color: "var(--cobalt)",
-          }}
-          aria-hidden
-        >
-          {(person.full_name || "?")[0].toUpperCase()}
-        </span>
-        {person.full_name}
-      </Link>,
+      <PersonLink key="n" id={person.id} name={person.full_name} avatar={person.avatar_url} />,
       <a
         key="e"
         href={`mailto:${person.email}`}
@@ -242,7 +227,7 @@ export default async function PeoplePage({
                 defaultValue={q}
                 placeholder="Name, email or phone"
                 aria-label="Search people"
-                className="w-56 rounded-full border border-line bg-paper py-1.5 pl-9 pr-3
+                className="w-56 rounded-xl border border-line bg-paper py-1.5 pl-9 pr-3
                            text-[12.5px] text-ink transition-colors placeholder:text-ink-3
                            hover:border-line-strong focus:border-transparent focus:outline-none
                            focus:ring-2 focus:ring-[var(--accent)]"

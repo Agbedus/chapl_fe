@@ -25,7 +25,7 @@ import {
   Landmark, Layers, Link2, MapPin, Megaphone, Navigation, Pencil, Phone, Pin,
   Plus, ShieldCheck, Tag, Target, ToggleLeft, User, Users, Wallet, X,
 } from "lucide-react";
-import { Fragment, useActionState, useEffect, useRef, useState } from "react";
+import { Fragment, useActionState, useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 
 import type { FormState } from "@/app/actions/auth";
 import {
@@ -173,6 +173,60 @@ function Editor({
   closeOnSuccess?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLFormElement>(null);
+  const scrimRef = useRef<HTMLDivElement>(null);
+  const closing = useRef(false);
+
+  /*
+   * The form grows out of the button that opened it.
+   *
+   * On open the panel starts as the button — its box, its place — and
+   * expands to its own size in the middle of the screen; on close it
+   * folds back into the button, faster than it came out, because closing
+   * is the app answering rather than something to watch. Web Animations
+   * rather than CSS: the start is measured, not known in advance, and a
+   * WAAPI transform still runs off the main thread. Reduced motion gets
+   * the plain fade the scrim already does.
+   */
+  function morph(panel: HTMLElement, reverse: boolean) {
+    const from = triggerRef.current?.getBoundingClientRect();
+    const to = panel.getBoundingClientRect();
+    if (!from || !to.width || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return panel.animate([{ opacity: reverse ? 1 : 0 }, { opacity: reverse ? 0 : 1 }], {
+        duration: 160, easing: "ease-out", fill: "both",
+      });
+    }
+    const dx = from.left + from.width / 2 - (to.left + to.width / 2);
+    const dy = from.top + from.height / 2 - (to.top + to.height / 2);
+    const sx = Math.max(from.width / to.width, 0.08);
+    const sy = Math.max(from.height / to.height, 0.04);
+    const small = { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, opacity: 0.2 };
+    const full = { transform: "none", opacity: 1 };
+    return panel.animate(reverse ? [full, small] : [small, full], {
+      duration: reverse ? 220 : 380,
+      easing: reverse ? "cubic-bezier(0.4, 0, 1, 1)" : "cubic-bezier(0.32, 0.72, 0, 1)",
+      fill: "both",
+    });
+  }
+
+  useLayoutEffect(() => {
+    if (open && panelRef.current) morph(panelRef.current, false);
+  }, [open]);
+
+  function close() {
+    const panel = panelRef.current;
+    if (!panel || closing.current) return setOpen(false);
+    closing.current = true;
+    scrimRef.current?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: "ease-out", fill: "both" });
+    morph(panel, true).finished.finally(() => {
+      closing.current = false;
+      setOpen(false);
+    });
+  }
+  // The timer and the Escape listener call the latest `close` without
+  // re-subscribing every render.
+  const dismiss = useEffectEvent(() => close());
   const [step, setStep] = useState(0);
   // The furthest step reached, so the rail can be used to go back
   // without letting it skip a step that has not been filled in.
@@ -196,7 +250,7 @@ function Editor({
   // set inside a timer, which the compiler's effect rule allows.
   useEffect(() => {
     if (!settled) return;
-    const timer = setTimeout(() => setOpen(false), 900);
+    const timer = setTimeout(dismiss, 900);
     return () => clearTimeout(timer);
   }, [settled, state]);
 
@@ -226,7 +280,7 @@ function Editor({
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") dismiss();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -303,6 +357,7 @@ function Editor({
     <div>
       <button
         type="button"
+        ref={triggerRef}
         onClick={() => {
           setStep(0);
           setReached(0);
@@ -328,9 +383,11 @@ function Editor({
           role="dialog"
           aria-modal="true"
           aria-label={label}
-          onClick={() => setOpen(false)}
+          ref={scrimRef}
+          onClick={close}
         >
           <form
+            ref={panelRef}
             action={formAction}
             noValidate={stepped}
             onSubmit={guard}
@@ -350,7 +407,7 @@ function Editor({
               </div>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={close}
                 aria-label="Close"
                 className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-ink-3
                            transition-colors hover:bg-sunk hover:text-ink"
@@ -401,7 +458,7 @@ function Editor({
 
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={close}
                 className="btn text-ink-3 transition-colors hover:text-ink"
               >
                 Cancel
@@ -2322,7 +2379,7 @@ export function CheckInBox({ action }: { action: Action }) {
                error={state.fieldErrors?.code}
                icon={<Hash className="h-full w-full" />} />
       </div>
-      <Submit full={false} state={state} doneLabel="Checked in" failLabel="Try again">Check in</Submit>
+      <Submit full={false} state={state} doneLabel="Checked in" failLabel="Try again" className="h-11 px-5">Check in</Submit>
     </form>
   );
 }
@@ -2371,7 +2428,7 @@ export function ReminderControl({
                     { value: "2880", label: "2 days before" },
                   ]} />
         </div>
-        <Submit full={false} state={state} doneLabel="Reminder set">{current ? "Change reminder" : "Remind me"}</Submit>
+        <Submit full={false} state={state} doneLabel="Reminder set" className="h-11 px-5">{current ? "Change reminder" : "Remind me"}</Submit>
       </form>
       {current && (
         <form action={removeAction}>

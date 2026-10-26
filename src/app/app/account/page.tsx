@@ -7,6 +7,7 @@ import {
 import { changePassword } from "@/app/actions/auth";
 import { forgetDevice, saveMyDetails } from "@/app/actions/manage";
 import { DonutChart } from "@/components/charts";
+import { ChurchSwitcher } from "@/components/church-switcher";
 import { PhoneLink } from "@/components/contact";
 import { ActionButton, PasswordEditor, SelfEditor } from "@/components/editors";
 import type { Schemas } from "@/lib/generated/api";
@@ -211,9 +212,9 @@ export default async function AccountPage() {
           {/* Which church you are working in is a fact about you, so the
               switch lives here rather than in the nav. */}
           {(me.churches.length > 1 || me.is_platform_staff) && (
-            <Link href="/app/select" className="btn btn-quiet btn-sm">
+            <ChurchSwitcher current={churchId} className="btn btn-quiet btn-sm">
               <ArrowLeftRight className="h-3.5 w-3.5" aria-hidden /> Switch church
-            </Link>
+            </ChurchSwitcher>
           )}
           <PasswordEditor action={changePassword} avoid={[me.full_name, me.email]} />
           {record && <SelfEditor action={saveMyDetails} person={record} />}

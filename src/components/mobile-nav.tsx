@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { permittedSections, type Item } from "@/components/app-nav";
 import { ProfileDot } from "@/components/profile-completion";
+import { ChurchSwitcher } from "@/components/church-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { Resource } from "@/lib/access";
 
@@ -34,12 +35,11 @@ const LEADER_TABS = [
   "/app", "/app/people", "/app/attendance", "/app/giving",
   "/app/cells", "/app/events", "/app/notices", "/app/account",
 ];
-const STAFF_TABS = ["/app", "/app/platform", "/app/select", "/app/audit"];
+const STAFF_TABS = ["/app", "/app/platform", "/app/people", "/app/audit"];
 
 /** The bar has room for a word, not a phrase. */
 const SHORT: Record<string, string> = {
   "/app": "Home",
-  "/app/select": "Churches",
   "/app/platform": "Verify",
   "/app/audit": "Activity",
   "/app/attendance": "Attendance",
@@ -47,13 +47,6 @@ const SHORT: Record<string, string> = {
 };
 
 const BAR_SLOTS = 5;
-
-const CHURCHES: Item = {
-  href: "/app/select",
-  label: "Churches",
-  icon: ArrowLeftRight,
-  tone: "var(--violet)",
-};
 
 export function MobileNav({
   allowed,
@@ -64,6 +57,7 @@ export function MobileNav({
   signOutAction,
   profileIncomplete = false,
   canSwitch = false,
+  churchId = null,
   badges = {},
 }: {
   allowed: Resource[];
@@ -75,6 +69,8 @@ export function MobileNav({
   profileIncomplete?: boolean;
   /** More than one church to work in, so the sheet offers the switch. */
   canSwitch?: boolean;
+  /** The church in effect, or null for every church. */
+  churchId?: string | null;
   /** Counts to show on a destination, keyed by href. */
   badges?: Record<string, number>;
 }) {
@@ -89,9 +85,6 @@ export function MobileNav({
   const sections = permittedSections(allowed, isPlatform);
   const everything = sections.flatMap((s) => s.items);
   const byHref = new Map(everything.map((item) => [item.href, item]));
-  // Not a nav item any more, but for platform staff the list of churches
-  // is a daily destination, so it keeps its place on their bar.
-  if (isPlatform) byHref.set("/app/select", CHURCHES);
 
   const wanted = isPlatform ? STAFF_TABS : LEADER_TABS;
   const needsMore = everything.length > BAR_SLOTS;
@@ -254,15 +247,15 @@ export function MobileNav({
                 </div>
               ))}
 
-              {canSwitch && !isPlatform && (
-                <Link
-                  href="/app/select"
-                  className="mx-1 mt-4 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-line
+              {canSwitch && (
+                <ChurchSwitcher
+                  current={churchId}
+                  className="mx-1 mt-4 flex min-h-11 w-[calc(100%-0.5rem)] items-center justify-center gap-2 rounded-xl border border-line
                              text-[13px] font-medium text-ink-2 active:bg-sunk"
                 >
                   <ArrowLeftRight className="h-4 w-4" aria-hidden />
                   Switch church
-                </Link>
+                </ChurchSwitcher>
               )}
 
               <form action={signOutAction} className="px-1 pb-2 pt-4">

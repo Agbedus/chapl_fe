@@ -70,7 +70,7 @@ export default async function HouseholdsPage({
               name="q"
               defaultValue={q}
               placeholder="Search a family or a name"
-              className="h-8 rounded-full border border-line bg-paper px-3 text-[12px] text-ink placeholder:text-ink-3"
+              className="h-8 rounded-xl border border-line bg-paper px-3 text-[12px] text-ink placeholder:text-ink-3"
               aria-label="Search households"
             />
           </form>

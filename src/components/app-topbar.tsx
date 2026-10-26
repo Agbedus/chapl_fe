@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { ChevronsUpDown, Loader2, Search, X } from "lucide-react";
 
 import type { Hit } from "@/app/actions/search";
+import { ChurchSwitcher } from "@/components/church-switcher";
 import { NotificationBell } from "@/components/notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -21,6 +21,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 export function AppTopbar({
   churchName,
   canSwitch = false,
+  churchId = null,
   environment,
   health,
   runtime,
@@ -32,6 +33,7 @@ export function AppTopbar({
   churchName: string | null;
   /** The church name doubles as the way to change it, when there is a choice. */
   canSwitch?: boolean;
+  churchId?: string | null;
   environment: string | null;
   health: "ok" | "warn" | "down" | null;
   runtime: string | null;
@@ -143,15 +145,14 @@ export function AppTopbar({
       >
         <div className="flex min-w-0 items-center gap-3">
           {canSwitch ? (
-            <Link
-              href="/app/select"
-              title="Switch church"
+            <ChurchSwitcher
+              current={churchId}
               className="group/church flex min-w-0 items-center gap-1.5 truncate rounded-lg text-[14px]
                          font-semibold text-ink transition-colors hover:text-ink-2"
             >
               <span className="truncate">{churchName ?? "All churches"}</span>
               <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-ink-3" aria-hidden />
-            </Link>
+            </ChurchSwitcher>
           ) : (
             <span className="truncate text-[14px] font-semibold text-ink">
               {churchName ?? "All churches"}

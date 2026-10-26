@@ -4,6 +4,8 @@ import { useFormStatus } from "react-dom";
 import { AlertCircle, Check, CheckCircle2, Loader2 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 
+import { ComboField } from "@/components/ui/pickers";
+
 /**
  * The text input's look, in one place.
  *
@@ -16,6 +18,11 @@ export const INPUT_CLASS = `w-full rounded-xl border bg-paper px-3.5 py-2.5 text
   transition-colors placeholder:text-ink-3 hover:border-line-strong
   focus:border-transparent focus:outline-none focus:ring-2
   focus:ring-[var(--accent)]`;
+
+/** "Branch · leave empty for the whole church" → "Branch". */
+export function cleanPrompt(text: string): string {
+  return text.split(" · ")[0].trim();
+}
 
 export function Field({
   label,
@@ -59,11 +66,11 @@ export function Field({
    * says the name twice. The label survives for screen readers as
    * `aria-label`.
    */
-  const prompt =
-    placeholder ??
-    [label, example && `e.g. ${example}`, !required && "optional"]
-      .filter(Boolean)
-      .join(" · ");
+  // Just the name of the field. The examples and "optional" made every
+  // box a sentence; a form reads cleaner as a column of single words,
+  // and a required field says so when it is left empty.
+  void example;
+  const prompt = cleanPrompt(placeholder ?? label);
 
   return (
     <div className={icon ? "has-icon relative" : "relative"}>
@@ -122,6 +129,7 @@ export function Submit({
   icon,
   doneLabel = "Saved",
   failLabel = "Not saved",
+  className = "",
 }: {
   children: ReactNode;
   full?: boolean;
@@ -132,6 +140,8 @@ export function Submit({
   icon?: ReactNode;
   doneLabel?: string;
   failLabel?: string;
+  /** For a button that sits in a row of fields and must match their height. */
+  className?: string;
 }) {
   const { pending } = useFormStatus();
   // The result already acknowledged; done or failed shows for any newer
@@ -173,7 +183,7 @@ export function Submit({
       aria-busy={pending || undefined}
       data-phase={phase}
       data-tone={tone}
-      className={`btn ${look} ${size === "sm" ? "btn-sm" : ""} btn-stateful ${full ? "w-full" : ""}`}
+      className={`btn ${look} ${size === "sm" ? "btn-sm" : ""} btn-stateful ${full ? "w-full" : ""} ${className}`}
     >
       {glyph && (
         // Keyed by phase so each new icon arrives with the pop.
@@ -238,6 +248,15 @@ export function Select({
   placeholder?: string;
   icon?: ReactNode;
 }) {
+  // Past about ten options a select is a scroll, not a choice: it becomes
+  // the searchable combo box, with the same props and the same posted
+  // value, so no form has to know which one it got.
+  if (options.length > 10) {
+    return (
+      <ComboField label={label} name={name} options={options} defaultValue={defaultValue}
+                  required={required} error={error} hint={hint} placeholder={placeholder} icon={icon} />
+    );
+  }
   return (
     <div className={icon ? "has-icon relative" : "relative"}>
       {icon && <span className="field-icon" aria-hidden>{icon}</span>}
@@ -256,7 +275,7 @@ export function Select({
       >
         {/* The first option carries the label, so a select says what it
             is without a heading above it. */}
-        <option value="">{placeholder ?? (required ? label : `${label} · optional`)}</option>
+        <option value="">{cleanPrompt(placeholder ?? label)}</option>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -303,7 +322,7 @@ export function Area({
         rows={rows}
         required={required}
         defaultValue={defaultValue}
-        placeholder={placeholder}
+        placeholder={placeholder ? cleanPrompt(placeholder) : undefined}
         className="w-full resize-y rounded-xl border bg-paper px-3.5 py-2.5 text-[14.5px]
                    leading-[1.6] text-ink transition-colors placeholder:text-ink-3
                    hover:border-line-strong focus:border-transparent focus:outline-none

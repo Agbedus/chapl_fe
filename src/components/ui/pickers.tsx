@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
+import { cleanPrompt } from "@/components/ui/form";
 import { Popover } from "@/components/ui/popover";
 
 /**
@@ -73,7 +74,7 @@ function Trigger({
           color: value ? "var(--ink)" : "var(--ink-3)",
         }}
       >
-        {value || placeholder}
+        {value || cleanPrompt(placeholder)}
       </button>
 
       {/* Clearing is one press, not "open the thing and find the button".
@@ -175,7 +176,6 @@ function DateShell({
   label,
   value,
   onChange,
-  required,
   error,
   startYear,
   /**
@@ -240,7 +240,7 @@ function DateShell({
         id={label}
         label={label}
         value={shown}
-        placeholder={required ? label : `${label} · optional`}
+        placeholder={label}
         icon={<CalendarIcon className="h-full w-full" />}
         error={error}
         open={open}
@@ -448,7 +448,6 @@ function TimeShell({
   label,
   value,
   onChange,
-  required,
   error,
 }: {
   label: string;
@@ -477,7 +476,7 @@ function TimeShell({
         id={label}
         label={label}
         value={value ? pretty(value) : ""}
-        placeholder={required ? label : `${label} · optional`}
+        placeholder={label}
         icon={<Clock className="h-full w-full" />}
         error={error}
         open={open}
@@ -638,7 +637,7 @@ export function ComboField({
         id={name}
         label={label}
         value={chosen?.label ?? ""}
-        placeholder={placeholder ?? (required ? label : `${label} · optional`)}
+        placeholder={cleanPrompt(placeholder ?? label)}
         icon={icon ?? <Search className="h-full w-full" />}
         error={error}
         open={open}

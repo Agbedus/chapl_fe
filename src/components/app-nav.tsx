@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import type { Resource } from "@/lib/access";
 
 import { ProfileDot } from "@/components/profile-completion";
+import { ChurchSwitcher } from "@/components/church-switcher";
 import { Tooltip } from "@/components/tooltip";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
@@ -28,6 +29,7 @@ import {
   ShieldCheck,
   History,
   ArrowLeftRight,
+  Bell,
   CalendarCheck,
   HeartHandshake,
   House as HomeIcon,
@@ -122,7 +124,10 @@ export const SECTIONS: { heading: string; items: Item[] }[] = [
   },
   {
     heading: "You",
-    items: [{ href: "/app/account", label: "Account", icon: UserCircle, tone: "var(--ink-3)" }],
+    items: [
+      { href: "/app/notifications", label: "Notifications", icon: Bell, tone: "var(--ruby)" },
+      { href: "/app/account", label: "Account", icon: UserCircle, tone: "var(--ink-3)" },
+    ],
   },
 ];
 
@@ -200,6 +205,7 @@ export function AppNav({
   profileIncomplete = false,
   canSwitch = false,
   userAvatar = null,
+  churchId = null,
   roleLabel = "Member",
 }: {
   churchName: string | null;
@@ -213,6 +219,8 @@ export function AppNav({
   canSwitch?: boolean;
   /** Their photo, where they have set one; initials otherwise. */
   userAvatar?: string | null;
+  /** The church in effect, or null for every church. */
+  churchId?: string | null;
   /** What they are here — "Church admin", "Cell leader", "Member". */
   roleLabel?: string;
   /**
@@ -235,7 +243,7 @@ export function AppNav({
   );
   const toggle = useCallback(() => collapseStore.set(!collapsed), [collapsed]);
   const listRef = useRef<HTMLDivElement>(null);
-  const [marker, setMarker] = useState<{ top: number; height: number } | null>(null);
+  const [marker, setMarker] = useState<{ top: number; height: number; left: number; width: number } | null>(null);
 
   // Longest matching href wins, so a detail page keeps its section lit.
   const activeHref = SECTIONS.flatMap((s) => s.items)
@@ -250,7 +258,7 @@ export function AppNav({
     const measure = () => {
       const el = list.querySelector<HTMLElement>(`[data-href="${activeHref}"]`);
       if (!el) return setMarker(null);
-      setMarker({ top: el.offsetTop, height: el.offsetHeight });
+      setMarker({ top: el.offsetTop, height: el.offsetHeight, left: el.offsetLeft, width: el.offsetWidth });
     };
 
     measure();
@@ -263,7 +271,7 @@ export function AppNav({
     <aside
       data-collapsed={collapsed || undefined}
       className="group/nav sticky top-4 z-30 hidden h-[calc(100vh-2rem)] shrink-0
-                 flex-col rounded-2xl border border-line-soft bg-mist/85 backdrop-blur
+                 flex-col
                  transition-[width] duration-300 ease-out lg:flex
                  motion-reduce:transition-none"
       style={{ width: collapsed ? 76 : 248 }}
@@ -333,12 +341,16 @@ export function AppNav({
         {marker && (
           <span
             aria-hidden
-            className="pointer-events-none absolute left-3 right-3 rounded-xl bg-sunk
-                       transition-[top,height] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
+            className="pointer-events-none absolute rounded-xl bg-sunk
+                       transition-[top,height,left,width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
                        motion-reduce:transition-none"
+            // Sized to the item itself, so collapsed it is a square around
+            // the icon rather than a bar with padding trailing off right.
             style={{
               top: marker.top,
               height: marker.height,
+              left: marker.left,
+              width: marker.width,
             }}
           />
         )}
@@ -371,10 +383,13 @@ export function AppNav({
                       href={item.href}
                       data-href={item.href}
                       aria-current={active ? "page" : undefined}
-                      className="group/item relative flex items-center gap-3 rounded-xl px-3 py-2.5
+                      className={`group/item relative flex items-center rounded-xl
                                  text-[13.5px] font-medium transition-[color,transform] duration-150
-                                 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98]
-                                 motion-reduce:transition-none"
+                                 ease-[cubic-bezier(0.22,1,0.36,1)]
+                                 motion-reduce:transition-none ${
+                                   // Collapsed: a 44px square, icon dead centre.
+                                   collapsed ? "mx-auto h-11 w-11 justify-center" : "gap-3 px-3 py-2.5"
+                                 }`}
                       style={{ color: active ? "var(--ink)" : "var(--ink-2)" }}
                     >
                       <Icon
@@ -389,6 +404,10 @@ export function AppNav({
                         style={{
                           opacity: collapsed ? 0 : 1,
                           transform: collapsed ? "translateX(-4px)" : "none",
+                          // Out of the flow when collapsed, so it cannot push
+                          // the icon off centre; still the link's name.
+                          position: collapsed ? "absolute" : undefined,
+                          pointerEvents: collapsed ? "none" : undefined,
                         }}
                       >
                         {item.label} {item.href === "/app/account" && <ProfileDot incomplete={profileIncomplete} />}
@@ -400,6 +419,7 @@ export function AppNav({
                         style={{
                           background: item.tone,
                           opacity: active && !collapsed ? 1 : 0,
+                          display: collapsed ? "none" : undefined,
                         }}
                       />
                     </Link>
@@ -442,19 +462,23 @@ export function AppNav({
 
         {canSwitch && (
           <Tooltip label="Switch church" disabled={!collapsed}>
-            <Link
-              href="/app/select"
-              className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px]
-                         font-medium text-ink-2 transition-colors hover:bg-sunk hover:text-ink"
+            {/* Collapsed, the list opens beside the rail rather than over it. */}
+            <ChurchSwitcher
+              current={churchId}
+              side={collapsed ? "right" : "bottom"}
+              className={`mt-1 flex items-center rounded-xl text-[13.5px] font-medium text-ink-2
+                         transition-colors hover:bg-sunk hover:text-ink ${
+                           collapsed ? "mx-auto h-11 w-11 justify-center" : "w-full gap-3 px-3 py-2.5"
+                         }`}
             >
               <ArrowLeftRight className="h-[18px] w-[18px] shrink-0" strokeWidth={1.9} />
               <span
                 className="truncate transition-opacity duration-200 motion-reduce:transition-none"
-                style={{ opacity: collapsed ? 0 : 1 }}
+                style={{ opacity: collapsed ? 0 : 1, display: collapsed ? "none" : undefined }}
               >
                 Switch church
               </span>
-            </Link>
+            </ChurchSwitcher>
           </Tooltip>
         )}
 

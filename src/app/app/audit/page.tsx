@@ -7,6 +7,7 @@ import { Notice } from "@/components/ui/form";
 import { api } from "@/lib/api";
 import { requireMe } from "@/lib/session";
 import type { Paged } from "@/lib/types";
+import { PersonLink } from "@/components/person";
 
 export const metadata = { title: "Audit log — Chapl" };
 
@@ -148,13 +149,7 @@ export default async function AuditPage({
           </span>
         </span>,
         entry.user_id ? (
-          <Link
-            key="u"
-            href={`/app/people/${entry.user_id}`}
-            className="font-medium text-ink hover:underline"
-          >
-            {entry.user_name ?? "A deleted account"}
-          </Link>
+          <PersonLink key="u" id={entry.user_id} name={entry.user_name ?? "A deleted account"} />
         ) : (
           <span key="u" className="text-[11.5px] text-ink-3">system</span>
         ),

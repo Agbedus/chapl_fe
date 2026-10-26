@@ -1,3 +1,4 @@
+import { Tabs } from "@/components/tabs";
 import { Mail, RotateCw, X } from "lucide-react";
 
 import { revokeInvitation, resendInvitation, sendInvitation } from "@/app/actions/manage";
@@ -194,31 +195,19 @@ export default async function InvitationsPage() {
         />
       </section>
 
-      <Panel
-        title="Waiting to be accepted"
-        lede={
-          pending.length
-            ? "Nothing sends mail yet — resend to get a fresh link to pass on"
-            : "Nothing outstanding"
-        }
-        accent="var(--gold)"
+      <Tabs
+        tabs={[
+          { id: "waiting", label: "Waiting", count: pending.length },
+          { id: "settled", label: "Settled", count: settled.length },
+        ]}
       >
-        <DataTable
-          columns={pendingColumns}
-          rows={pendingRows}
-          empty="No invitations are waiting. Everyone invited has joined."
-        />
-      </Panel>
-
-      {settled.length > 0 && (
-        <Panel title="Settled" accent="var(--ink-3)">
-          <DataTable
-            columns={settledColumns}
-            rows={settledRows}
-            empty="Nothing settled yet."
-          />
+        <Panel accent="var(--gold)">
+          <DataTable columns={pendingColumns} rows={pendingRows} empty="No invitations waiting." />
         </Panel>
-      )}
+        <Panel accent="var(--ink-3)">
+          <DataTable columns={settledColumns} rows={settledRows} empty="Nothing settled yet." />
+        </Panel>
+      </Tabs>
 
     </Page>
   );

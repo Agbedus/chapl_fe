@@ -218,8 +218,9 @@ More slices than about six and it is a bar chart wearing a circle.
 carries the hue; the number beside it stays ink. A wall of coloured
 figures is a wall where none of them means anything.
 
-**`.btn` is a pill**, as on the home page. A rounded rectangle in the
-product and a pill on the marketing site reads as two products.
+**`.btn` is a rounded square** (12px, 10px for `.btn-sm`), the same
+corner as a form field, on the marketing site too. A pill beside a
+rounded field reads as two design systems.
 
 **`.page-in` is the one orchestrated moment**, staggered by depth — the
 heading, then the numbers, then the detail, and everything past the third

@@ -16,6 +16,7 @@ import { api } from "@/lib/api";
 import type { Schemas } from "@/lib/generated/api";
 import { requireMe } from "@/lib/session";
 import type { Paged, Person } from "@/lib/types";
+import { PersonLink } from "@/components/person";
 
 export const metadata = { title: "Household — Chapl" };
 
@@ -104,9 +105,8 @@ export default async function HouseholdPage({ params }: { params: Promise<{ id: 
               {members.map((m) => (
                 <li key={m.user_id} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
                   <span className="min-w-0">
-                    <Link href={`/app/people/${m.user_id}`} className="text-[13px] font-medium text-ink hover:underline">
-                      {m.full_name}
-                    </Link>
+                    <PersonLink id={m.user_id} name={m.full_name} avatar={m.avatar_url}
+                                className="text-[13px] font-medium text-ink hover:underline" />
                     <span className="ml-2 text-[11.5px] text-ink-3">
                       {ROLE[m.role] ?? m.role}
                       {ageOf(m.date_of_birth) ? ` · ${ageOf(m.date_of_birth)}` : ""}

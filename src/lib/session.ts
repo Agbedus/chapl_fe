@@ -44,7 +44,10 @@ export async function currentChurchId(): Promise<string | null> {
   const me = await getMe();
   if (raw === "all" && me?.is_platform_staff) return null;
   if (raw && (me?.is_platform_staff || me?.churches?.some((c) => c.id === raw))) return raw;
-  return !me?.is_platform_staff && me?.churches?.length === 1 ? me.churches[0].id : null;
+  // No (valid) choice yet: a church member is in their first active
+  // church; platform staff are across all of them.
+  if (me?.is_platform_staff || !me?.churches?.length) return null;
+  return (me.churches.find((c) => c.status === "active") ?? me.churches[0]).id;
 }
 
 /**
@@ -73,7 +76,7 @@ export async function requireMe(next?: string): Promise<Me> {
     const church = me.churches?.find((c) => c.id === selected);
     if (next && !["/app/start", "/app/church/new", "/app/select", "/app/church", "/app/account"].includes(next)) {
       if (!me.churches?.length) redirect("/app/start");
-      if (!church) redirect("/app/select");
+      if (!church) redirect("/app");
       if (church.status !== "active" || !church.is_active) redirect(`/app/church?id=${church.id}`);
     }
     if (selected) return { ...me, assignments: me.assignments.filter((a) => a.church_id === selected) };

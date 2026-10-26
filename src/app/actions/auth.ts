@@ -32,7 +32,7 @@ const str = (data: FormData, key: string) => String(data.get(key) ?? "").trim();
 function landingFor(me: Me): string {
   if (!me.profile_completion.complete) return "/app/account#complete-profile";
   if (me.is_platform_staff) return "/app";
-  if (me.churches?.length > 0) return me.churches.length > 1 ? "/app/select" : me.churches[0].status === "active" ? "/app" : "/app/church";
+  if (me.churches?.length > 0) return me.churches.some((c) => c.status === "active") ? "/app" : "/app/church";
   // An identity with no church yet: the only useful next step is to make
   // one, or to accept an invitation.
   return "/app/start";
@@ -70,8 +70,11 @@ export async function signIn(
   await startSession(result.data.access_token);
 
   const me = result.data.user;
-  if (me.churches?.length === 1) {
-    await setChurch(me.churches[0].id);
+  // Someone in several churches starts in the first active one and
+  // switches from the side nav; there is no page in between asking.
+  // Platform staff start across every church.
+  if (!me.is_platform_staff && me.churches?.length) {
+    await setChurch((me.churches.find((c) => c.status === "active") ?? me.churches[0]).id);
   }
 
   redirect(next.startsWith("/") && !next.startsWith("//") && !next.includes("\\") ? next : landingFor(me));
@@ -255,7 +258,7 @@ export async function chooseChurch(churchId: string) {
   if (!result.ok) redirect("/signin");
   if (churchId !== "all" || !result.data.is_platform_staff) {
     const church = await api<{ id: string }>(`/churches/${encodeURIComponent(churchId)}`);
-    if (!church.ok) redirect("/app/select");
+    if (!church.ok) redirect("/app");
   }
   await setChurch(churchId);
   revalidatePath("/app", "layout");

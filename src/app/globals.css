@@ -466,14 +466,16 @@ body {
 
 /* --- controls -------------------------------------------------- */
 
-/* Pill buttons, as on the marketing page. A rounded rectangle in the
-   product and a pill on the home page reads as two design systems. */
+/* Rounded-square buttons, everywhere — the marketing page included, so
+   the two halves still read as one design system. */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.4375rem;
-  border-radius: 999px;
+  /* The same rounded square as a field, not a pill: a button beside an
+     input should look like it belongs to the same form. */
+  border-radius: 12px;
   padding: 0.5rem 1rem;
   font-size: 13px;
   font-weight: 500;
@@ -515,6 +517,7 @@ body {
 .btn-sm {
   padding: 0.3125rem 0.75rem;
   font-size: 12px;
+  border-radius: 10px;
 }
 
 /* A status or category chip. Colour comes from the caller, because
@@ -915,7 +918,36 @@ body {
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 20px;
+  /* Its entrance is measured from the button that opened it — see
+     `Editor` in components/editors.tsx. Other modals keep the CSS one. */
   animation: modal-in 0.22s var(--ease-out);
+}
+form.modal-panel {
+  animation: none;
+}
+
+/* Once the panel has opened, its fields follow it in, top to bottom.
+   A step shown later replays this as it appears, which is the same
+   gesture for the same reason. */
+.modal-body > *,
+.modal-body > [data-step] > * {
+  animation: field-in 300ms var(--ease-out) both;
+}
+.modal-body > :nth-child(1), .modal-body > [data-step] > :nth-child(1) { animation-delay: 140ms; }
+.modal-body > :nth-child(2), .modal-body > [data-step] > :nth-child(2) { animation-delay: 175ms; }
+.modal-body > :nth-child(3), .modal-body > [data-step] > :nth-child(3) { animation-delay: 210ms; }
+.modal-body > :nth-child(4), .modal-body > [data-step] > :nth-child(4) { animation-delay: 245ms; }
+.modal-body > :nth-child(5), .modal-body > [data-step] > :nth-child(5) { animation-delay: 280ms; }
+.modal-body > :nth-child(n + 6), .modal-body > [data-step] > :nth-child(n + 6) { animation-delay: 310ms; }
+@keyframes field-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal-body > *,
+  .modal-body > [data-step] > * {
+    animation: none;
+  }
 }
 
 /* The church record carries five sections of fields; at 52rem they
@@ -1854,6 +1886,10 @@ body:has(.modal-scrim) {
   transform: translateY(-100%);
   transform-origin: bottom center;
 }
+/* Opened beside a rail: grows out of the side it is attached to. */
+.pop[data-side="right"] {
+  transform-origin: bottom left;
+}
 
 @keyframes pop-in {
   from {
@@ -2050,4 +2086,16 @@ a .sheet {
     scale: none;
     translate: none;
   }
+}
+
+/* A tab's view arrives instead of snapping in. */
+.tab-in {
+  animation: tab-in 220ms var(--ease-out);
+}
+@keyframes tab-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tab-in { animation: none; }
 }

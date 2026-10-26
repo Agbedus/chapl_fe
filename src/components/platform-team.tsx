@@ -41,12 +41,11 @@ export function PlatformGrantForm({ action }: { action: Action }) {
           { value: "super_admin", label: "Super admin" },
         ]}
       />
-      <div className="sm:pt-0">
-        <Submit full={false} state={state} doneLabel="Granted">
-          <Shield className="h-3.5 w-3.5" aria-hidden />
-          Grant
-        </Submit>
-      </div>
+      {/* As tall as the fields beside it, so the row lines up. */}
+      <Submit full={false} state={state} doneLabel="Granted" className="h-11 px-5"
+              icon={<Shield className="h-3.5 w-3.5" aria-hidden />}>
+        Grant
+      </Submit>
       <div className="sm:col-span-3 empty:hidden">
         {state.error && <Notice kind="error">{state.error}</Notice>}
       </div>

@@ -72,6 +72,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         canSwitch={canSwitch}
         userAvatar={me.avatar_url}
         roleLabel={roleLabel}
+        churchId={churchId}
       />
 
       <MobileNav
@@ -83,6 +84,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         signOutAction={signOut}
         profileIncomplete={!me.profile_completion.complete}
         canSwitch={canSwitch}
+        churchId={churchId}
         badges={waiting > 0 ? { "/app/platform": waiting } : {}}
       />
 
@@ -90,6 +92,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <AppTopbar
           churchName={churchName}
           canSwitch={canSwitch}
+          churchId={churchId}
           environment={environment}
           health={health}
           runtime={runtime}

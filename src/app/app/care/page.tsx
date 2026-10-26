@@ -1,14 +1,15 @@
-import Link from "next/link";
 import { Check, CheckCheck, Lock } from "lucide-react";
 
 import { raiseCareRequest, respondToCare } from "@/app/actions/manage";
 import { ActionButton, CareRequestEditor } from "@/components/editors";
+import { Tabs } from "@/components/tabs";
 import { Empty, Page, PageHead, Panel, StatCard } from "@/components/panels";
 import { Notice } from "@/components/ui/form";
 import { canRead, canWrite } from "@/lib/access";
 import { api } from "@/lib/api";
 import type { Schemas } from "@/lib/generated/api";
 import { requireMe } from "@/lib/session";
+import { PersonLink } from "@/components/person";
 
 type Request = Schemas["CareRequestRead"];
 
@@ -55,53 +56,9 @@ export default async function CarePage() {
   const closed = all.filter((r) => r.status === "closed").slice(0, 20);
   const waiting = open.filter((r) => r.status === "open").length;
 
-  return (
-    <Page>
-      <PageHead
-        eyebrow="Care"
-        title={leader ? "Care requests" : "Prayer and calls"}
-        lede={
-          leader
-            ? "What people have asked for, and who has picked it up."
-            : "Ask for prayer or for someone to call you. Your leaders see it straight away."
-        }
-        action={<CareRequestEditor action={raiseCareRequest} />}
-      />
-
-      {leader && (
-        <>
-          {queue && !queue.ok && <Notice kind="error">{queue.error.detail}</Notice>}
-          <section className="grid gap-2 sm:grid-cols-3">
-            <StatCard label="Waiting" value={String(waiting)} colour="var(--ruby)" footnote="nobody has picked these up" />
-            <StatCard label="In hand" value={String(open.length - waiting)} colour="var(--gold)" footnote="picked up, not yet closed" />
-            <StatCard label="Closed" value={String(all.length - open.length)} colour="var(--emerald)" footnote="of the latest 200" />
-          </section>
-
-          <Panel title="Open" accent="var(--ruby)">
-            {open.length === 0 ? (
-              <Empty>Nothing waiting. Everyone who asked has been looked after.</Empty>
-            ) : (
-              <ul className="divide-y divide-[var(--line)]">
-                {open.map((r) => (
-                  <RequestRow key={r.id} request={r} responder={responder} />
-                ))}
-              </ul>
-            )}
-          </Panel>
-
-          {closed.length > 0 && (
-            <Panel title="Recently closed" accent="var(--emerald)" quiet>
-              <ul className="divide-y divide-[var(--line)]">
-                {closed.map((r) => (
-                  <RequestRow key={r.id} request={r} responder={false} />
-                ))}
-              </ul>
-            </Panel>
-          )}
-        </>
-      )}
-
-      <Panel title="What you have asked for" accent="var(--cobalt)" quiet={leader}>
+  // What this person asked for: its own tab for a leader, the page for a member.
+  const minePanel = (
+      <Panel accent="var(--cobalt)">
         {!mine.ok ? (
           <Empty>{mine.error.detail}</Empty>
         ) : mine.data.items.length === 0 ? (
@@ -126,6 +83,66 @@ export default async function CarePage() {
           </ul>
         )}
       </Panel>
+  );
+
+  return (
+    <Page>
+      <PageHead
+        eyebrow="Care"
+        title={leader ? "Care requests" : "Prayer and calls"}
+        lede={
+          leader
+            ? "What people have asked for, and who has picked it up."
+            : "Ask for prayer or for someone to call you. Your leaders see it straight away."
+        }
+        action={<CareRequestEditor action={raiseCareRequest} />}
+      />
+
+      {leader && (
+        <>
+          {queue && !queue.ok && <Notice kind="error">{queue.error.detail}</Notice>}
+          <section className="grid gap-2 sm:grid-cols-3">
+            <StatCard label="Waiting" value={String(waiting)} colour="var(--ruby)" footnote="nobody has picked these up" />
+            <StatCard label="In hand" value={String(open.length - waiting)} colour="var(--gold)" footnote="picked up, not yet closed" />
+            <StatCard label="Closed" value={String(all.length - open.length)} colour="var(--emerald)" footnote="of the latest 200" />
+          </section>
+
+          <Tabs
+            tabs={[
+              { id: "open", label: "Open", count: open.length },
+              { id: "closed", label: "Recently closed", count: closed.length },
+              { id: "mine", label: "Mine", count: mine.ok ? mine.data.items.length : 0 },
+            ]}
+          >
+          <Panel accent="var(--ruby)">
+            {open.length === 0 ? (
+              <Empty>Nothing waiting. Everyone who asked has been looked after.</Empty>
+            ) : (
+              <ul className="divide-y divide-[var(--line)]">
+                {open.map((r) => (
+                  <RequestRow key={r.id} request={r} responder={responder} />
+                ))}
+              </ul>
+            )}
+          </Panel>
+
+          <Panel accent="var(--emerald)">
+            {closed.length === 0 ? (
+              <Empty>Nothing closed yet.</Empty>
+            ) : (
+              <ul className="divide-y divide-[var(--line)]">
+                {closed.map((r) => (
+                  <RequestRow key={r.id} request={r} responder={false} />
+                ))}
+              </ul>
+            )}
+          </Panel>
+          {minePanel}
+          </Tabs>
+        </>
+      )}
+
+      {!leader && minePanel}
     </Page>
   );
 }
@@ -150,9 +167,8 @@ function RequestRow({ request: r, responder }: { request: Request; responder: bo
           <span>
             from{" "}
             {r.member_id ? (
-              <Link href={`/app/people/${r.member_id}`} className="hover:underline">
-                {r.member_name ?? "a member"}
-              </Link>
+              <PersonLink id={r.member_id} name={r.member_name ?? "a member"} showAvatar={false}
+                          className="hover:underline" />
             ) : (
               r.member_name ?? "a member"
             )}

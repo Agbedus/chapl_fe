@@ -14,6 +14,7 @@ import { Notice } from "@/components/ui/form";
 import { api } from "@/lib/api";
 import { requireMe } from "@/lib/session";
 import type { Branch, Department, Paged, Person } from "@/lib/types";
+import { PersonLink } from "@/components/person";
 
 type Server = {
   id: string;
@@ -91,13 +92,7 @@ export default async function DepartmentPage({
   const rows: TableRow[] = serving.map((person) => ({
     id: person.id,
     cells: [
-      <Link
-        key="n"
-        href={`/app/people/${person.user_id}`}
-        className="font-medium text-ink hover:underline"
-      >
-        {person.full_name}
-      </Link>,
+      <PersonLink key="n" id={person.user_id} name={person.full_name} />,
       person.role_in_department ? (
         <span key="r" className="chip capitalize" style={{ color: "var(--emerald)" }}>
           {person.role_in_department}

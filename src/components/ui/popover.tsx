@@ -27,6 +27,7 @@ export function Popover({
   labelledBy,
   children,
   width,
+  side = "bottom",
 }: {
   open: boolean;
   onClose: () => void;
@@ -35,6 +36,8 @@ export function Popover({
   children: ReactNode;
   /** Defaults to matching the trigger, which is what a field wants. */
   width?: number;
+  /** "right" opens beside the anchor — for a trigger in a narrow rail. */
+  side?: "bottom" | "right";
 }) {
   const panel = useRef<HTMLDivElement>(null);
 
@@ -74,6 +77,19 @@ export function Popover({
        */
       const panelWidth = width ?? r.width;
       const margin = 8;
+      if (side === "right") {
+        // Beside the anchor, bottoms aligned, kept on screen.
+        const top = Math.min(
+          Math.max(margin, r.bottom - box.offsetHeight),
+          window.innerHeight - box.offsetHeight - margin,
+        );
+        box.style.left = `${r.right + 10}px`;
+        box.style.top = `${top}px`;
+        box.style.width = `${panelWidth}px`;
+        box.style.visibility = "visible";
+        box.dataset.side = "right";
+        return;
+      }
       let left = r.left;
       if (left + panelWidth > window.innerWidth - margin) {
         left = Math.max(margin, r.right - panelWidth);
@@ -95,7 +111,7 @@ export function Popover({
       window.removeEventListener("resize", measure);
       window.removeEventListener("scroll", measure, true);
     };
-  }, [open, anchor, width]);
+  }, [open, anchor, width, side]);
 
   useEffect(() => {
     if (!open) return;
