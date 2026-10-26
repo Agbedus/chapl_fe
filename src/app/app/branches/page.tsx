@@ -200,7 +200,6 @@ export default async function BranchesPage() {
       <PageHead
         eyebrow="Structure"
         title="Branches"
-        lede="Where your church meets. Everyone belongs to one."
         action={canWrite && churchId ? <BranchEditor action={saveBranch} /> : undefined}
       />
 
@@ -242,7 +241,7 @@ export default async function BranchesPage() {
       </section>
 
       <section className="grid gap-2 lg:grid-cols-3">
-        <Panel title="Turnout" lede="Best first" accent="var(--gold)">
+        <Panel title="Turnout" accent="var(--gold)">
           <Leaderboard
             colour="var(--gold)"
             unit="%"
@@ -259,7 +258,7 @@ export default async function BranchesPage() {
           />
         </Panel>
 
-        <Panel title="Size" lede="People on the roll" accent="var(--cobalt)">
+        <Panel title="Size" accent="var(--cobalt)">
           <Leaderboard
             colour="var(--cobalt)"
             items={[...withPeople]
@@ -274,7 +273,7 @@ export default async function BranchesPage() {
           />
         </Panel>
 
-        <Panel title="How full" lede="Present against seats" accent="var(--teal)">
+        <Panel title="How full" accent="var(--teal)">
           <Leaderboard
             colour="var(--teal)"
             unit="%"

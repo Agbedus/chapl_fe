@@ -692,7 +692,7 @@ function View({
           )}
         </Panel>
 
-        <Panel title="Pastoral care" lede="Check-ups by state" accent="var(--ruby)">
+        <Panel title="Pastoral care" accent="var(--ruby)">
           {careTotal > 0 ? (
             <RingPanel
               value={String(followUps)}
@@ -719,7 +719,6 @@ function View({
 
         <Panel
           title="Age"
-          lede="Active members"
           accent="var(--violet)"
           aside={
             genders.length > 0 && (
@@ -762,7 +761,6 @@ function View({
             the arc lengths without anyone reading a number. */}
         <Panel
           title="Turnout by branch"
-          lede="Each ring is one site, against the same 100%"
           accent="var(--violet)"
           aside={
             <Link
@@ -799,7 +797,6 @@ function View({
 
         <Panel
           title="Membership"
-          lede="Cumulative, 12 months"
           accent="var(--cobalt)"
           aside={
             joined != null && (
@@ -827,7 +824,6 @@ function View({
         {showGiving ? (
           <Panel
             title="Giving over time"
-            lede="Completed gifts, by month"
             accent="var(--emerald)"
             aside={
               <Link
@@ -846,7 +842,7 @@ function View({
             />
           </Panel>
         ) : (
-          <Panel title="Last service" lede="Share of those marked" accent="var(--gold)">
+          <Panel title="Last service" accent="var(--gold)">
             {latest ? (
               <Ring
                 height={186}
@@ -870,7 +866,7 @@ function View({
 
       {/* ---------------- platform only: the tenants ---------------- */}
       {platform && (data.churches ?? []).length > 0 && (
-        <Panel title="Churches" lede="Largest first" accent="var(--violet)">
+        <Panel title="Churches" accent="var(--violet)">
           <ul className="rows">
             {(data.churches ?? []).map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-3 py-1.5 first:pt-0">
@@ -925,7 +921,7 @@ function PlatformSection({
 
   return (
     <section className="grid gap-2 lg:grid-cols-3">
-      <Panel title="Churches" lede="By where they stand" accent="var(--violet)">
+      <Panel title="Churches" accent="var(--violet)">
         {total > 0 ? (
           <RingPanel
             value={String(total)}
@@ -980,7 +976,7 @@ function PlatformSection({
         />
       </Panel>
 
-      <Panel title="Recent activity" lede="Across every church" accent="var(--ink-3)">
+      <Panel title="Recent activity" accent="var(--ink-3)">
         {activity && activity.length > 0 ? (
           <>
             <ul className="rows">

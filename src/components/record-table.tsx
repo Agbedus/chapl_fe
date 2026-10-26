@@ -38,7 +38,7 @@ export async function RecordTable<T extends { id: string }>({
 }: {
   eyebrow?: string;
   title: string;
-  lede: string;
+  lede?: string;
   /** The collection, without its own limit/skip. */
   path: string;
   columns: Column<T>[];
@@ -112,7 +112,7 @@ export async function RecordTable<T extends { id: string }>({
                       {columns.map((column) => (
                         <td
                           key={column.key}
-                          className={`whitespace-nowrap px-3 py-3.5 text-[14px] text-ink-2 ${
+                          className={`whitespace-nowrap px-3 py-2.5 text-[13px] text-ink-2 ${
                             column.align === "right" ? "tnum text-right" : "text-left"
                           }`}
                         >

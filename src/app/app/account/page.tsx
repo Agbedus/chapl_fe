@@ -371,7 +371,6 @@ export default async function AccountPage() {
 
             <Panel
               title="What you may do"
-              lede="Your roles, and what each one carries"
               accent="var(--cobalt)"
             >
               {me.assignments.length > 0 ? (
@@ -411,7 +410,6 @@ export default async function AccountPage() {
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_260px]">
             <Panel
               title="Your details"
-              lede="What the church has on file"
               accent="var(--violet)"
               aside={
                 <span className="text-[11px] text-ink-3">
@@ -477,7 +475,7 @@ export default async function AccountPage() {
               )}
             </Panel>
 
-            <Panel title="In an emergency" lede="Who the church would ring" accent="var(--ruby)">
+            <Panel title="In an emergency" accent="var(--ruby)">
               {record?.emergency_contact_name ? (
                 <>
                   <p className="text-[13px] font-medium">
@@ -497,7 +495,6 @@ export default async function AccountPage() {
             <Panel
               fill={balanced}
               title="What you serve on"
-              lede="Departments you are a part of"
               accent="var(--teal)"
             >
               {serving.length > 0 ? (
@@ -561,7 +558,6 @@ export default async function AccountPage() {
               <Panel
                 fill={balanced}
                 title="Your giving"
-                lede="Completed gifts recorded against your name"
                 accent="var(--emerald)"
               >
                 <Empty>
@@ -671,7 +667,7 @@ export default async function AccountPage() {
             identifies, and it is the thing you only look at when something
             is wrong.
           */}
-          <Panel fill title="This account" lede="The sign-in itself" accent="var(--gold)">
+          <Panel fill title="This account" accent="var(--gold)">
             <ul>
               <Fact
                 icon={<Mail className="h-3.5 w-3.5" />}

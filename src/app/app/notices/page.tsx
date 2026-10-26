@@ -127,7 +127,6 @@ export default async function NoticesPage() {
       <PageHead
         eyebrow="Activity"
         title="Notices"
-        lede="Bulletins, and who they reached."
         action={
           canWrite(me, "notice") && audiences.length > 0 ? (
             <NoticeEditor action={saveNotice} audiences={audiences} />
@@ -146,7 +145,7 @@ export default async function NoticesPage() {
           colour="var(--violet)" footnote="rest went to a branch or a cell" />
       </section>
 
-      <Panel fill title="Every notice" lede="Most recent first" accent="var(--cobalt)">
+      <Panel fill title="Every notice" accent="var(--cobalt)">
         <DataTable fill columns={columns} rows={tableRows}
           empty="Nothing posted yet."
           footer={[`${rows.length} notices`, `${urgent} urgent`, "", "", "", "", `${live} live`]} />

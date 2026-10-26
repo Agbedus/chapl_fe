@@ -157,7 +157,6 @@ export default async function PeoplePage({
       <PageHead
         eyebrow="People"
         title={`${total.toLocaleString()} ${total === 1 ? "person" : "people"}`}
-        lede="Everyone you can see. Search runs against the database."
         action={
           <span className="flex flex-wrap items-center gap-2">
             {canWrite(me, "user") && (

@@ -22,7 +22,6 @@ export default async function ImportPage() {
       <PageHead
         eyebrow="People"
         title="Import people"
-        lede="Bring your existing list in from a spreadsheet. Nothing is saved until you have seen the preview."
         action={
           <Link href="/app/people" className="btn btn-quiet btn-sm">
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden />

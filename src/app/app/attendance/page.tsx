@@ -59,7 +59,6 @@ export default async function AttendancePage({
         <PageHead
           eyebrow="Activity"
           title="Attendance"
-          lede="Who was in a seat, service by service."
         />
         <Empty>
           No service has been marked yet. Once a register is taken, this page
@@ -127,7 +126,6 @@ export default async function AttendancePage({
       <PageHead
         eyebrow="Activity"
         title="Attendance"
-        lede="Who was in a seat, service by service."
         action={
           <span className="flex items-center gap-2">
             <ServiceStepper
@@ -236,7 +234,6 @@ export default async function AttendancePage({
 
         <Panel
           title="Which sites were thin"
-          lede="Turnout at this service, worst first"
           accent="var(--violet)"
         >
           {branchBars.length > 0 ? (
@@ -257,7 +254,6 @@ export default async function AttendancePage({
         <Panel
           fill
           title="Cell health"
-          lede="Cells marked at this service"
           accent="var(--teal)"
         >
           {health.length > 0 ? (
@@ -289,7 +285,6 @@ export default async function AttendancePage({
 
         <Panel
           title="The thinnest cells"
-          lede="Where the empty seats were concentrated"
           accent="var(--teal)"
         >
           {thin.length > 0 ? (
@@ -353,7 +348,6 @@ export default async function AttendancePage({
       */}
       <Panel
         title="Who was not there"
-        lede="Longest gone first, within each branch · every name opens their record"
         accent="var(--ruby)"
       >
         <Absentees people={service.absentees} service={service.date} />

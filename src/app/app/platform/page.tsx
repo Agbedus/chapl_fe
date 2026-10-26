@@ -139,7 +139,6 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
       <PageHead
         eyebrow="Platform"
         title="Verification"
-        lede="Churches anybody registered, waiting to be checked. Oldest first."
       />
 
       {everything.some(c => !c.owner_id) && <Panel title="Churches needing an owner" accent="var(--gold)"><ul className="space-y-2">{everything.filter(c => !c.owner_id).map(c => <li key={c.id}><Link href={`/app/church?id=${c.id}`} className="text-[13px] hover:underline">{c.name} · Assign an owner</Link></li>)}</ul></Panel>}
@@ -162,25 +161,24 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
       <div id="queue" className="scroll-mt-4" />
       <Panel
         title="Awaiting verification"
-        lede="Verifying tells the owner immediately, by notification and email"
         accent="var(--gold)"
       >
         <DataTable
           columns={columns}
           rows={rows}
-          empty="Nothing waiting. Every church on the platform has been looked at."
+          empty="Nothing waiting."
         />
       </Panel>
 
       <div id="delivery" className="scroll-mt-4" />
-      {delivery.ok && <Panel title="Email delivery" lede={delivery.data.configured ? `Sending through ${delivery.data.host}:${delivery.data.port} (${delivery.data.tls}) · retried automatically` : `Missing mail settings: ${delivery.data.missing.join(", ")}`}>
-        {delivery.data.hint && <div className="mb-2"><Notice kind="error">{delivery.data.hint}</Notice></div>}
-        <p className="text-[12px] text-ink-2">{Object.entries(delivery.data.counts).map(([state, count]) => `${state}: ${count}`).join(" · ") || "No messages queued"}</p>
+      {/* Only when there is something to act on: a failed email to retry,
+          or mail not configured at all. A healthy transport needs no panel. */}
+      {delivery.ok && (delivery.data.failures.length > 0 || !delivery.data.configured) && <Panel title="Email delivery" lede={delivery.data.configured ? undefined : `Missing mail settings: ${delivery.data.missing.join(", ")}`}>
         <DataTable columns={[{ key: "subject", label: "Email" }, { key: "status", label: "Status" }, { key: "action", label: "" }]}
           rows={delivery.data.failures.map((job) => ({ id: job.id, cells: [job.subject, `${job.status} · ${job.error ?? "expired"}`, job.status !== "expired" ? <ActionButton key="retry" action={retryMail} fields={{ id: job.id }} label="Retry" /> : <span key="expired">Request a new email</span>] }))} empty="No delivery failures" />
       </Panel>}
       <div id="accounts" className="scroll-mt-4" />
-      {isSuper && <Panel title="Accounts" lede="Account verification and access across all churches">
+      {isSuper && <Panel title="Accounts">
         <form className="mb-3 flex gap-2"><input name="q" defaultValue={q} placeholder="Name or email" aria-label="Search accounts" className="rounded-lg border border-line bg-paper px-3 py-2 text-[12px]" /><button className="btn btn-quiet btn-sm">Search</button></form>
         {accounts.ok ? <>
           <DataTable columns={[{ key: "name", label: "Person" }, { key: "email", label: "Email" }, { key: "status", label: "Status" }, { key: "actions", label: "Actions" }]}
@@ -200,7 +198,7 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
       </Panel>}
 
       {isSuper && (
-        <Panel title="Platform team" lede="Who holds authority above every church" accent="var(--violet)">
+        <Panel title="Platform team" accent="var(--violet)">
           <DataTable
             columns={[
               { key: "person", label: "Person" },
@@ -241,7 +239,7 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
       )}
 
       <div id="churches" className="scroll-mt-4" />
-      <Panel title="Every church" lede="Across the whole platform" accent="var(--cobalt)">
+      <Panel title="Every church" accent="var(--cobalt)">
         <DataTable
           columns={[
             { key: "name", label: "Church" },

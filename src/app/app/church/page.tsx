@@ -457,7 +457,7 @@ export default async function ChurchPage({
             owner. Only the owner or platform staff may hand it on, which
             is how a handover happens without anybody filing a ticket.
           */}
-          <Panel title="Ownership" lede="The one account that answers for this church" accent="var(--cobalt)">
+          <Panel title="Ownership" accent="var(--cobalt)">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <span className="text-[13px] font-medium text-ink">
                 {church.owner_id ? (ownerName ?? "Someone outside this church") : "Nobody yet"}
@@ -485,7 +485,7 @@ export default async function ChurchPage({
 
           {/* The tree in one block. The only structural figures on this
               page, because everything else here is the church whole. */}
-          <Panel title="The tree" lede="Church → branch → cell" accent="var(--violet)">
+          <Panel title="The tree" accent="var(--violet)">
             <dl className="grid grid-cols-3 gap-2 text-center">
               {[
                 { k: "branches", v: church.branch_count, tone: "var(--violet)", href: "/app/branches" },
@@ -605,7 +605,6 @@ export default async function ChurchPage({
           <section className="grid gap-3 lg:grid-cols-2">
             <Panel
               title="How it grew"
-              lede="Everyone on the roll, month by month"
               accent="var(--cobalt)"
               aside={
                 growthPct != null ? (
@@ -633,7 +632,6 @@ export default async function ChurchPage({
 
             <Panel
               title="Who joined"
-              lede="New members each month"
               accent="var(--emerald)"
               aside={
                 <span className="tnum text-[11.5px] font-semibold" style={{ color: "var(--emerald)" }}>
@@ -687,7 +685,7 @@ export default async function ChurchPage({
             {/* Cell life, whole. The dashboard lists the cells at risk by
                 name because that is a leader's next job; this says what
                 proportion of the church's cell life is in each state. */}
-            <Panel title="Cell health" lede="Every cell by band" accent="var(--emerald)">
+            <Panel title="Cell health" accent="var(--emerald)">
               {health.length > 0 ? (
                 <RingPanel
                   columns={1}
@@ -715,7 +713,7 @@ export default async function ChurchPage({
           </section>
 
           <section className="grid flex-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-            <Panel fill title="Age" lede="Everyone active" accent="var(--violet)">
+            <Panel fill title="Age" accent="var(--violet)">
               {ages.length > 0 ? (
                 <RingPanel
                   fill
@@ -741,7 +739,7 @@ export default async function ChurchPage({
               )}
             </Panel>
 
-            <Panel fill title="Women and men" lede="Everyone active" accent="var(--cobalt)">
+            <Panel fill title="Women and men" accent="var(--cobalt)">
               {genders.length > 0 ? (
                 <RingPanel
                   fill
@@ -798,7 +796,7 @@ export default async function ChurchPage({
                 />
               </Panel>
             ) : (
-              <Panel fill title="Care" lede="Every check-up by state" accent="var(--ruby)">
+              <Panel fill title="Care" accent="var(--ruby)">
                 {(data?.care ?? []).some((c) => c.value > 0) ? (
                   <RingPanel
                     fill

@@ -161,7 +161,6 @@ export default async function TeamPage() {
       <PageHead
         eyebrow="People"
         title="Team & roles"
-        lede="Who may do what, and on which rung."
         action={
           canWrite(me, "assignment") ? <GrantEditor
             action={grantRole}
@@ -214,7 +213,6 @@ export default async function TeamPage() {
 
       <Panel
         title="Who holds what"
-        lede="Strongest role first · a person may hold more than one"
         accent="var(--cobalt)"
       >
         <DataTable

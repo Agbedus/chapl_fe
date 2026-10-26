@@ -311,7 +311,7 @@ export default async function CellsPage({
       </section>
 
       <section className="grid gap-2 lg:grid-cols-3">
-        <Panel title="Strongest cells" lede="Highest turnout" accent="var(--emerald)">
+        <Panel title="Strongest cells" accent="var(--emerald)">
           <Leaderboard
             colour="var(--emerald)"
             unit="%"
@@ -327,7 +327,7 @@ export default async function CellsPage({
           />
         </Panel>
 
-        <Panel title="Needing a call" lede="Lowest turnout" accent="var(--ruby)">
+        <Panel title="Needing a call" accent="var(--ruby)">
           <Leaderboard
             colour="var(--ruby)"
             unit="%"
@@ -345,7 +345,7 @@ export default async function CellsPage({
 
         {/* Cells per branch: which sites are actually organised into
             groups, and which are one big room. */}
-        <Panel title="Cells per branch" lede="How the church is divided" accent="var(--violet)">
+        <Panel title="Cells per branch" accent="var(--violet)">
           <Leaderboard
             colour="var(--violet)"
             items={branches

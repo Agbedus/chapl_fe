@@ -116,7 +116,6 @@ export default async function EventsPage() {
       <PageHead
         eyebrow="Activity"
         title="Calendar"
-        lede="Everything the church has on."
         action={
           canWrite(me, "event") && audiences.length > 0 ? (
             <EventEditor action={saveEvent} audiences={audiences} />
@@ -163,7 +162,6 @@ export default async function EventsPage() {
       <Panel
         fill
         title="The calendar"
-        lede="Month, timeline or list — the same events, three ways"
         accent="var(--violet)"
       >
         <Calendar events={events} today={today} />

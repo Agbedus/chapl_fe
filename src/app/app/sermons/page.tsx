@@ -39,7 +39,6 @@ export default async function SermonsPage({
     <RecordTable<Row>
       eyebrow="Worship"
       title="Sermons"
-      lede="The library, video and audio."
       path="/sermons/?sort=sermon_date&order=desc"
       searchParams={searchParams}
       empty={writer ? "No sermons yet. Add the last one preached." : "No sermons yet."}

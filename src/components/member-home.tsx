@@ -88,7 +88,6 @@ export function MemberHome({
       {/* --- the next thing that happens ---------------------------- */}
       <Panel
         title="Next up"
-        lede="The next thing on the church calendar"
         accent="var(--violet)"
       >
         {next ? (
@@ -194,7 +193,7 @@ export function MemberHome({
         </Panel>
 
         {/* --- where they belong ----------------------------------- */}
-        <Panel title="Where you belong" lede="Your place in the church" accent="var(--cobalt)">
+        <Panel title="Where you belong" accent="var(--cobalt)">
           <dl className="rows">
             <div className="flex items-baseline justify-between gap-3 py-2 first:pt-0">
               <dt className="text-[12px] text-ink-3">Branch</dt>
@@ -228,7 +227,6 @@ export function MemberHome({
       {/* --- what the church is saying ------------------------------ */}
       <Panel
         title="Notices"
-        lede="From your church, your branch and your cell"
         accent="var(--cobalt)"
       >
         {notices.length > 0 ? (

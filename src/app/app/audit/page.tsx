@@ -196,7 +196,6 @@ export default async function AuditPage({
       <PageHead
         eyebrow="Platform"
         title="Audit log"
-        lede="Who changed what, and when. Nothing here can be edited — that is the point."
       />
 
       <section className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -210,7 +209,6 @@ export default async function AuditPage({
 
       <Panel
         title="The trail"
-        lede="Newest first"
         accent="var(--cobalt)"
         aside={
           <form className="flex items-center gap-2">

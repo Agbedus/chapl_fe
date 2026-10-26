@@ -77,7 +77,7 @@ export default async function CarePage() {
             <StatCard label="Closed" value={String(all.length - open.length)} colour="var(--emerald)" footnote="of the latest 200" />
           </section>
 
-          <Panel title="Open" lede="Most urgent first, then oldest" accent="var(--ruby)">
+          <Panel title="Open" accent="var(--ruby)">
             {open.length === 0 ? (
               <Empty>Nothing waiting. Everyone who asked has been looked after.</Empty>
             ) : (

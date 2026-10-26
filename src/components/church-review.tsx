@@ -68,7 +68,7 @@ export function ChurchReview({
         : null;
 
   return (
-    <Panel title="Registration" lede="Who submitted this, and what has been decided" accent="var(--gold)">
+    <Panel title="Registration" accent="var(--gold)">
       <dl className="grid gap-x-6 gap-y-3 text-[12.5px] sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <dt className="eyebrow text-ink-3">Status</dt>

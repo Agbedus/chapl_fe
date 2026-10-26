@@ -150,7 +150,6 @@ export default async function DepartmentsPage() {
       <PageHead
         eyebrow="Church"
         title="Departments"
-        lede="Ministry teams, off the branch and cell tree."
         action={
           canWrite(me, "department") ? <DepartmentEditor action={saveDepartment} branches={branchChoices} /> : null
         }
@@ -197,7 +196,7 @@ export default async function DepartmentsPage() {
         <DepartmentGrid departments={cards} branches={branchOptions} />
       </Panel>
 
-      <Panel fill title="Every department" lede="Across the whole church" accent="var(--emerald)">
+      <Panel fill title="Every department" accent="var(--emerald)">
         <DataTable
           fill
           columns={columns}

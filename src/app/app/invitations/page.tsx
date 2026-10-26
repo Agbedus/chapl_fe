@@ -154,7 +154,6 @@ export default async function InvitationsPage() {
       <PageHead
         eyebrow="People"
         title="Invitations"
-        lede="How someone joins. The branch and role are set before they arrive."
         action={
           <InviteEditor
             action={sendInvitation}
@@ -212,7 +211,7 @@ export default async function InvitationsPage() {
       </Panel>
 
       {settled.length > 0 && (
-        <Panel title="Settled" lede="Accepted, expired or revoked" accent="var(--ink-3)">
+        <Panel title="Settled" accent="var(--ink-3)">
           <DataTable
             columns={settledColumns}
             rows={settledRows}

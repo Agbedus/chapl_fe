@@ -91,7 +91,7 @@ export default async function CheckInPage() {
 
       {leader && (
         <>
-          <Panel title="Open now" lede="Show the code on the screen or at the door" accent="var(--gold)">
+          <Panel title="Open now" accent="var(--gold)">
             {live.length === 0 ? (
               <Empty>No service is open for check-in.{opener ? " Use “Open check-in” to start one." : ""}</Empty>
             ) : (

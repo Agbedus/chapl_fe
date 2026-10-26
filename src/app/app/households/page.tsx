@@ -45,7 +45,6 @@ export default async function HouseholdsPage({
       <PageHead
         eyebrow="People"
         title="Households"
-        lede="Who lives with whom. A family can span several cells."
         action={writer ? <HouseholdEditor action={saveHousehold} people={options} /> : undefined}
       />
 

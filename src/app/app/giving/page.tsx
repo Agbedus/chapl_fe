@@ -219,7 +219,6 @@ export default async function GivingPage({
       <section className="grid gap-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <Panel
           title="Month by month"
-          lede="Completed gifts, by the month they were given"
           accent="var(--emerald)"
           aside={
             isPartial ? (
@@ -251,7 +250,7 @@ export default async function GivingPage({
           )}
         </Panel>
 
-        <Panel title="What it was for" lede="Share of the window" accent="var(--teal)">
+        <Panel title="What it was for" accent="var(--teal)">
           <RingPanel
             height={186}
             value={money(window, currency, true)}
@@ -277,7 +276,6 @@ export default async function GivingPage({
       {/* ---------------- and only then, the ledger ---------------- */}
       <Panel
         title="Recent gifts"
-        lede="Most recent first"
         accent="var(--emerald)"
       >
         {gifts.length === 0 ? (

@@ -421,7 +421,6 @@ export default async function PersonPage({
           <div className="grid gap-3 sm:grid-cols-2">
             <Panel
               title="Placement"
-              lede="Where they belong"
               accent="var(--violet)"
               aside={
                 privileged && (
@@ -453,7 +452,6 @@ export default async function PersonPage({
 
             <Panel
               title="Authority"
-              lede="What they may do"
               accent="var(--cobalt)"
               aside={
                 privileged && (
@@ -486,7 +484,7 @@ export default async function PersonPage({
           <div className={`grid gap-3 sm:grid-cols-2 ${balanced ? "flex-1" : ""}`}>
             {/* What they give their time to. Off the branch/cell tree, so
                 it never appears in the placement panel beside it. */}
-            <Panel fill={balanced} title="Serving" lede="Departments they are on" accent="var(--teal)">
+            <Panel fill={balanced} title="Serving" accent="var(--teal)">
               {serving.length > 0 ? (
                 <ul className="rows">
                   {serving.map((dept) => (

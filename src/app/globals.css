@@ -14,6 +14,8 @@
 
   --paper: #ffffff;
   --mist: #f6f7f9;
+  /* The signed-in canvas behind every card. Mist by day. */
+  --canvas: #f6f7f9;
   --sunk: #eef0f4;
   --line: #e6e8ec;
   --line-soft: #eef0f3;
@@ -65,12 +67,16 @@
 .dark {
   color-scheme: dark;
 
-  --paper: #0a0c11;
-  --mist: #10131a;
-  --sunk: #161a23;
-  --line: #222733;
-  --line-soft: #191d27;
-  --line-strong: #313847;
+  /* Night: the canvas is the darkest thing on screen and a card sits one
+     quiet step above it — lifted, not floating. The other way round read
+     as dark holes punched in grey. */
+  --canvas: #060709;
+  --paper: #0f1115;
+  --mist: #0b0d10;
+  --sunk: #181b21;
+  --line: #1f232b;
+  --line-soft: #171a20;
+  --line-strong: #2c313b;
 
   --ink: #eef0f4;
   --ink-2: #a4adbc;
@@ -413,7 +419,7 @@ body {
    still reads as a card against it — contrast does the work a shadow
    used to. No tints; the product stays plain. */
 .app-ambient {
-  background: var(--mist);
+  background: var(--canvas);
 }
 
 /* Reading measure. Prose past this is prose nobody finishes. */
@@ -472,7 +478,8 @@ body {
   font-size: 13px;
   font-weight: 500;
   transition: opacity 0.15s, border-color 0.15s, box-shadow 0.15s,
-    background-color 0.15s, transform 0.14s var(--ease-out);
+    background-color 0.15s, transform 0.14s var(--ease-out),
+    scale 0.14s var(--ease-out), translate 0.16s var(--ease-out);
   white-space: nowrap;
 }
 
@@ -492,12 +499,8 @@ body {
  * down is the whole feedback loop: the interface heard you, before the
  * network has any opinion about it.
  */
-.btn:active {
-  transform: scale(0.97);
-}
-.btn-primary:active {
-  transform: scale(0.97);
-}
+/* The press itself is the `scale` rule under micro-interactions, shared
+   by every control. */
 
 .btn-quiet {
   border: 1px solid var(--line);
@@ -1905,6 +1908,8 @@ body:has(.modal-scrim) {
     color 260ms cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 260ms cubic-bezier(0.22, 1, 0.36, 1),
     transform 140ms cubic-bezier(0.22, 1, 0.36, 1),
+    scale 140ms cubic-bezier(0.22, 1, 0.36, 1),
+    translate 160ms cubic-bezier(0.22, 1, 0.36, 1),
     opacity 200ms ease;
 }
 .btn-stateful[data-tone="danger"] {
@@ -1952,4 +1957,97 @@ body:has(.modal-scrim) {
   .btn-stateful, .btn-label { transition: none; }
   .btn-stateful[data-phase="failed"], .btn-glyph { animation: none; }
   .btn-label { transform: none; }
+}
+
+/* --- micro-interactions ------------------------------------------------
+ *
+ * Everything you can press answers: a hover that leans in, a press that
+ * gives a little, an icon that wakes up. Small on purpose — these run
+ * tens of times a minute, so each is fast (≤160ms), eased out, and uses
+ * the individual `scale`/`translate` properties so it composes with any
+ * transform an element already carries instead of overwriting it.
+ *
+ * Hover is gated to a fine pointer: on a phone a tap would leave the
+ * hover stuck on. Reduced motion keeps the colour changes and drops the
+ * movement.
+ */
+:where(a, button, [role="button"], summary, label.btn) {
+  transition-property: color, background-color, border-color, opacity, scale, translate;
+  transition-duration: 160ms;
+  transition-timing-function: var(--ease-out);
+}
+:where(a, button, [role="button"], summary) > svg,
+:where(a, button, [role="button"]) > span > svg {
+  transition: scale 180ms var(--ease-out), translate 180ms var(--ease-out), color 160ms ease;
+}
+
+/* Press: everything that is a control gives a little. */
+:where(button, [role="button"], a.btn, label.btn, .tab, nav a):not(:disabled):active {
+  scale: 0.97;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  /* Icons inside controls wake on hover. */
+  :where(a, button, [role="button"]):hover > svg,
+  :where(a, button, [role="button"]):hover > span > svg {
+    scale: 1.08;
+  }
+  /* An arrow points where it goes. */
+  :where(a, button):hover > svg.lucide-arrow-right,
+  :where(a, button):hover > svg.lucide-chevron-right {
+    scale: 1;
+    translate: 2px 0;
+  }
+  :where(a, button):hover > svg.lucide-arrow-left,
+  :where(a, button):hover > svg.lucide-chevron-left {
+    scale: 1;
+    translate: -2px 0;
+  }
+  /* Quiet buttons and pills lift a hair, as the primary already does. */
+  .btn-quiet:hover {
+    translate: 0 -1px;
+  }
+  /* A card that is a link says so before it is pressed. */
+  a.sheet:hover,
+  a .sheet:hover {
+    translate: 0 -2px;
+    border-color: var(--line-strong);
+  }
+  /* Side-nav rows: a soft wash under the cursor, so the list reads as
+     pressable before the marker arrives. */
+  aside nav a:hover,
+  aside [data-href]:hover {
+    background-color: color-mix(in oklab, var(--sunk) 60%, transparent);
+  }
+  /* Table rows: the row under the cursor, faintly. */
+  tbody tr {
+    transition: background-color 140ms ease;
+  }
+}
+
+a.sheet,
+a .sheet {
+  transition: translate 200ms var(--ease-out), border-color 200ms ease, background-color 200ms ease;
+}
+
+/* Keyboard focus is always visible, never on a mouse click. */
+:where(a, button, [role="button"], input, select, textarea, summary):focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(a, button, [role="button"], summary, label.btn),
+  :where(a, button, [role="button"], summary) > svg,
+  a.sheet,
+  a .sheet {
+    transition-property: color, background-color, border-color, opacity;
+  }
+  :where(button, [role="button"], a.btn, label.btn, .tab, nav a):active,
+  a.sheet:hover,
+  a .sheet:hover,
+  .btn-quiet:hover {
+    scale: none;
+    translate: none;
+  }
 }
