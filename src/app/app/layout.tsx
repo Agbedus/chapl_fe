@@ -24,7 +24,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   if (churchId) {
     const result = await api<Church>(`/churches/${churchId}`);
     if (result.ok) churchName = result.data.name;
-  } else if (me.churches?.length === 1) {
+  } else if (!me.is_platform_staff && me.churches?.length === 1) {
     churchName = me.churches[0].name;
   }
 

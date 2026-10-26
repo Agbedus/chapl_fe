@@ -1,0 +1,21 @@
+full_name,email,phone,gender,date_of_birth,marital_status,occupation,address,household,household_role
+Kwame Mensah,kwame.mensah@example.com,0244100001,M,12/04/1978,married,Engineer,"12 Palm St, Adenta",The Mensah family,head
+Akosua Mensah,akosua.mensah@example.com,0244100002,F,03/09/1981,married,Teacher,"12 Palm St, Adenta",The Mensah family,wife
+Kofi Mensah,kofi.mensah@example.com,0244100003,M,21/01/2008,single,Student,"12 Palm St, Adenta",The Mensah family,son
+Ama Mensah,ama.mensah@example.com,0244100004,F,15/06/2011,single,Student,"12 Palm St, Adenta",The Mensah family,daughter
+Yaw Boateng,yaw.boateng@example.com,0244100005,M,30/11/1985,married,Accountant,"4 Ring Rd, Osu",The Boateng family,head
+Efua Boateng,efua.boateng@example.com,0244100006,F,08/02/1988,married,Nurse,"4 Ring Rd, Osu",The Boateng family,wife
+Kwesi Boateng,kwesi.boateng@example.com,0244100007,M,19/07/2015,single,Student,"4 Ring Rd, Osu",The Boateng family,son
+Abena Owusu,abena.owusu@example.com,0244100008,F,25/12/1990,single,Pharmacist,"7 Liberation Rd, Airport",,
+Kojo Asante,kojo.asante@example.com,0244100009,M,1972-05-14,married,Trader,"22 Market St, Madina",The Asante family,head
+Adwoa Asante,adwoa.asante@example.com,0244100010,F,1975-10-02,married,Caterer,"22 Market St, Madina",The Asante family,wife
+Yaa Asante,yaa.asante@example.com,0244100011,F,2004-03-27,single,Student,"22 Market St, Madina",The Asante family,daughter
+Kwabena Darko,kwabena.darko@example.com,0244100012,M,17/08/1995,single,Software developer,"9 Oxford St, Osu",,
+Esi Appiah,esi.appiah@example.com,0244100013,F,06/01/1968,widowed,Retired,"3 Hill Rd, East Legon",,
+Fiifi Quaye,fiifi.quaye@example.com,0244100014,M,29/09/1983,married,Driver,"15 Spintex Rd, Spintex",The Quaye family,head
+Araba Quaye,araba.quaye@example.com,0244100015,F,11/11/1986,married,Hairdresser,"15 Spintex Rd, Spintex",The Quaye family,wife
+Nana Agyeman,nana.agyeman@example.com,0244100016,M,02/02/1960,married,Lawyer,"1 Castle Rd, Cantonments",,
+Akua Frimpong,akua.frimpong@example.com,0244100017,F,23/04/1999,single,Banker,"18 Tema Rd, Tema",,
+Kweku Ansah,kweku.ansah@example.com,0244100018,M,10/10/1991,engaged,Electrician,"6 School Rd, Dansoman",,
+Afia Badu,afia.badu@example.com,0244100019,F,14/03/1979,divorced,Seamstress,"30 Kaneshie Rd, Kaneshie",,
+Ekow Hammond,ekow.hammond@example.com,0244100020,M,05/07/1987,married,Architect,"11 Labone Cres, Labone",,

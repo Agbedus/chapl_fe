@@ -89,7 +89,11 @@ export async function api<T>(
     const token = jar.get(TOKEN_COOKIE)?.value;
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    const church = churchId === undefined ? jar.get(CHURCH_COOKIE)?.value : churchId;
+    // No choice made yet means "all". Left out, the API falls back to the
+    // caller's sole membership — so platform staff who belong to one
+    // church saw that church while the header said "All churches". A
+    // church member sending "all" simply gets their own church back.
+    const church = churchId === undefined ? (jar.get(CHURCH_COOKIE)?.value ?? "all") : churchId;
     if (church) headers["X-Church-Id"] = church;
   } else if (churchId) {
     headers["X-Church-Id"] = churchId;
