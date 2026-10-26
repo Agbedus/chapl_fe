@@ -148,7 +148,7 @@ export function Register({
             <UserX className="h-3.5 w-3.5" aria-hidden />
             Nobody
           </button>
-          <Submit full={false}>Save the register</Submit>
+          <Submit full={false} state={state} doneLabel="Register saved">Save the register</Submit>
         </div>
       </div>
 

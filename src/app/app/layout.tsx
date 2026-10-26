@@ -11,7 +11,8 @@ import { Toaster } from "@/components/toaster";
 import { readable } from "@/lib/access";
 import { api } from "@/lib/api";
 import { currentChurchId, requireMe } from "@/lib/session";
-import type { Church, Dashboard } from "@/lib/types";
+import type { Church, Dashboard, Role } from "@/lib/types";
+import { ROLE_LABEL } from "@/lib/types";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const me = await requireMe();
@@ -20,6 +21,15 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // Which tenant the shell is labelled with. Platform staff with nothing
   // selected are working across all of them, and it says so.
   let churchName: string | null = null;
+  // The one role that says the most about them here: their highest grant
+  // in this church, or their platform role. Nothing at all is a member.
+  const order = Object.keys(ROLE_LABEL) as Role[];
+  const held = (me.assignments ?? [])
+    .filter((a) => order.indexOf(a.role) < 2 || !churchId || a.church_id === churchId)
+    .map((a) => a.role)
+    .sort((a, b) => order.indexOf(a) - order.indexOf(b));
+  const roleLabel = held.length ? ROLE_LABEL[held[0]] : "Member";
+
   const canSwitch = (me.churches?.length ?? 0) > 1 || me.is_platform_staff;
   if (churchId) {
     const result = await api<Church>(`/churches/${churchId}`);
@@ -61,6 +71,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         profileIncomplete={!me.profile_completion.complete}
         canSwitch={canSwitch}
         userAvatar={me.avatar_url}
+        roleLabel={roleLabel}
       />
 
       <MobileNav

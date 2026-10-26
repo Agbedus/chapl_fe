@@ -47,7 +47,7 @@ export function NewChurchForm({
         <Field label="Contact phone" name="contact_phone" type="tel" />
       </div>
 
-      <Submit>Create church</Submit>
+      <Submit state={state} doneLabel="Created">Create church</Submit>
     </form>
   );
 }

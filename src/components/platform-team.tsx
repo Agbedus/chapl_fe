@@ -42,7 +42,7 @@ export function PlatformGrantForm({ action }: { action: Action }) {
         ]}
       />
       <div className="sm:pt-0">
-        <Submit full={false}>
+        <Submit full={false} state={state} doneLabel="Granted">
           <Shield className="h-3.5 w-3.5" aria-hidden />
           Grant
         </Submit>

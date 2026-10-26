@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { FileCheck2, FileUp, X } from "lucide-react";
 
 import type { ImportState } from "@/app/actions/people-import";
@@ -32,6 +32,16 @@ const ACTION: Record<string, { label: string; tone: string }> = {
 export function PeopleImport({ action, branches }: { action: Action; branches: { value: string; label: string }[] }) {
   const [state, formAction] = useActionState(action, {});
   const result = state.result;
+  // What the buttons report. Memoised on the result, so the button sees
+  // one new outcome per submit rather than a new object every render.
+  const previewed = useMemo(
+    () => ({ error: state.error, message: state.result?.dry_run ? "ok" : undefined }),
+    [state],
+  );
+  const imported = useMemo(
+    () => ({ message: state.result && !state.result.dry_run ? "ok" : undefined }),
+    [state],
+  );
   // The input itself is hidden behind the button, so without this a
   // chosen file left no trace on the page and Preview looked like it
   // would send nothing.
@@ -105,7 +115,7 @@ export function PeopleImport({ action, branches }: { action: Action; branches: {
             placeholder="Branch for rows without one · optional"
           />
         )}
-        <Submit full={false}>Preview</Submit>
+        <Submit full={false} state={previewed} doneLabel="Preview ready" failLabel="Check the file">Preview</Submit>
       </form>
 
       {state.error && <Notice kind="error">{state.error}</Notice>}
@@ -131,7 +141,7 @@ export function PeopleImport({ action, branches }: { action: Action; branches: {
                 <input type="checkbox" name="send_welcome" value="true" defaultChecked={state.welcome} />
                 Email new people a link to set their password
               </label>
-              <Submit full={false}>
+              <Submit full={false} state={imported} doneLabel="Imported">
                 Import {result.created + result.added + result.updated} {result.created + result.added + result.updated === 1 ? "person" : "people"}
               </Submit>
             </form>

@@ -200,6 +200,7 @@ export function AppNav({
   profileIncomplete = false,
   canSwitch = false,
   userAvatar = null,
+  roleLabel = "Member",
 }: {
   churchName: string | null;
   userName: string;
@@ -212,6 +213,8 @@ export function AppNav({
   canSwitch?: boolean;
   /** Their photo, where they have set one; initials otherwise. */
   userAvatar?: string | null;
+  /** What they are here — "Church admin", "Cell leader", "Member". */
+  roleLabel?: string;
   /**
    * Resources this person can read, worked out on the server.
    *
@@ -433,7 +436,7 @@ export function AppNav({
             style={{ opacity: collapsed ? 0 : 1 }}
           >
             <span className="block truncate text-[12.5px] font-medium text-ink">{userName}</span>
-            <span className="block truncate text-[11px] text-ink-3">{userEmail}</span>
+            <span className="block truncate text-[11px] text-ink-3" title={userEmail}>{roleLabel}</span>
           </span>
         </Link>
 

@@ -135,6 +135,17 @@ function Row({ children }: { children: React.ReactNode }) {
  * unmounting would also throw away anything typed the moment somebody
  * stepped back to check a spelling.
  */
+/** What a form's button says once it worked: "Add team" → "Added". */
+function doneWord(submit: string): string {
+  const first = submit.split(" ")[0].toLowerCase();
+  const past: Record<string, string> = {
+    add: "Added", send: "Sent", invite: "Invited", open: "Opened", log: "Logged",
+    record: "Recorded", grant: "Granted", start: "Started", create: "Created",
+    import: "Imported", place: "Placed", move: "Moved", publish: "Published",
+  };
+  return past[first] ?? "Saved";
+}
+
 function Editor({
   label,
   submit,
@@ -385,7 +396,7 @@ function Editor({
                   <ChevronRight className="h-3.5 w-3.5" aria-hidden />
                 </button>
               ) : (
-                <Submit full={false} state={state}>{submit}</Submit>
+                <Submit full={false} state={state} doneLabel={doneWord(submit)}>{submit}</Submit>
               )}
 
               <button
@@ -489,11 +500,12 @@ export function ActionButton({
   confirm?: string;
 }) {
   const [state, formAction] = useActionState(action, EMPTY);
-  const colour = tone === "danger" ? "var(--ruby)" : "var(--ink-2)";
-  // Success as a toast; a refusal stays beside the row it belongs to. A
-  // new link is shown in place instead, where it can be copied.
+  // The button says done or failed itself; the toast carries the sentence
+  // — "Picked up — they have been told" is more than a button can hold.
+  // A new link is shown in place instead, where it can be copied.
   useEffect(() => {
-    if (state.message && !state.link) toast(state.message);
+    if (state.error) toast(state.error, "error");
+    else if (state.message && !state.link) toast(state.message);
   }, [state]);
 
   return (
@@ -507,18 +519,18 @@ export function ActionButton({
         {Object.entries(fields).map(([name, value]) => (
           <input key={name} type="hidden" name={name} value={value} />
         ))}
-        <button
-          type="submit"
-          className="btn btn-quiet btn-sm"
-          style={{ color: colour }}
+        <Submit
+          full={false}
+          size="sm"
+          tone={tone === "danger" ? "danger" : "quiet"}
+          state={state}
+          icon={icon}
+          doneLabel={label ? "Done" : ""}
+          failLabel={label ? "Failed" : ""}
         >
-          {icon}
           {label}
-        </button>
+        </Submit>
       </form>
-      {state.error && (
-        <span className="text-[11.5px]" style={{ color: "var(--ruby)" }}>{state.error}</span>
-      )}
       {state.link && (
         <div className="w-full max-w-md">
           <LinkResult message={state.message ?? "New link"} link={state.link} />
@@ -2310,7 +2322,7 @@ export function CheckInBox({ action }: { action: Action }) {
                error={state.fieldErrors?.code}
                icon={<Hash className="h-full w-full" />} />
       </div>
-      <Submit full={false}>Check in</Submit>
+      <Submit full={false} state={state} doneLabel="Checked in" failLabel="Try again">Check in</Submit>
     </form>
   );
 }
@@ -2334,9 +2346,15 @@ export function ReminderControl({
   current?: string | null;
 }) {
   const [state, formAction] = useActionState(action, EMPTY);
+  // Removing is its own form with its own result, so pressing one button
+  // never makes the other say "done".
+  const [removed, removeAction] = useActionState(action, EMPTY);
   useEffect(() => {
     if (state.message) toast(state.message);
   }, [state]);
+  useEffect(() => {
+    if (removed.message) toast(removed.message);
+  }, [removed]);
   return (
     <div className="space-y-2">
       <form action={formAction} className="flex flex-wrap items-center gap-2">
@@ -2353,13 +2371,13 @@ export function ReminderControl({
                     { value: "2880", label: "2 days before" },
                   ]} />
         </div>
-        <Submit full={false}>{current ? "Change reminder" : "Remind me"}</Submit>
+        <Submit full={false} state={state} doneLabel="Reminder set">{current ? "Change reminder" : "Remind me"}</Submit>
       </form>
       {current && (
-        <form action={formAction}>
+        <form action={removeAction}>
           <input type="hidden" name="event_id" value={eventId} />
           <input type="hidden" name="cancel" value="true" />
-          <button type="submit" className="btn btn-quiet btn-sm">Remove reminder</button>
+          <Submit full={false} size="sm" tone="quiet" state={removed} doneLabel="Removed">Remove reminder</Submit>
         </form>
       )}
       {state.error && <Notice kind="error">{state.error}</Notice>}

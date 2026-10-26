@@ -100,52 +100,96 @@ export function Field({
 /**
  * The submit button, which also reports the result.
  *
- * Pass the action's `state` and the button says "Saved" for a moment once
- * a write lands, then goes back to its label. Saying it on the button
- * rather than in a line beneath means nothing on the form moves: a
- * confirmation that pushes the button up is a button that is no longer
- * where your finger was.
+ * Four phases, all on the button itself: **idle** (its label), **working**
+ * (a spinner, and it cannot be pressed twice), **done** ("Saved", on
+ * green, for a moment) and **failed** ("Not saved", on red, with a small
+ * shake). Then it settles back to idle. Saying it on the button rather
+ * than in a line beneath means nothing on the form moves: a confirmation
+ * that pushes the button up is a button no longer where your finger was.
+ *
+ * Every label sits in one grid cell, so the button keeps the width of the
+ * longest and swapping them never nudges what is beside it.
+ *
+ * Pass the action's `state` to get done and failed; without it the button
+ * only knows idle and working.
  */
 export function Submit({
   children,
   full = true,
   state,
+  tone = "primary",
+  size,
+  icon,
+  doneLabel = "Saved",
+  failLabel = "Not saved",
 }: {
   children: ReactNode;
   full?: boolean;
   state?: { message?: string; error?: string };
+  tone?: "primary" | "quiet" | "danger";
+  size?: "sm";
+  /** Shown beside the label while idle. */
+  icon?: ReactNode;
+  doneLabel?: string;
+  failLabel?: string;
 }) {
   const { pending } = useFormStatus();
-  // The result already acknowledged. "Saved" shows for any newer one —
-  // and one that existed when the button mounted (a form reopened after
-  // its last save) counts as old news.
+  // The result already acknowledged; done or failed shows for any newer
+  // one. A result that existed when the button mounted (a form reopened
+  // after its last save) counts as old news.
   const [shown, setShown] = useState<object | null>(state ?? null);
-  const saved = Boolean(state && state.message && !state.error && shown !== state && !pending);
-  useEffect(() => {
-    if (!saved || !state) return;
-    const timer = setTimeout(() => setShown(state), 1600);
-    return () => clearTimeout(timer);
-  }, [saved, state]);
+  const fresh = Boolean(state && shown !== state && !pending);
+  const phase: "idle" | "working" | "done" | "failed" = pending
+    ? "working"
+    : fresh && state?.error
+      ? "failed"
+      : fresh && state?.message
+        ? "done"
+        : "idle";
 
+  useEffect(() => {
+    if (phase !== "done" && phase !== "failed") return;
+    const timer = setTimeout(() => setShown(state ?? null), phase === "failed" ? 2200 : 1600);
+    return () => clearTimeout(timer);
+  }, [phase, state]);
+
+  const glyph =
+    phase === "working" ? (
+      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+    ) : phase === "done" ? (
+      <Check className="h-4 w-4" aria-hidden />
+    ) : phase === "failed" ? (
+      <AlertCircle className="h-4 w-4" aria-hidden />
+    ) : (
+      icon
+    );
+
+  const look = tone === "primary" ? "btn-primary" : "btn-quiet";
   return (
     <button
       type="submit"
       disabled={pending}
       aria-live="polite"
-      className={`btn btn-primary ${full ? "w-full" : ""} disabled:opacity-60`}
+      aria-busy={pending || undefined}
+      data-phase={phase}
+      data-tone={tone}
+      className={`btn ${look} ${size === "sm" ? "btn-sm" : ""} btn-stateful ${full ? "w-full" : ""}`}
     >
-      {pending ? (
-        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-      ) : saved ? (
-        <Check className="h-4 w-4" aria-hidden />
-      ) : null}
-      {/* Both labels share one cell, so the button keeps the width of the
-          longer and swapping them does not nudge anything beside it. */}
+      {glyph && (
+        // Keyed by phase so each new icon arrives with the pop.
+        <span key={phase} className="btn-glyph">{glyph}</span>
+      )}
       <span className="grid">
-        <span className={`col-start-1 row-start-1 ${saved ? "invisible" : ""}`}>{children}</span>
-        <span className={`col-start-1 row-start-1 ${saved ? "" : "invisible"}`} aria-hidden={!saved}>
-          Saved
-        </span>
+        {(["idle", "working", "done", "failed"] as const).map((p) => (
+          <span
+            key={p}
+            className="btn-label col-start-1 row-start-1"
+            data-on={phase === p || undefined}
+            aria-hidden={phase !== p}
+          >
+            {p === "done" ? doneLabel : p === "failed" ? failLabel : children}
+          </span>
+        ))}
       </span>
     </button>
   );
