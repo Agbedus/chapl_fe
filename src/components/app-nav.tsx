@@ -199,6 +199,7 @@ export function AppNav({
   isPlatform = false,
   profileIncomplete = false,
   canSwitch = false,
+  userAvatar = null,
 }: {
   churchName: string | null;
   userName: string;
@@ -209,6 +210,8 @@ export function AppNav({
   profileIncomplete?: boolean;
   /** More than one church to work in, so the footer offers the switch. */
   canSwitch?: boolean;
+  /** Their photo, where they have set one; initials otherwise. */
+  userAvatar?: string | null;
   /**
    * Resources this person can read, worked out on the server.
    *
@@ -337,7 +340,12 @@ export function AppNav({
           />
         )}
 
-        {sections.map((section) => (
+        {/* Account lives once, in the footer with the person's name and
+            photo — listing it here as well put "you" in the nav twice. */}
+        {sections
+          .map((s) => ({ ...s, items: s.items.filter((i) => i.href !== "/app/account") }))
+          .filter((s) => s.items.length > 0)
+          .map((section) => (
           <div key={section.heading} className="mb-5">
             <p
               className="eyebrow px-3 pb-2 text-ink-3 transition-opacity duration-200
@@ -411,7 +419,13 @@ export function AppNav({
               color: "var(--violet)",
             }}
           >
-            {userName.slice(0, 1).toUpperCase()}<ProfileDot incomplete={profileIncomplete} />
+            {userAvatar ? (
+              // eslint-disable-next-line @next/next/no-img-element -- the API serves it; no loader to configure
+              <img src={userAvatar} alt="" className="h-full w-full rounded-full object-cover" />
+            ) : (
+              userName.slice(0, 1).toUpperCase()
+            )}
+            <ProfileDot incomplete={profileIncomplete} />
           </span>
           <span
             className="min-w-0 flex-1 overflow-hidden transition-opacity duration-200

@@ -60,6 +60,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         isPlatform={me.is_platform_staff}
         profileIncomplete={!me.profile_completion.complete}
         canSwitch={canSwitch}
+        userAvatar={me.avatar_url}
       />
 
       <MobileNav
