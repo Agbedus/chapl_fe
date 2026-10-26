@@ -224,7 +224,7 @@ export function Meter({ value, colour }: { value: number; colour: string }) {
         className="block h-full rounded-full"
         style={{
           width: `${Math.min(100, Math.max(0, value))}%`,
-          background: `linear-gradient(90deg, color-mix(in oklab, ${colour} 60%, transparent), ${colour})`,
+          background: colour,
         }}
       />
     </span>

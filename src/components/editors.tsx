@@ -179,31 +179,15 @@ function Editor({
   // can be copied.
   const settled = Boolean(closeOnSuccess && state.message && !state.link);
 
-  /*
-   * Close once the write lands.
-   *
-   * `settled` was computed and then never acted on, so every form stayed
-   * open over the page it had just changed, showing "Saved." above fields
-   * you had no more use for — and the confirmation line under the button,
-   * which is guarded on `!open`, could never appear at all.
-   *
-   * Adjusted during render rather than in an effect. An effect would run
-   * after the modal had already painted once more, and the compiler's
-   * `set-state-in-effect` rule refuses it outright; this is React's own
-   * escape hatch for state that has to follow other state, and it
-   * re-renders before anything reaches the screen.
-   */
-  const [wasSettled, setWasSettled] = useState(false);
-  if (settled !== wasSettled) {
-    setWasSettled(settled);
-    if (settled) setOpen(false);
-  }
-
-  // The save is announced as the form closes, where the eye goes next.
-  // A form that stays open (an invitation's link) shows its own result.
+  // Close once the write lands. The button says "Saved" first (see `Submit`), and the form closes a
+  // beat later, so the confirmation is seen where the press was made
+  // rather than in a line that shoves the button upward. The close is
+  // set inside a timer, which the compiler's effect rule allows.
   useEffect(() => {
-    if (closeOnSuccess && state.message && !state.link) toast(state.message);
-  }, [state, closeOnSuccess]);
+    if (!settled) return;
+    const timer = setTimeout(() => setOpen(false), 900);
+    return () => clearTimeout(timer);
+  }, [settled, state]);
 
   /*
    * A rejected write opens the step that was rejected.
@@ -370,7 +354,6 @@ function Editor({
 
             <div className="modal-body space-y-4" ref={bodyRef}>
               {state.error && <Notice kind="error">{state.error}</Notice>}
-              {state.message && !state.link && <Notice kind="success">{state.message}</Notice>}
               {state.link && <LinkResult message={state.message ?? ""} link={state.link} />}
 
               {steps
@@ -402,7 +385,7 @@ function Editor({
                   <ChevronRight className="h-3.5 w-3.5" aria-hidden />
                 </button>
               ) : (
-                <Submit full={false}>{submit}</Submit>
+                <Submit full={false} state={state}>{submit}</Submit>
               )}
 
               <button

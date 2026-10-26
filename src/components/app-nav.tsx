@@ -282,7 +282,7 @@ export function AppNav({
                      transition-opacity duration-150 motion-reduce:transition-none"
           style={{
             background:
-              "linear-gradient(135deg, var(--cobalt), color-mix(in oklab, var(--cobalt) 55%, var(--violet)))",
+              "var(--accent)",
             color: "var(--accent-ink)",
           }}
           title={churchName ?? "All churches"}

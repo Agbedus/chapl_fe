@@ -347,7 +347,7 @@ export default async function ChurchPage({
                   className="mx-auto grid h-20 w-20 place-items-center rounded-2xl text-[24px] font-bold"
                   style={{
                     background:
-                      "linear-gradient(140deg, color-mix(in oklab, var(--cobalt) 20%, transparent), color-mix(in oklab, var(--violet) 16%, transparent))",
+                      "color-mix(in oklab, var(--cobalt) 14%, transparent)",
                     color: "var(--cobalt)",
                     fontFamily: "var(--font-display)",
                   }}

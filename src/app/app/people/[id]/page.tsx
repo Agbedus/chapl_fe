@@ -612,7 +612,7 @@ export default async function PersonPage({
                 className="mx-auto grid h-24 w-24 place-items-center rounded-full text-[30px] font-semibold ring-1 ring-line"
                 style={{
                   background:
-                    "linear-gradient(135deg, color-mix(in oklab, var(--cobalt) 20%, transparent), color-mix(in oklab, var(--violet) 16%, transparent))",
+                    "color-mix(in oklab, var(--cobalt) 14%, transparent)",
                   color: "var(--cobalt)",
                   fontFamily: "var(--font-display)",
                 }}

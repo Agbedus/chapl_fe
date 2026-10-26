@@ -1,8 +1,8 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
-import type { ReactNode } from "react";
+import { AlertCircle, Check, CheckCircle2, Loader2 } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 
 /**
  * The text input's look, in one place.
@@ -97,22 +97,56 @@ export function Field({
   );
 }
 
+/**
+ * The submit button, which also reports the result.
+ *
+ * Pass the action's `state` and the button says "Saved" for a moment once
+ * a write lands, then goes back to its label. Saying it on the button
+ * rather than in a line beneath means nothing on the form moves: a
+ * confirmation that pushes the button up is a button that is no longer
+ * where your finger was.
+ */
 export function Submit({
   children,
   full = true,
+  state,
 }: {
   children: ReactNode;
   full?: boolean;
+  state?: { message?: string; error?: string };
 }) {
   const { pending } = useFormStatus();
+  // The result already acknowledged. "Saved" shows for any newer one —
+  // and one that existed when the button mounted (a form reopened after
+  // its last save) counts as old news.
+  const [shown, setShown] = useState<object | null>(state ?? null);
+  const saved = Boolean(state && state.message && !state.error && shown !== state && !pending);
+  useEffect(() => {
+    if (!saved || !state) return;
+    const timer = setTimeout(() => setShown(state), 1600);
+    return () => clearTimeout(timer);
+  }, [saved, state]);
+
   return (
     <button
       type="submit"
       disabled={pending}
+      aria-live="polite"
       className={`btn btn-primary ${full ? "w-full" : ""} disabled:opacity-60`}
     >
-      {pending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-      {children}
+      {pending ? (
+        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+      ) : saved ? (
+        <Check className="h-4 w-4" aria-hidden />
+      ) : null}
+      {/* Both labels share one cell, so the button keeps the width of the
+          longer and swapping them does not nudge anything beside it. */}
+      <span className="grid">
+        <span className={`col-start-1 row-start-1 ${saved ? "invisible" : ""}`}>{children}</span>
+        <span className={`col-start-1 row-start-1 ${saved ? "" : "invisible"}`} aria-hidden={!saved}>
+          Saved
+        </span>
+      </span>
     </button>
   );
 }

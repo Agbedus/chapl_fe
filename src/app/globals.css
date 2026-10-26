@@ -405,33 +405,15 @@ body {
   left: 1.25rem;
   right: 1.25rem;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in oklab, var(--edge, var(--cobalt)) 70%, transparent) 30%,
-    color-mix(in oklab, var(--edge, var(--cobalt)) 70%, transparent) 70%,
-    transparent
-  );
+  background: color-mix(in oklab, var(--edge, var(--cobalt)) 55%, transparent);
   pointer-events: none;
 }
 
-/* The ambient light of the signed-in half: two faint jewel tints bleeding
-   in from the top corners. The canvas is mist, not paper, so a flat card
+/* The canvas of the signed-in half: flat mist, not paper, so a flat card
    still reads as a card against it — contrast does the work a shadow
-   used to. */
+   used to. No tints; the product stays plain. */
 .app-ambient {
-  background:
-    radial-gradient(
-      52rem 26rem at 8% -6%,
-      color-mix(in oklab, var(--violet) 8%, transparent),
-      transparent 60%
-    ),
-    radial-gradient(
-      44rem 22rem at 98% -4%,
-      color-mix(in oklab, var(--cobalt) 9%, transparent),
-      transparent 55%
-    ),
-    var(--mist);
+  background: var(--mist);
 }
 
 /* Reading measure. Prose past this is prose nobody finishes. */
@@ -495,11 +477,7 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(
-    135deg,
-    var(--cobalt),
-    color-mix(in oklab, var(--cobalt) 62%, var(--violet))
-  );
+  background: var(--accent);
   color: var(--accent-ink);
 }
 .btn-primary:hover {
@@ -565,21 +543,10 @@ body {
   line-height: 1;
 }
 
-/*
- * A headline number set as a gradient. `color: transparent` is the only
- * way background-clip: text works, so a `style={{ color }}` would fight
- * it — use this class instead of an inline colour.
- */
+/* A heading that used to be a gradient. Plain ink now; kept as a class
+   so the markup that names it needs no change. */
 .grad-text {
-  background-image: linear-gradient(
-    118deg,
-    var(--cobalt),
-    color-mix(in oklab, var(--cobalt) 52%, var(--violet)) 60%,
-    var(--violet)
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--ink);
 }
 
 /* A signed change, the quiet way. */
@@ -608,12 +575,7 @@ body {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in oklab, var(--stat-tone, var(--cobalt)) 45%, transparent),
-    transparent
-  );
+  background: color-mix(in oklab, var(--stat-tone, var(--cobalt)) 30%, transparent);
   pointer-events: none;
 }
 
