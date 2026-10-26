@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
-import { FileUp } from "lucide-react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { FileCheck2, FileUp, X } from "lucide-react";
 
 import type { ImportState } from "@/app/actions/people-import";
 import { toast } from "@/components/toaster";
@@ -32,6 +32,27 @@ const ACTION: Record<string, { label: string; tone: string }> = {
 export function PeopleImport({ action, branches }: { action: Action; branches: { value: string; label: string }[] }) {
   const [state, formAction] = useActionState(action, {});
   const result = state.result;
+  // The input itself is hidden behind the button, so without this a
+  // chosen file left no trace on the page and Preview looked like it
+  // would send nothing.
+  const [picked, setPicked] = useState<{ name: string; rows: number | null } | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function onPick(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return setPicked(null);
+    setPicked({ name: file.name, rows: null });
+    file.text().then((text) => {
+      // Lines with something on them, less the header row.
+      const rows = text.split(/\r?\n/).filter((line) => line.trim()).length - 1;
+      setPicked({ name: file.name, rows: Math.max(0, rows) });
+    });
+  }
+
+  function clearPick() {
+    if (fileRef.current) fileRef.current.value = "";
+    setPicked(null);
+  }
 
   useEffect(() => {
     if (result && !result.dry_run) {
@@ -45,9 +66,23 @@ export function PeopleImport({ action, branches }: { action: Action; branches: {
         <div className="flex flex-wrap items-center gap-3">
           <label className="btn btn-quiet btn-sm cursor-pointer">
             <FileUp className="h-3.5 w-3.5" aria-hidden />
-            Choose CSV file
-            <input type="file" name="file" accept=".csv,text/csv,text/plain" className="sr-only" />
+            {picked ? "Choose another file" : "Choose CSV file"}
+            <input ref={fileRef} type="file" name="file" accept=".csv,text/csv,text/plain"
+                   className="sr-only" onChange={onPick} />
           </label>
+          {picked && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-[12px] text-ink">
+              <FileCheck2 className="h-3.5 w-3.5" style={{ color: "var(--emerald)" }} aria-hidden />
+              <span className="max-w-[16rem] truncate font-medium">{picked.name}</span>
+              <span className="text-ink-3">
+                {picked.rows === null ? "reading…" : `${picked.rows} ${picked.rows === 1 ? "row" : "rows"}`}
+              </span>
+              <button type="button" onClick={clearPick} aria-label="Remove file"
+                      className="ml-0.5 text-ink-3 hover:text-ink">
+                <X className="h-3 w-3" aria-hidden />
+              </button>
+            </span>
+          )}
           <a
             href={`data:text/csv;charset=utf-8,${encodeURIComponent(TEMPLATE)}`}
             download="chapl-people-template.csv"
