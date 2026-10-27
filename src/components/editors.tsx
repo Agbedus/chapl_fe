@@ -179,39 +179,86 @@ function Editor({
   const closing = useRef(false);
 
   /*
-   * The form grows out of the button that opened it.
+   * The form opens from the button that opened it, and stays there.
    *
-   * On open the panel starts as the button — its box, its place — and
-   * expands to its own size in the middle of the screen; on close it
-   * folds back into the button, faster than it came out, because closing
-   * is the app answering rather than something to watch. Web Animations
-   * rather than CSS: the start is measured, not known in advance, and a
-   * WAAPI transform still runs off the main thread. Reduced motion gets
-   * the plain fade the scrim already does.
+   * Not centred: the panel hangs just below its button, right edges
+   * aligned, so it reads as that button unfolding rather than a dialog
+   * arriving from nowhere. It is revealed from the button's corner — a
+   * clip-path inset opening down and outward, with a slight scale from
+   * the same corner — and only once it has mostly opened do the fields
+   * follow, top to bottom (see `.modal-anchored` in globals.css).
+   * Closing runs the reveal backwards, faster: the app answering is
+   * quicker than the app presenting.
+   *
+   * A button near the bottom of the screen (an edit pencil in a long
+   * table) opens the panel upward instead, from the button's top corner.
+   * Position is written to the node, not held in state — it is geometry
+   * the browser needs, not data the tree does.
    */
+  function place(panel: HTMLElement) {
+    const button = triggerRef.current?.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const gap = 8;
+    const edge = 12;
+    panel.style.position = "fixed";
+    panel.style.margin = "0";
+    if (!button || vw < 640) {
+      // A phone has no room to hang anything: full width, from the top.
+      Object.assign(panel.style, {
+        left: `${edge}px`, right: `${edge}px`, top: `${edge}px`, bottom: "auto",
+        width: "auto", maxHeight: `${vh - edge * 2}px`,
+      });
+      panel.dataset.from = "top";
+      return;
+    }
+    const width = Math.min(panel.classList.contains("modal-wide") ? 960 : 640, vw - edge * 2);
+    const right = Math.max(edge, vw - button.right);
+    const below = vh - button.bottom - gap - edge;
+    const above = button.top - gap - edge;
+    const up = below < 360 && above > below;
+    Object.assign(panel.style, {
+      width: `${width}px`,
+      right: `${right}px`,
+      left: "auto",
+      top: up ? "auto" : `${button.bottom + gap}px`,
+      bottom: up ? `${vh - button.top + gap}px` : "auto",
+      maxHeight: `${up ? above : below}px`,
+    });
+    panel.dataset.from = up ? "bottom" : "top";
+  }
+
   function morph(panel: HTMLElement, reverse: boolean) {
-    const from = triggerRef.current?.getBoundingClientRect();
-    const to = panel.getBoundingClientRect();
-    if (!from || !to.width || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const up = panel.dataset.from === "bottom";
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return panel.animate([{ opacity: reverse ? 1 : 0 }, { opacity: reverse ? 0 : 1 }], {
-        duration: 160, easing: "ease-out", fill: "both",
+        duration: 140, easing: "ease-out", fill: "both",
       });
     }
-    const dx = from.left + from.width / 2 - (to.left + to.width / 2);
-    const dy = from.top + from.height / 2 - (to.top + to.height / 2);
-    const sx = Math.max(from.width / to.width, 0.08);
-    const sy = Math.max(from.height / to.height, 0.04);
-    const small = { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, opacity: 0.2 };
-    const full = { transform: "none", opacity: 1 };
-    return panel.animate(reverse ? [full, small] : [small, full], {
-      duration: reverse ? 220 : 380,
-      easing: reverse ? "cubic-bezier(0.4, 0, 1, 1)" : "cubic-bezier(0.32, 0.72, 0, 1)",
+    panel.style.transformOrigin = up ? "bottom right" : "top right";
+    // Folded into the button's corner: most of the width and nearly all
+    // of the height clipped away, a touch smaller, faded.
+    const shut = {
+      clipPath: up ? "inset(92% 0 0 70% round 20px)" : "inset(0 0 92% 70% round 20px)",
+      transform: "scale(0.96)",
+      opacity: 0,
+    };
+    const shown = { clipPath: "inset(0 0 0 0 round 20px)", transform: "none", opacity: 1 };
+    return panel.animate(reverse ? [shown, shut] : [shut, shown], {
+      duration: reverse ? 200 : 340,
+      easing: reverse ? "cubic-bezier(0.4, 0, 1, 1)" : "cubic-bezier(0.23, 1, 0.32, 1)",
       fill: "both",
     });
   }
 
   useLayoutEffect(() => {
-    if (open && panelRef.current) morph(panelRef.current, false);
+    const panel = panelRef.current;
+    if (!open || !panel) return;
+    place(panel);
+    morph(panel, false);
+    const onResize = () => place(panel);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, [open]);
 
   function close() {
@@ -379,7 +426,7 @@ function Editor({
           which is why the stop is on the panel rather than the scrim.
         */
         <div
-          className="modal-scrim"
+          className="modal-scrim modal-anchored"
           role="dialog"
           aria-modal="true"
           aria-label={label}

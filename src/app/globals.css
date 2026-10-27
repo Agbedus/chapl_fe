@@ -918,8 +918,9 @@ body {
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 20px;
-  /* Its entrance is measured from the button that opened it — see
-     `Editor` in components/editors.tsx. Other modals keep the CSS one. */
+  /* Forms opened from a button are placed under it and revealed from
+     its corner by `Editor` (components/editors.tsx); other modals keep
+     this centred entrance. */
   animation: modal-in 0.22s var(--ease-out);
 }
 form.modal-panel {
@@ -928,24 +929,53 @@ form.modal-panel {
 
 /* Once the panel has opened, its fields follow it in, top to bottom.
    A step shown later replays this as it appears, which is the same
-   gesture for the same reason. */
+   gesture for the same reason. Delays start after most of the panel's
+   340ms reveal, so the frame lands first and the contents second. */
 .modal-body > *,
 .modal-body > [data-step] > * {
-  animation: field-in 300ms var(--ease-out) both;
+  animation: field-in 280ms var(--ease-out) both;
 }
-.modal-body > :nth-child(1), .modal-body > [data-step] > :nth-child(1) { animation-delay: 140ms; }
-.modal-body > :nth-child(2), .modal-body > [data-step] > :nth-child(2) { animation-delay: 175ms; }
-.modal-body > :nth-child(3), .modal-body > [data-step] > :nth-child(3) { animation-delay: 210ms; }
-.modal-body > :nth-child(4), .modal-body > [data-step] > :nth-child(4) { animation-delay: 245ms; }
-.modal-body > :nth-child(5), .modal-body > [data-step] > :nth-child(5) { animation-delay: 280ms; }
-.modal-body > :nth-child(n + 6), .modal-body > [data-step] > :nth-child(n + 6) { animation-delay: 310ms; }
+.modal-body > :nth-child(1), .modal-body > [data-step] > :nth-child(1) { animation-delay: 200ms; }
+.modal-body > :nth-child(2), .modal-body > [data-step] > :nth-child(2) { animation-delay: 240ms; }
+.modal-body > :nth-child(3), .modal-body > [data-step] > :nth-child(3) { animation-delay: 280ms; }
+.modal-body > :nth-child(4), .modal-body > [data-step] > :nth-child(4) { animation-delay: 320ms; }
+.modal-body > :nth-child(5), .modal-body > [data-step] > :nth-child(5) { animation-delay: 360ms; }
+.modal-body > :nth-child(n + 6), .modal-body > [data-step] > :nth-child(n + 6) { animation-delay: 390ms; }
+/* The head and footer arrive with the frame, a beat before the fields. */
+.modal-anchored .modal-head,
+.modal-anchored .modal-foot {
+  animation: field-in 240ms var(--ease-out) 120ms both;
+}
+/* Anchored to its button, not centred: the scrim only dims, and the
+   panel is placed by `Editor`. A lighter scrim, too — the page under it
+   is the context the button lives in, so it should still read. */
+.modal-scrim.modal-anchored {
+  display: block;
+  padding: 0;
+  background: color-mix(in oklab, var(--ink) 18%, transparent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.dark .modal-scrim.modal-anchored {
+  background: rgba(0, 0, 0, 0.5);
+}
+.modal-anchored .modal-panel {
+  box-shadow:
+    0 1px 2px rgb(14 17 22 / 0.06),
+    0 24px 60px -16px rgb(14 17 22 / 0.35);
+}
+.dark .modal-anchored .modal-panel {
+  box-shadow: 0 24px 60px -12px rgb(0 0 0 / 0.7);
+}
 @keyframes field-in {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .modal-body > *,
-  .modal-body > [data-step] > * {
+  .modal-body > [data-step] > *,
+  .modal-anchored .modal-head,
+  .modal-anchored .modal-foot {
     animation: none;
   }
 }
