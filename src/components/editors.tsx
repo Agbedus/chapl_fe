@@ -34,6 +34,7 @@ import {
 import { PasswordField } from "@/components/ui/password";
 import { toast } from "@/components/toaster";
 import { useAnchoredPanel } from "@/components/ui/anchored";
+import { ConfirmDialog } from "@/components/ui/confirm";
 import {
   ComboField, DateField, DateTimeField, TimeField,
 } from "@/components/ui/pickers";
@@ -512,6 +513,11 @@ export function ActionButton({
   confirm?: string;
 }) {
   const [state, formAction] = useActionState(action, EMPTY);
+  // A confirmation is asked in the product's own dialog; once answered
+  // yes, the same form is submitted for real.
+  const [asking, setAsking] = useState(false);
+  const approved = useRef(false);
+  const form = useRef<HTMLFormElement>(null);
   // The button says done or failed itself; the toast carries the sentence
   // — "Picked up — they have been told" is more than a button can hold.
   // A new link is shown in place instead, where it can be copied.
@@ -523,9 +529,15 @@ export function ActionButton({
   return (
     <div className="flex flex-col items-end gap-1.5">
       <form
+        ref={form}
         action={formAction}
         onSubmit={(event) => {
-          if (confirm && !window.confirm(confirm)) event.preventDefault();
+          if (!confirm || approved.current) {
+            approved.current = false;
+            return;
+          }
+          event.preventDefault();
+          setAsking(true);
         }}
       >
         {Object.entries(fields).map(([name, value]) => (
@@ -539,10 +551,23 @@ export function ActionButton({
           icon={icon}
           doneLabel={label ? "Done" : ""}
           failLabel={label ? "Failed" : ""}
+          className={label ? "" : "icon-btn"}
         >
           {label}
         </Submit>
       </form>
+      <ConfirmDialog
+        open={asking}
+        title={confirm ?? ""}
+        tone={tone}
+        confirmLabel={label || (tone === "danger" ? "Remove" : "Confirm")}
+        onCancel={() => setAsking(false)}
+        onConfirm={() => {
+          setAsking(false);
+          approved.current = true;
+          form.current?.requestSubmit();
+        }}
+      />
       {state.link && (
         <div className="w-full max-w-md">
           <LinkResult message={state.message ?? "New link"} link={state.link} />

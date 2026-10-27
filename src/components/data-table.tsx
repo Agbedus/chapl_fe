@@ -138,10 +138,9 @@ export function DataTable({
                         type="button"
                         onClick={() => setEditing(row.id)}
                         aria-label="Edit row"
-                        className="grid h-6 w-6 place-items-center rounded-md text-ink-3
-                                   transition-colors hover:bg-sunk hover:text-ink"
+                        className="icon-btn"
                       >
-                        <Pencil className="h-3 w-3" aria-hidden />
+                        <Pencil aria-hidden />
                       </button>
                     ) : null}
                   </td>
@@ -243,29 +242,19 @@ function EditRow({
       })}
 
       <td className="whitespace-nowrap px-1 py-1.5 text-right">
+        <div className="inline-flex items-center gap-1 align-middle">
         <form action={formAction} id={formId} className="inline-flex">
           {Object.entries(row.hidden ?? { id: row.id }).map(([name, value]) => (
             <input key={name} type="hidden" name={name} value={value} />
           ))}
-          <button
-            type="submit"
-            aria-label="Save row"
-            className="grid h-6 w-6 place-items-center rounded-md transition-colors
-                       hover:bg-[color-mix(in_oklab,var(--emerald)_14%,transparent)]"
-            style={{ color: "var(--emerald)" }}
-          >
-            <Check className="h-3.5 w-3.5" aria-hidden />
+          <button type="submit" aria-label="Save row" className="icon-btn" data-tone="ok">
+            <Check aria-hidden />
           </button>
         </form>
-        <button
-          type="button"
-          onClick={onDone}
-          aria-label="Cancel edit"
-          className="ml-1 grid h-6 w-6 place-items-center rounded-md text-ink-3
-                     transition-colors hover:bg-sunk hover:text-ink"
-        >
-          <X className="h-3.5 w-3.5" aria-hidden />
+        <button type="button" onClick={onDone} aria-label="Cancel edit" className="icon-btn">
+          <X aria-hidden />
         </button>
+        </div>
         {state.error && (
           <span className="ml-2 text-[10.5px]" style={{ color: "var(--ruby)" }}>
             {state.error}

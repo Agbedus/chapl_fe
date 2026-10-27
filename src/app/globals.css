@@ -2144,3 +2144,68 @@ a .sheet {
   width: 15px;
   height: 15px;
 }
+
+/* --- icon buttons ------------------------------------------------------
+ * The actions at the end of a table row: one glyph in a rounded square,
+ * the same 32px whatever it does, centred, no border until hovered. A row
+ * of these reads as one set of controls rather than three odd shapes. */
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  gap: 0;
+  border-radius: 10px;
+  color: var(--ink-3);
+}
+.icon-btn.btn-quiet,
+.btn-quiet.icon-btn {
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+}
+.icon-btn > .grid {
+  display: none;
+}
+.icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+.icon-btn:hover {
+  background: var(--sunk);
+  color: var(--ink);
+}
+.icon-btn[data-tone="danger"] {
+  color: var(--ruby);
+}
+.icon-btn[data-tone="danger"]:hover {
+  background: color-mix(in oklab, var(--ruby) 12%, transparent);
+  color: var(--ruby);
+}
+.icon-btn[data-tone="ok"] {
+  color: var(--emerald);
+}
+.icon-btn[data-tone="ok"]:hover {
+  background: color-mix(in oklab, var(--emerald) 14%, transparent);
+}
+/* Done and failed still show on an icon button: the glyph changes, and
+   the square takes the colour. */
+.icon-btn[data-phase="done"] {
+  background: color-mix(in oklab, var(--emerald) 16%, transparent);
+  color: var(--emerald);
+}
+.icon-btn[data-phase="failed"] {
+  background: color-mix(in oklab, var(--ruby) 14%, transparent);
+  color: var(--ruby);
+}
+
+/* --- confirm -----------------------------------------------------------
+ * Small and centred: a question, two answers. */
+.confirm-scrim {
+  z-index: 130;
+}
+.confirm-panel {
+  max-width: 26rem;
+  max-height: none;
+}
