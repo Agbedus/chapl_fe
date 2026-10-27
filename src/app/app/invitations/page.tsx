@@ -136,6 +136,7 @@ export default async function InvitationsPage() {
     { key: "branch", label: "Branch" },
     { key: "role", label: "Role" },
     { key: "status", label: "Outcome", align: "right" },
+    { key: "act", label: "", align: "right", width: "1%" },
   ];
 
   const settledRows: TableRow[] = settled.map((invite) => ({
@@ -147,6 +148,20 @@ export default async function InvitationsPage() {
       <span key="s" className="chip bg-sunk capitalize text-ink-3">
         {invite.status === "pending" ? "expired" : invite.status}
       </span>,
+      // An invitation that ran out before anyone answered can be sent
+      // again: a fresh link to the same seat, emailed. Accepted and
+      // revoked ones are finished business.
+      invite.status === "pending" ? (
+        <ActionButton
+          key="a"
+          action={resendInvitation}
+          fields={{ id: invite.id }}
+          label="Resend"
+          icon={<RotateCw className="h-3 w-3" aria-hidden />}
+        />
+      ) : (
+        <span key="a" />
+      ),
     ],
   }));
 
