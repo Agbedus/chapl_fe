@@ -69,7 +69,7 @@ export function MemberHome({
               "You are not placed in a branch yet"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="page-actions flex items-center gap-2">
           {/* The one action a member has. It sits in the header rather
               than at the bottom of the page because somebody who needs it
               should not have to scroll past their attendance to find it. */}

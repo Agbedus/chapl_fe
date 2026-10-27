@@ -50,7 +50,7 @@ export function PageHead({
           <p className="measure mt-1 text-[12.5px] leading-[1.5] text-ink-3">{lede}</p>
         )}
       </div>
-      {action && <div className="shrink-0">{action}</div>}
+      {action && <div className="page-actions shrink-0">{action}</div>}
     </header>
   );
 }

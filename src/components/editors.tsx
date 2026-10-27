@@ -23,9 +23,9 @@ import {
   AlertTriangle, AtSign, Briefcase, Building2, CalendarDays, Check, ChevronLeft,
   ChevronRight, Clock, Compass, Copy, Hash, Heart, Image as ImageIcon, KeyRound,
   Landmark, Layers, Link2, MapPin, Megaphone, Navigation, Pencil, Phone, Pin,
-  Plus, ShieldCheck, Tag, Target, ToggleLeft, User, Users, Wallet, X,
+  Plus, ShieldCheck, UserPlus, Tag, Target, ToggleLeft, User, Users, Wallet, X,
 } from "lucide-react";
-import { Fragment, useActionState, useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useActionState, useEffect, useEffectEvent, useRef, useState } from "react";
 
 import type { FormState } from "@/app/actions/auth";
 import {
@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/form";
 import { PasswordField } from "@/components/ui/password";
 import { toast } from "@/components/toaster";
+import { useAnchoredPanel } from "@/components/ui/anchored";
 import {
   ComboField, DateField, DateTimeField, TimeField,
 } from "@/components/ui/pickers";
@@ -176,103 +177,16 @@ function Editor({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLFormElement>(null);
   const scrimRef = useRef<HTMLDivElement>(null);
-  const closing = useRef(false);
 
-  /*
-   * The form opens from the button that opened it, and stays there.
-   *
-   * Not centred: the panel hangs just below its button, right edges
-   * aligned, so it reads as that button unfolding rather than a dialog
-   * arriving from nowhere. It is revealed from the button's corner — a
-   * clip-path inset opening down and outward, with a slight scale from
-   * the same corner — and only once it has mostly opened do the fields
-   * follow, top to bottom (see `.modal-anchored` in globals.css).
-   * Closing runs the reveal backwards, faster: the app answering is
-   * quicker than the app presenting.
-   *
-   * A button near the bottom of the screen (an edit pencil in a long
-   * table) opens the panel upward instead, from the button's top corner.
-   * Position is written to the node, not held in state — it is geometry
-   * the browser needs, not data the tree does.
-   */
-  function place(panel: HTMLElement) {
-    const button = triggerRef.current?.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const gap = 8;
-    const edge = 12;
-    panel.style.position = "fixed";
-    panel.style.margin = "0";
-    if (!button || vw < 640) {
-      // A phone has no room to hang anything: full width, from the top.
-      Object.assign(panel.style, {
-        left: `${edge}px`, right: `${edge}px`, top: `${edge}px`, bottom: "auto",
-        width: "auto", maxHeight: `${vh - edge * 2}px`,
-      });
-      panel.dataset.from = "top";
-      return;
-    }
-    const width = Math.min(panel.classList.contains("modal-wide") ? 960 : 640, vw - edge * 2);
-    const right = Math.max(edge, vw - button.right);
-    const below = vh - button.bottom - gap - edge;
-    const above = button.top - gap - edge;
-    const up = below < 360 && above > below;
-    Object.assign(panel.style, {
-      width: `${width}px`,
-      right: `${right}px`,
-      left: "auto",
-      top: up ? "auto" : `${button.bottom + gap}px`,
-      bottom: up ? `${vh - button.top + gap}px` : "auto",
-      maxHeight: `${up ? above : below}px`,
-    });
-    panel.dataset.from = up ? "bottom" : "top";
-  }
-
-  function morph(panel: HTMLElement, reverse: boolean) {
-    const up = panel.dataset.from === "bottom";
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return panel.animate([{ opacity: reverse ? 1 : 0 }, { opacity: reverse ? 0 : 1 }], {
-        duration: 140, easing: "ease-out", fill: "both",
-      });
-    }
-    panel.style.transformOrigin = up ? "bottom right" : "top right";
-    // Folded into the button's corner: most of the width and nearly all
-    // of the height clipped away, a touch smaller, faded.
-    const shut = {
-      clipPath: up ? "inset(92% 0 0 70% round 20px)" : "inset(0 0 92% 70% round 20px)",
-      transform: "scale(0.96)",
-      opacity: 0,
-    };
-    const shown = { clipPath: "inset(0 0 0 0 round 20px)", transform: "none", opacity: 1 };
-    return panel.animate(reverse ? [shown, shut] : [shut, shown], {
-      duration: reverse ? 200 : 340,
-      easing: reverse ? "cubic-bezier(0.4, 0, 1, 1)" : "cubic-bezier(0.23, 1, 0.32, 1)",
-      fill: "both",
-    });
-  }
-
-  useLayoutEffect(() => {
-    const panel = panelRef.current;
-    if (!open || !panel) return;
-    place(panel);
-    morph(panel, false);
-    const onResize = () => place(panel);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [open]);
-
-  function close() {
-    const panel = panelRef.current;
-    if (!panel || closing.current) return setOpen(false);
-    closing.current = true;
-    scrimRef.current?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: "ease-out", fill: "both" });
-    morph(panel, true).finished.finally(() => {
-      closing.current = false;
-      setOpen(false);
-    });
-  }
-  // The timer and the Escape listener call the latest `close` without
-  // re-subscribing every render.
+  // Opens from its button and closes back into it — see `useAnchoredPanel`.
+  const { close } = useAnchoredPanel({
+    open,
+    trigger: triggerRef,
+    panel: panelRef,
+    scrim: scrimRef,
+    onClosed: () => setOpen(false),
+  });
+  // The close-after-save timer calls the latest `close` without re-subscribing.
   const dismiss = useEffectEvent(() => close());
   const [step, setStep] = useState(0);
   // The furthest step reached, so the rail can be used to go back
@@ -322,16 +236,7 @@ function Editor({
     }
   }
 
-  // Escape closes it, which is the shortcut anyone reaches for before
-  // they look for a button.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") dismiss();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  // Escape closes it too; `useAnchoredPanel` listens for it.
 
   function controls(within?: Element | null): HTMLInputElement[] {
     const scope = within ?? bodyRef.current;
@@ -413,7 +318,10 @@ function Editor({
         className={`btn btn-sm ${tone === "var(--sunk)" ? "btn-quiet" : "btn-primary"}`}
         style={tone === "var(--sunk)" ? undefined : { background: tone }}
       >
-        {icon ?? <Plus className="h-3.5 w-3.5" aria-hidden />}
+        {/* A plus means "add". Anything else says what it does. */}
+        {icon ?? (/^edit\b/i.test(label)
+          ? <Pencil className="h-3.5 w-3.5" aria-hidden />
+          : <Plus className="h-3.5 w-3.5" aria-hidden />)}
         {label}
       </button>
 
@@ -1097,6 +1005,7 @@ export function InviteEditor({
   return (
     <Editor
       label="Invite someone"
+      icon={<UserPlus className="h-3.5 w-3.5" aria-hidden />}
       submit="Create invitation"
       context="The branch, cell and role are decided now, so accepting places them correctly rather than leaving an account that belongs nowhere."
       action={action}
@@ -1389,6 +1298,7 @@ export function PlacementEditor({
   return (
     <Editor
       label={membership ? "Move them" : "Place them"}
+      icon={<MapPin className="h-3.5 w-3.5" aria-hidden />}
       submit="Save placement"
       context="Which branch, and optionally which cell. Only cells inside the chosen branch are offered."
       action={action}
@@ -1521,6 +1431,7 @@ export function GrantEditor({
   return (
     <Editor
       label="Grant a role"
+      icon={<ShieldCheck className="h-3.5 w-3.5" aria-hidden />}
       submit="Grant role"
       action={action}
       wide
@@ -1683,6 +1594,7 @@ export function NoticeEditor({
   return (
     <Editor
       label="Post a notice"
+      icon={<Megaphone className="h-3.5 w-3.5" aria-hidden />}
       submit="Post notice"
       context="Everyone in the scope you choose gets it in their tray straight away."
       action={action}
@@ -2055,6 +1967,7 @@ export function GiftEditor({
   return (
     <Editor
       label="Record a gift"
+      icon={<Wallet className="h-3.5 w-3.5" aria-hidden />}
       submit="Record it"
       context="What was counted, and who gave it. Online giving writes its own rows — this is the plate, the transfer and the envelope."
       action={action}

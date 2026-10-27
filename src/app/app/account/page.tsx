@@ -208,7 +208,7 @@ export default async function AccountPage() {
         >
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden /> Overview
         </Link>
-        <div id="complete-profile" className="flex flex-wrap items-center gap-2">
+        <div id="complete-profile" className="page-actions flex flex-wrap items-center gap-2">
           {/* Which church you are working in is a fact about you, so the
               switch lives here rather than in the nav. */}
           {(me.churches.length > 1 || me.is_platform_staff) && (

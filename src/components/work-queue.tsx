@@ -2,7 +2,9 @@
 
 import { ArrowUpRight, Cake, Check, HeartPulse, Mail, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState, useTransition } from "react";
+
+import { useAnchoredPanel } from "@/components/ui/anchored";
+import { useRef, useState, useTransition } from "react";
 
 import type { FormState } from "@/app/actions/auth";
 import { PhoneLink } from "@/components/contact";
@@ -87,15 +89,8 @@ export function WorkQueue({
   settleAction?: (state: FormState, data: FormData) => Promise<FormState>;
 }) {
   const [open, setOpen] = useState<QueueItem | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  // The row that was pressed, so its list opens from it.
+  const trigger = useRef<HTMLElement | null>(null);
 
   if (items.length === 0) {
     return (
@@ -117,7 +112,10 @@ export function WorkQueue({
             <button
               key={item.kind}
               type="button"
-              onClick={() => setOpen(item)}
+              onClick={(event) => {
+                trigger.current = event.currentTarget;
+                setOpen(item);
+              }}
               className="group -mx-1 flex w-full items-center gap-3 rounded-xl px-1.5 py-2 text-left
                          transition-[background-color,transform] duration-150
                          hover:bg-mist active:scale-[0.995]"
@@ -162,6 +160,7 @@ export function WorkQueue({
         <QueueModal
           item={open}
           settleAction={settleAction}
+          trigger={trigger}
           onClose={() => setOpen(null)}
         />
       )}
@@ -172,25 +171,33 @@ export function WorkQueue({
 function QueueModal({
   item,
   settleAction,
-  onClose,
+  trigger,
+  onClose: closed,
 }: {
   item: QueueItem;
   settleAction?: (state: FormState, data: FormData) => Promise<FormState>;
+  trigger: React.RefObject<HTMLElement | null>;
   onClose: () => void;
 }) {
+  const panel = useRef<HTMLDivElement>(null);
+  const scrim = useRef<HTMLDivElement>(null);
+  // Mounted only while open, so `open` is always true here.
+  const { close: onClose } = useAnchoredPanel({ open: true, trigger, panel, scrim, onClosed: closed });
   const Icon = ICONS[item.kind];
   const total = item.total ?? item.count;
   const capped = total > item.rows.length;
 
   return (
     <div
-      className="modal-scrim"
+      ref={scrim}
+      className="modal-scrim modal-anchored"
       role="dialog"
       aria-modal="true"
       aria-label={`${item.count} ${item.label}`}
       onClick={onClose}
     >
       <div
+        ref={panel}
         className="modal-panel"
         onClick={(event) => event.stopPropagation()}
       >

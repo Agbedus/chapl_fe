@@ -359,7 +359,7 @@ function View({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="page-actions flex flex-wrap items-center gap-2">
           {platform && data.health && (
             <span
               className="chip"

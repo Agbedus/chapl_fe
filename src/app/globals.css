@@ -476,7 +476,7 @@ body {
   /* The same rounded square as a field, not a pill: a button beside an
      input should look like it belongs to the same form. */
   border-radius: 12px;
-  padding: 0.5rem 1rem;
+  padding: 0.625rem 1.125rem;
   font-size: 13px;
   font-weight: 500;
   transition: opacity 0.15s, border-color 0.15s, box-shadow 0.15s,
@@ -515,7 +515,7 @@ body {
 }
 
 .btn-sm {
-  padding: 0.3125rem 0.75rem;
+  padding: 0.4375rem 0.875rem;
   font-size: 12px;
   border-radius: 10px;
 }
@@ -2128,4 +2128,19 @@ a .sheet {
 }
 @media (prefers-reduced-motion: reduce) {
   .tab-in { animation: none; }
+}
+
+/* A page's own actions — top right, beside its title — are the buttons
+   pressed most, so they are full size whatever size they were written
+   at: easier to hit, and every header's buttons share one height. */
+.page-actions .btn,
+.page-actions .btn-sm {
+  min-height: 2.5rem;
+  padding: 0.5rem 1.125rem;
+  font-size: 13px;
+  border-radius: 12px;
+}
+.page-actions .btn svg {
+  width: 15px;
+  height: 15px;
 }
