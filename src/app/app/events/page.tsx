@@ -43,8 +43,11 @@ export default async function EventsPage() {
   // The API answers at most 400 days at a time, and asking for more
   // fails the whole request — the calendar then falls back to showing
   // each repeating event once.
+  // Whole days, so the window — and with it the cache key — stays the
+  // same all day instead of changing every millisecond.
   const from = new Date();
   from.setMonth(from.getMonth() - 2, 1);
+  from.setHours(0, 0, 0, 0);
   const to = new Date(from.getTime() + 395 * 24 * 60 * 60 * 1000);
 
   const [list, branchList, cellList, today, dated] = await Promise.all([

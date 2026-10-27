@@ -491,6 +491,24 @@ Links out of the queue filter on **ids, not names** — `?branch=<uuid>`.
 was ignoring the parameter entirely, so "open this cell at risk" landed
 on all eighty-one, unfiltered.
 
+## Caching
+
+Reads are stale-while-revalidate on the server, decided in one place:
+`cacheSeconds()` in `src/lib/api.ts`. What changes a few times a week —
+sermons, notices, events, households, branches, cells, departments,
+churches — is cached for five minutes; the dashboard, the directory,
+service detail and giving for one. Anything worked through as it changes
+(notifications, care, check-ups, check-in, invitations, audit, who you
+are) is never cached. Next keys a cached fetch on its headers too, so the
+token and `X-Church-Id` keep one person's answers from anyone else.
+
+Every cached read carries `chapl:church:<id>`, and **every successful
+write through `api()` expires its church's tag** (and "all churches"), so
+the page after a save shows the save, for everyone in that church. Writes
+made elsewhere — the phone, another tool — show here within the cache
+window. In the browser, `staleTimes.dynamic` keeps a visited page for
+thirty seconds, so back and forward between two screens is instant.
+
 ## Checks
 
 `npm run lint` and `npx tsc --noEmit` both need to be clean; `npm run build`

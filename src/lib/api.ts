@@ -7,6 +7,7 @@
  * not to keep it in localStorage. It also sidesteps cross-origin cookies
  * entirely: the browser only ever talks to this app's own origin.
  */
+import { revalidateTag, updateTag } from "next/cache";
 import { cookies } from "next/headers";
 
 export const API_URL =
@@ -60,6 +61,78 @@ type RequestOptions = {
   cache?: RequestCache;
 };
 
+/**
+ * How long a read may be served from Next's data cache before it is
+ * fetched again in the background — stale-while-revalidate on the server.
+ *
+ * Only what changes a few times a week is cached. Anything somebody is
+ * working through as it changes — notifications, care, check-in, the
+ * audit trail, who you are — is always asked for, so a queue never shows
+ * work that was already done. The cache key includes the Authorization
+ * and X-Church-Id headers (Next keys fetches on URL, method, headers and
+ * body), so one person never sees another's answer.
+ */
+function cacheSeconds(path: string): number | null {
+  const live = [
+    "/auth/",
+    "/users/me",
+    "/communication/notifications",
+    "/care/",
+    "/checkups",
+    "/attendance/check-in",
+    "/audit_logs",
+    "/system/",
+    "/realtime/",
+    "/invitations",
+    "/registrations",
+    "/reminders",
+  ];
+  if (live.some((p) => path.includes(p))) return null;
+  const slow = [
+    "/sermons",
+    "/communication/notices",
+    "/events",
+    "/households",
+    "/departments",
+    "/branches",
+    "/cells",
+    "/churches",
+    "/assignments/roles",
+    "/memberships",
+  ];
+  if (slow.some((p) => path.startsWith(p))) return 300;
+  const warm = ["/dashboard", "/users/", "/attendance/service", "/donations"];
+  if (warm.some((p) => path.startsWith(p))) return 60;
+  return null;
+}
+
+/** The tag a church's cached reads carry, so a write can clear them. */
+export function churchTag(church: string | null | undefined): string {
+  return `chapl:church:${church || "none"}`;
+}
+
+/**
+ * After a write, the church's cached reads are expired so the next page
+ * shows the change — for the person who made it and everyone else in that
+ * church. "All churches" reads are cleared too, because platform staff see
+ * every church at once. `updateTag` waits for fresh data and only works in
+ * a Server Action; anywhere else `revalidateTag` with no grace does.
+ */
+function clearChurch(church: string | null | undefined) {
+  const tags = church && church !== "all" ? [churchTag(church), churchTag("all")] : ["chapl"];
+  for (const tag of tags) {
+    try {
+      updateTag(tag);
+    } catch {
+      try {
+        revalidateTag(tag, { expire: 0 });
+      } catch {
+        // Rendering, not acting: nothing to clear.
+      }
+    }
+  }
+}
+
 export async function api<T>(
   path: string,
   options: RequestOptions = {},
@@ -70,7 +143,7 @@ export async function api<T>(
     form,
     auth = true,
     churchId,
-    cache = "no-store",
+    cache,
   } = options;
 
   const headers: Record<string, string> = { Accept: "application/json" };
@@ -84,6 +157,7 @@ export async function api<T>(
     payload = JSON.stringify(body);
   }
 
+  let church: string | null | undefined = churchId;
   if (auth) {
     const jar = await cookies();
     const token = jar.get(TOKEN_COOKIE)?.value;
@@ -93,11 +167,14 @@ export async function api<T>(
     // caller's sole membership — so platform staff who belong to one
     // church saw that church while the header said "All churches". A
     // church member sending "all" simply gets their own church back.
-    const church = churchId === undefined ? (jar.get(CHURCH_COOKIE)?.value ?? "all") : churchId;
+    church = churchId === undefined ? (jar.get(CHURCH_COOKIE)?.value ?? "all") : churchId;
     if (church) headers["X-Church-Id"] = church;
   } else if (churchId) {
     headers["X-Church-Id"] = churchId;
   }
+
+  const reading = method.toUpperCase() === "GET";
+  const seconds = reading && auth && cache === undefined ? cacheSeconds(path) : null;
 
   let response: Response;
   try {
@@ -105,7 +182,9 @@ export async function api<T>(
       method,
       headers,
       body: payload,
-      cache,
+      ...(seconds === null
+        ? { cache: cache ?? "no-store" }
+        : { next: { revalidate: seconds, tags: ["chapl", churchTag(church)] } }),
       signal: AbortSignal.timeout(20000),
     });
   } catch {
@@ -114,6 +193,8 @@ export async function api<T>(
       error: { status: 0, detail: "Could not reach the Chapl API." },
     };
   }
+
+  if (!reading && response.ok) clearChurch(church);
 
   if (response.status === 204) return { ok: true, data: undefined as T };
 
