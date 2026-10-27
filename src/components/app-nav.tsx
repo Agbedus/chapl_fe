@@ -287,7 +287,9 @@ export function AppNav({
         only thing in that row, which makes it the one place the cursor
         will already be.
       */}
-      <div className="group/brand relative flex items-center gap-2.5 px-4 py-4">
+      {/* Collapsed, everything in the rail shares one centre line; open,
+          everything lines up on the left. */}
+      <div className={`group/brand relative flex items-center py-4 ${collapsed ? "justify-center" : "gap-2.5 px-4"}`}>
         <span
           className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-[11px] font-bold
                      transition-opacity duration-150 motion-reduce:transition-none"
@@ -304,7 +306,7 @@ export function AppNav({
         <span
           className="min-w-0 flex-1 overflow-hidden transition-[opacity,width] duration-200
                      motion-reduce:transition-none"
-          style={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : "auto" }}
+          style={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : "auto", display: collapsed ? "none" : undefined }}
         >
           <span className="block truncate text-[13px] font-semibold text-ink">
             {churchName ?? "All churches"}
@@ -319,7 +321,7 @@ export function AppNav({
           aria-expanded={!collapsed}
           className={
             collapsed
-              ? `absolute left-4 top-4 grid h-9 w-9 place-items-center rounded-xl
+              ? `absolute left-1/2 top-4 grid h-9 w-9 -translate-x-1/2 place-items-center rounded-xl
                  border border-line bg-paper text-ink opacity-0
                  transition-opacity duration-150
                  group-hover/brand:opacity-100 focus-visible:opacity-100
@@ -434,7 +436,7 @@ export function AppNav({
 
       {/* who */}
       <div className="border-t border-line px-3 py-3">
-        <Link href="/app/account#complete-profile" className="flex items-center gap-3 rounded-xl px-3 py-2" aria-label={profileIncomplete ? "Complete your profile" : "Your profile"}>
+        <Link href="/app/account#complete-profile" className={`flex items-center rounded-xl ${collapsed ? "mx-auto h-11 w-11 justify-center" : "gap-3 px-3 py-2"}`} aria-label={profileIncomplete ? "Complete your profile" : "Your profile"}>
           <span
             className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[11px] font-semibold"
             style={{
@@ -453,7 +455,7 @@ export function AppNav({
           <span
             className="min-w-0 flex-1 overflow-hidden transition-opacity duration-200
                        motion-reduce:transition-none"
-            style={{ opacity: collapsed ? 0 : 1 }}
+            style={{ opacity: collapsed ? 0 : 1, display: collapsed ? "none" : undefined }}
           >
             <span className="block truncate text-[12.5px] font-medium text-ink">{userName}</span>
             <span className="block truncate text-[11px] text-ink-3" title={userEmail}>{roleLabel}</span>
@@ -486,13 +488,15 @@ export function AppNav({
           <button
             type="submit"
             title={collapsed ? "Sign out" : undefined}
-            className=" flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px]
-                       font-medium text-ink-2 transition-colors hover:bg-sunk hover:text-ink"
+            className={`flex items-center rounded-xl text-[13.5px] font-medium text-ink-2
+                       transition-colors hover:bg-sunk hover:text-ink ${
+                         collapsed ? "mx-auto h-11 w-11 justify-center" : "w-full gap-3 px-3 py-2.5"
+                       }`}
           >
             <LogOut className="h-[18px] w-[18px] shrink-0" strokeWidth={1.9} />
             <span
               className="truncate transition-opacity duration-200 motion-reduce:transition-none"
-              style={{ opacity: collapsed ? 0 : 1 }}
+              style={{ opacity: collapsed ? 0 : 1, display: collapsed ? "none" : undefined }}
             >
               Sign out
             </span>
