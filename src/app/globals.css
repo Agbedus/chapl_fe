@@ -17,9 +17,11 @@
   /* The signed-in canvas behind every card. Mist by day. */
   --canvas: #f6f7f9;
   --sunk: #eef0f4;
-  --line: #e6e8ec;
-  --line-soft: #eef0f3;
-  --line-strong: #d4d8e0;
+  /* A shade darker than they were: on white, #e6e8ec read as no border
+     at all, and a field without an edge is a field you have to hunt for. */
+  --line: #dadee5;
+  --line-soft: #e5e8ed;
+  --line-strong: #c3c9d3;
 
   --ink: #0e1116;
   --ink-2: #4a5261;
@@ -995,7 +997,7 @@ form.modal-panel {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  padding: 0 2rem 1.25rem;
+  padding: 0.25rem 2rem 1.25rem;
 }
 
 .modal-foot {
@@ -1041,6 +1043,12 @@ form.modal-panel {
   align-items: center;
   flex-shrink: 0;
   padding: 0.125rem 2rem 1rem;
+  /* A hairline under the rail, so the steps read as the form's header
+     and the first row of fields starts below it, not against it. */
+  border-bottom: 1px solid var(--line-soft);
+}
+.stepper + .modal-body {
+  padding-top: 1.375rem;
 }
 
 .stepper-item {
