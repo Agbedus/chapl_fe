@@ -4,6 +4,8 @@ import { CheckCheck } from "lucide-react";
 import { markAllRead } from "@/app/actions/manage";
 import { Empty, Page, PageHead, Panel } from "@/components/panels";
 import { Notice } from "@/components/ui/form";
+import { AutoRefresh } from "@/components/auto-refresh";
+import { Tabs } from "@/components/tabs";
 import { api } from "@/lib/api";
 import type { Schemas } from "@/lib/generated/api";
 import { requireMe } from "@/lib/session";
@@ -47,7 +49,7 @@ export default async function NotificationsPage({
 }: {
   searchParams: Promise<{ unread?: string; page?: string }>;
 }) {
-  await requireMe("/app/notifications");
+  const me = await requireMe("/app/notifications");
   const { unread, page: pageParam } = await searchParams;
   const unreadOnly = unread === "1";
   const page = Math.max(1, Number(pageParam ?? 1) || 1);
@@ -81,27 +83,8 @@ export default async function NotificationsPage({
     </Link>
   );
 
-  return (
-    <Page>
-      <PageHead
-        eyebrow="You"
-        title="Notifications"
-        action={
-          <span className="flex items-center gap-2">
-            <span className="flex items-center gap-1 rounded-xl border border-line p-0.5">
-              {tab("All", "/app/notifications", !unreadOnly)}
-              {tab("Unread", "/app/notifications?unread=1", unreadOnly)}
-            </span>
-            <form action={markAllRead}>
-              <button type="submit" className="btn btn-quiet btn-sm">
-                <CheckCheck className="h-3.5 w-3.5" aria-hidden />
-                Mark all read
-              </button>
-            </form>
-          </span>
-        }
-      />
-
+  const mineView = (
+    <>
       {!result.ok && <Notice kind="error">{result.error.detail}</Notice>}
 
       {items.length === 0 ? (
@@ -166,6 +149,77 @@ export default async function NotificationsPage({
             </Link>
           ) : <span />}
         </div>
+      )}
+    </>
+  );
+
+  // Platform staff also see everything the platform is telling anyone —
+  // the traffic, not their own tray. Refreshed every fifteen seconds.
+  const feed = me.is_platform_staff
+    ? await api<Schemas["NotificationFeed"]>("/communication/notifications/feed?limit=100", { churchId: "all" })
+    : null;
+  const feedView = !feed ? null : !feed.ok ? (
+    <Notice kind="error">{feed.error.detail}</Notice>
+  ) : feed.data.items.length === 0 ? (
+    <Panel><Empty>Nothing has been sent yet.</Empty></Panel>
+  ) : (
+    <Panel>
+      <ul className="-mx-2">
+        {feed.data.items.map((n) => (
+          <li key={n.id} className="flex items-start gap-3 rounded-xl px-2 py-2.5 hover:bg-mist">
+            <span className="dot mt-[7px] shrink-0" style={{ color: tone(n.type) }} aria-hidden />
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13px] leading-snug text-ink">{n.title}</span>
+              <span className="mt-0.5 block text-[12px] text-ink-3">{n.message}</span>
+              <span className="mt-1 block text-[11px] text-ink-3">
+                To {n.recipient_name ?? "a deleted account"}
+                {n.church_name ? ` · ${n.church_name}` : ""} · <span className="font-mono">{n.type}</span>
+                {n.is_read ? " · read" : ""}
+              </span>
+            </span>
+            <span className="tnum shrink-0 text-[11px] text-ink-3">{when(n.created_at)}</span>
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  );
+
+  return (
+    <Page>
+      <PageHead
+        eyebrow="You"
+        title="Notifications"
+        action={
+          <span className="flex items-center gap-2">
+            <span className="flex items-center gap-1 rounded-xl border border-line p-0.5">
+              {tab("All", "/app/notifications", !unreadOnly)}
+              {tab("Unread", "/app/notifications?unread=1", unreadOnly)}
+            </span>
+            <form action={markAllRead}>
+              <button type="submit" className="btn btn-quiet btn-sm">
+                <CheckCheck className="h-3.5 w-3.5" aria-hidden />
+                Mark all read
+              </button>
+            </form>
+          </span>
+        }
+      />
+
+      {me.is_platform_staff ? (
+        <Tabs
+          tabs={[
+            { id: "mine", label: "Mine", count: total },
+            { id: "platform", label: "Across the platform", count: feed?.ok ? feed.data.total : undefined },
+          ]}
+        >
+          <div className="space-y-3">{mineView}</div>
+          <div className="space-y-3">
+            <AutoRefresh seconds={15} />
+            {feedView}
+          </div>
+        </Tabs>
+      ) : (
+        mineView
       )}
     </Page>
   );

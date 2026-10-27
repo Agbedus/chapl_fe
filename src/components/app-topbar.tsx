@@ -39,7 +39,7 @@ export function AppTopbar({
   runtime: string | null;
   searchAction: (term: string) => Promise<Hit[]>;
   /** Server Actions for the bell — the session cookie is httpOnly. */
-  getTicket: () => Promise<{ ticket: string } | null>;
+  getTicket: () => Promise<{ ticket: string; url?: string } | null>;
   getUnread: () => Promise<number>;
   markRead: () => Promise<void>;
 }) {

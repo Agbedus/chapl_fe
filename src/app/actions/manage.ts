@@ -17,7 +17,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import type { FormState } from "@/app/actions/auth";
-import { api } from "@/lib/api";
+import { API_URL, api } from "@/lib/api";
 import type {
   Assignment,
   Branch,
@@ -545,11 +545,16 @@ export async function settleCheckup(
  * happens here, on the server, and the short-lived ticket is the only
  * thing that crosses into the client.
  */
-export async function realtimeTicket(): Promise<{ ticket: string } | null> {
+export async function realtimeTicket(): Promise<{ ticket: string; url: string } | null> {
   const result = await api<{ ticket: string }>("/realtime/ticket", {
     method: "POST",
   });
-  return result.ok ? { ticket: result.data.ticket } : null;
+  // Where to connect, worked out here from the API's own address — the
+  // browser cannot see CHAPL_API_URL, and the old fallback pointed every
+  // deployed tab at ws://localhost:8000, which never connected (and an
+  // https page may not open ws:// at all). https becomes wss.
+  const url = `${API_URL.replace(/^http/, "ws")}/realtime/ws`;
+  return result.ok ? { ticket: result.data.ticket, url } : null;
 }
 
 /** A member asks for prayer, or asks to be called. */
@@ -1057,4 +1062,29 @@ export async function forgetDevice(_prev: FormState, data: FormData): Promise<Fo
   if (!result.ok) return fail(result.error);
   revalidatePath("/app/account");
   return { message: "That phone will not be notified any more." };
+}
+
+/**
+ * The most recent notifications, for the bell's tray.
+ *
+ * The tray used to show only what arrived over the socket since the page
+ * loaded, so a count of five above an empty list was the usual sight:
+ * the five were real, they had simply come in before you arrived.
+ */
+export async function recentNotifications(): Promise<
+  { id: string; title: string; message: string; kind: string; href: string | null; created_at: string | null; is_read: boolean }[]
+> {
+  const result = await api<{
+    items: { id: string; title: string; message: string; type: string; href?: string | null; created_at: string; is_read: boolean }[];
+  }>("/communication/notifications?limit=12");
+  if (!result.ok) return [];
+  return result.data.items.map((n) => ({
+    id: n.id,
+    title: n.title,
+    message: n.message,
+    kind: n.type,
+    href: n.href ?? null,
+    created_at: n.created_at,
+    is_read: n.is_read,
+  }));
 }

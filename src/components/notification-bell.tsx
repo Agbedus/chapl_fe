@@ -2,6 +2,8 @@
 
 import { Bell } from "lucide-react";
 import Link from "next/link";
+
+import { recentNotifications } from "@/app/actions/manage";
 import { useRef, useState } from "react";
 
 import { Popover } from "@/components/ui/popover";
@@ -32,16 +34,21 @@ export function NotificationBell({
   getUnread,
   onOpen,
 }: {
-  getTicket: () => Promise<{ ticket: string } | null>;
+  getTicket: () => Promise<{ ticket: string; url?: string } | null>;
   getUnread: () => Promise<number>;
   onOpen: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const { unread, latest, connected, clear } = useRealtime({ getTicket, getUnread });
+  // What was already waiting when the page loaded — fetched on opening.
+  const [stored, setStored] = useState<LiveNotification[]>([]);
+  // Live first, then stored, without the overlap a reconnect can cause.
+  const shown = [...latest, ...stored.filter((s) => !latest.some((l) => l.id === s.id))].slice(0, 12);
 
   const show = () => {
     setOpen(true);
+    void recentNotifications().then(setStored);
     if (unread > 0) {
       clear();
       void onOpen();
@@ -90,12 +97,12 @@ export function NotificationBell({
         </div>
 
         <div className="max-h-[20rem] overflow-y-auto p-1.5">
-          {latest.length === 0 ? (
+          {shown.length === 0 ? (
             <p className="px-2.5 py-8 text-center text-[12px] text-ink-3">
               Nothing new.
             </p>
           ) : (
-            latest.map((n) => <Row key={n.id} notification={n} onGo={() => setOpen(false)} />)
+            shown.map((n) => <Row key={n.id} notification={n} onGo={() => setOpen(false)} />)
           )}
         </div>
       </Popover>

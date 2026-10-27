@@ -40,7 +40,7 @@ export type LiveNotification = {
 
 type Options = {
   /** Mints a fresh single-use ticket. A Server Action — the cookie is httpOnly. */
-  getTicket: () => Promise<{ ticket: string } | null>;
+  getTicket: () => Promise<{ ticket: string; url?: string } | null>;
   /** The count as the server knows it, read on mount and on wake. */
   getUnread: () => Promise<number>;
 };
@@ -141,7 +141,7 @@ export function useRealtime({ getTicket, getUnread }: Options) {
       }
 
       const url = new URL(
-        process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000/api/v1/realtime/ws",
+        minted.url ?? process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000/api/v1/realtime/ws",
       );
       url.searchParams.set("ticket", minted.ticket);
 
