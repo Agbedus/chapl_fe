@@ -80,6 +80,8 @@ function cacheSeconds(path: string): number | null {
     "/care/",
     "/checkups",
     "/attendance/check-in",
+    "/attendance/live",
+    "/sermons/saved",
     "/audit_logs",
     "/system/",
     "/realtime/",

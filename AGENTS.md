@@ -491,6 +491,41 @@ Links out of the queue filter on **ids, not names** — `?branch=<uuid>`.
 was ignoring the parameter entirely, so "open this cell at risk" landed
 on all eighty-one, unfiltered.
 
+## Sunday
+
+**A service is a check-in session**, and everything live hangs off it.
+The session already says whose it is — one branch's, or the whole
+church's when `branch_id` is empty — so a member is in their branch's
+service when it has one open and in the main one otherwise. Nobody
+chooses; membership decides. `GET /attendance/live` answers "what am I
+in right now" with the room (`present` of `expected`), the sermon dated
+for the service, and the question on the screen.
+
+`SundayPanel` (`components/live-service.tsx`) is that answer on the
+dashboard: check in, the room as dots filling as people arrive, today's
+message, and the question with its answers as dots — one per person, so
+it reads like a show of hands. It replaced the old check-in prompt. The
+leader's half is `LeaderLive` under each open session on `/app/check-in`:
+the same room, the answers coming in, **Ask the room** and **Close
+answers**. Who answered what is never sent anywhere; the room sees
+counts.
+
+**Live without a second socket.** The bell's connection announces every
+message as a `chapl:live` window event; `LiveRefresh` listens for a
+prefix (`service.`) and calls `router.refresh()`, coalescing a burst of
+forty answers into one refresh, with a slow poll for a dropped socket.
+The messages only say *what changed* — the page reads it again. On the
+API, a branch's service goes to `congregation:{branch}` (the people in
+its seats) and `branch:` (its leaders); members never hear `branch:`.
+
+**Sermons have pages now** — `/app/sermons/[id]`, with **Save** and
+**Share** — because a shared link has to land somewhere. Saved sermons
+live on the account (`/sermons/saved`), so the phone and the web agree.
+`ShareButton` uses the system share sheet where there is one, else
+copies the link. **Your church** (`/app/about`, `GET
+/churches/{id}/about`) is for every member: where each branch meets,
+when, and directions — their own branch first.
+
 ## Caching
 
 Reads are stale-while-revalidate on the server, decided in one place:

@@ -971,6 +971,62 @@ export async function checkIn(_prev: FormState, data: FormData): Promise<FormSta
 }
 
 /* ------------------------------------------------------------------ */
+/* the live service                                                    */
+/* ------------------------------------------------------------------ */
+
+/** Put a question to the room: one answer per line, two to six of them. */
+export async function askRoom(_prev: FormState, data: FormData): Promise<FormState> {
+  const question = str(data, "question");
+  const options = (str(data, "options") ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (!question) return { error: "Ask something.", fieldErrors: { question: "Required" } };
+  if (options.length < 2 || options.length > 6) {
+    return { error: "Give two to six answers, one per line.", fieldErrors: { options: "Two to six" } };
+  }
+  const result = await api(`/attendance/check-in/sessions/${str(data, "session_id")}/prompts`, {
+    method: "POST",
+    body: { question, options },
+  });
+  if (!result.ok) return fail(result.error);
+  revalidatePath("/app/check-in");
+  return { message: "It is on everyone's phone." };
+}
+
+export async function closePrompt(_prev: FormState, data: FormData): Promise<FormState> {
+  const result = await api(`/attendance/live/prompts/${str(data, "id")}/close`, { method: "POST" });
+  if (!result.ok) return fail(result.error);
+  revalidatePath("/app/check-in");
+  return { message: "Answers closed. The room still sees how it answered." };
+}
+
+export async function answerPrompt(_prev: FormState, data: FormData): Promise<FormState> {
+  const result = await api(`/attendance/live/prompts/${str(data, "id")}/answer`, {
+    method: "POST",
+    body: { choice: num(data, "choice") ?? 0 },
+  });
+  if (!result.ok) return fail(result.error);
+  revalidatePath("/app");
+  revalidatePath("/app/check-in");
+  return { message: "Answered." };
+}
+
+/* ------------------------------------------------------------------ */
+/* saved sermons                                                       */
+/* ------------------------------------------------------------------ */
+
+export async function toggleSavedSermon(_prev: FormState, data: FormData): Promise<FormState> {
+  const id = str(data, "id");
+  const saved = str(data, "saved") === "true";
+  const result = await api(`/sermons/${id}/saved`, { method: saved ? "DELETE" : "PUT" });
+  if (!result.ok) return fail(result.error);
+  revalidatePath("/app/sermons");
+  revalidatePath(`/app/sermons/${id}`);
+  return { message: saved ? "Removed from your saved sermons." : "Saved. Find it under Saved." };
+}
+
+/* ------------------------------------------------------------------ */
 /* reminders                                                           */
 /* ------------------------------------------------------------------ */
 

@@ -2528,3 +2528,149 @@ export function HouseholdMemberEditor({
     </Editor>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* the live service                                                    */
+/* ------------------------------------------------------------------ */
+
+type LivePromptShape = {
+  id: string;
+  question: string;
+  options: { label: string; count?: number }[];
+  total?: number;
+  is_open: boolean;
+  my_choice?: number | null;
+};
+
+/**
+ * The question on the screen, as answers to tap and the room's answers
+ * as dots: one dot per person who chose it, so a show of hands looks
+ * like one. A member taps to answer (and taps another to change their
+ * mind); the person running the service sees the same rows, read-only.
+ */
+export function PromptAnswers({
+  action,
+  prompt,
+  answering,
+}: {
+  action: Action;
+  prompt: LivePromptShape;
+  /** False for the leader's view, or once answers have closed. */
+  answering: boolean;
+}) {
+  const [state, formAction] = useActionState(action, EMPTY);
+  useEffect(() => {
+    if (state.error) toast(state.error, "error");
+  }, [state]);
+  const most = Math.max(1, ...prompt.options.map((o) => o.count ?? 0));
+  const total = prompt.total ?? 0;
+  // One dot a person until a row would run past sixty; then one a few.
+  const unit = Math.max(1, Math.ceil(most / 60));
+  const open = answering && prompt.is_open;
+  return (
+    <div>
+      <p className="text-[13px] font-semibold text-ink">{prompt.question}</p>
+      <form action={formAction} className="mt-2 grid gap-1.5">
+        <input type="hidden" name="id" value={prompt.id} />
+        {prompt.options.map((option, i) => {
+          const mine = prompt.my_choice === i;
+          const count = option.count ?? 0;
+          const dots = Math.round(count / unit);
+          return (
+            <button
+              key={option.label}
+              type="submit"
+              name="choice"
+              value={i}
+              disabled={!open}
+              aria-pressed={mine}
+              className={`sheet-mist rounded-[10px] px-3 py-2 text-left transition ${
+                open ? "hover:bg-[var(--sunk)]" : "cursor-default"
+              } ${mine ? "ring-1 ring-[var(--cobalt)]" : ""}`}
+            >
+              <span className="flex items-baseline justify-between gap-3 text-[12.5px]">
+                <span className={mine ? "font-semibold text-ink" : "text-ink-2"}>
+                  {option.label}
+                  {mine && <span className="ml-1.5 text-[11px] text-ink-3">· yours</span>}
+                </span>
+                <span className="tnum text-ink">{count}</span>
+              </span>
+              <span className="mt-1.5 flex min-h-[5px] flex-wrap gap-[3px]" aria-hidden>
+                {Array.from({ length: dots }, (_, d) => (
+                  <span key={d} className="dot" style={{ color: mine ? "var(--cobalt)" : "var(--ink-3)" }} />
+                ))}
+              </span>
+            </button>
+          );
+        })}
+      </form>
+      <p className="mt-1.5 text-[11px] text-ink-3">
+        <span className="tnum">{total}</span> {total === 1 ? "answer" : "answers"}
+        {unit > 1 ? ` · one dot is ${unit}` : ""}
+        {prompt.is_open ? (open ? " · tap to answer, tap again to change" : "") : " · answers closed"}
+      </p>
+    </div>
+  );
+}
+
+/** "Ask the room": a question and two to six answers, one per line. */
+export function AskRoomBox({ action, sessionId }: { action: Action; sessionId: string }) {
+  const [state, formAction] = useActionState(action, EMPTY);
+  const form = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    if (state.error) toast(state.error, "error");
+    else if (state.message) {
+      toast(state.message);
+      form.current?.reset();
+    }
+  }, [state]);
+  return (
+    <form ref={form} action={formAction} className="grid gap-2">
+      <input type="hidden" name="session_id" value={sessionId} />
+      <Field label="Question" name="question" required autoComplete="off"
+             placeholder="Ask the room · e.g. Which point spoke to you?"
+             error={state.fieldErrors?.question} />
+      <Area label="Answers" name="options" rows={3} required
+            placeholder={"One answer per line, two to six\nGrace\nFaith\nHope"}
+            error={state.fieldErrors?.options} />
+      <Submit full={false} state={state} doneLabel="Asked" failLabel="Not asked" size="sm">Ask the room</Submit>
+    </form>
+  );
+}
+
+/** Keep or let go of a sermon. A filled mark when it is kept. */
+export function SaveSermonButton({
+  action,
+  id,
+  saved,
+  compact,
+}: {
+  action: Action;
+  id: string;
+  saved: boolean;
+  /** Just the heart, for a row in a list. */
+  compact?: boolean;
+}) {
+  const [state, formAction] = useActionState(action, EMPTY);
+  useEffect(() => {
+    if (state.error) toast(state.error, "error");
+    else if (state.message) toast(state.message);
+  }, [state]);
+  return (
+    <form action={formAction}>
+      <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="saved" value={String(saved)} />
+      <button
+        type="submit"
+        className={compact ? "grid h-7 w-7 place-items-center rounded-[8px] text-ink-3 hover:bg-[var(--sunk)] hover:text-ink" : "btn btn-sm btn-quiet"}
+        aria-pressed={saved}
+        aria-label={compact ? (saved ? "Remove from saved" : "Save") : undefined}
+        title={compact ? (saved ? "Saved" : "Save") : undefined}
+      >
+        <Heart className="h-3.5 w-3.5" aria-hidden fill={saved ? "currentColor" : "none"}
+               style={{ color: saved ? "var(--ruby)" : undefined }} />
+        {!compact && (saved ? "Saved" : "Save")}
+      </button>
+    </form>
+  );
+}

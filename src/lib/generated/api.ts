@@ -24,6 +24,7 @@ export interface Schemas {
   "Body_reset_password_api_v1_auth_reset_password_post": { "token": string; "new_password": string; };
   "Body_upload_my_avatar_api_v1_users_me_avatar_put": { "file": string; };
   "Body_verify_otp_api_v1_auth_verify_otp_post": { "email": string; "otp": string; "purpose"?: "activation"; };
+  "BranchAbout": { "id": string; "name": string; "location"?: (string | null); "address"?: (string | null); "service_times"?: (string | null); "contact_phone"?: (string | null); "contact_email"?: (string | null); "latitude"?: (number | null); "longitude"?: (number | null); };
   "BranchCreate": { "code": string; "name": string; "location"?: (string | null); "address"?: (string | null); "capacity"?: (number | null); "latitude"?: (number | null); "longitude"?: (number | null); "is_active"?: boolean; "contact_email"?: (string | null); "contact_phone"?: (string | null); "service_times"?: (string | null); "opened_date"?: (string | null); };
   "BranchList": { "items": Array<Schemas["BranchRead"]>; "total": number; };
   "BranchRead": { "code": string; "name": string; "location"?: (string | null); "address"?: (string | null); "capacity"?: (number | null); "latitude"?: (number | null); "longitude"?: (number | null); "is_active"?: boolean; "contact_email"?: (string | null); "contact_phone"?: (string | null); "service_times"?: (string | null); "opened_date"?: (string | null); "id": string; "church_id": string; "created_at": string; "updated_at": string; };
@@ -49,6 +50,7 @@ export interface Schemas {
   "CheckInSessionRead": { "id": string; "branch_id"?: (string | null); "branch_name"?: (string | null); "attendance_date": string; "service_day": Schemas["ServiceDay"]; "code"?: (string | null); "closes_at": string; "is_open": boolean; "checked_in"?: number; "created_at": string; };
   "CheckupNote": { "date": string; "status": string; "notes": (string | null); };
   "CheckupStatus": "not_reached" | "reached" | "follow_up_needed" | "resolved";
+  "ChurchAbout": { "id": string; "name": string; "about"?: (string | null); "denomination"?: (string | null); "founded_date"?: (string | null); "logo_url"?: (string | null); "contact_email"?: (string | null); "contact_phone"?: (string | null); "website"?: (string | null); "address"?: (string | null); "city"?: (string | null); "country"?: (string | null); "my_branch_id"?: (string | null); "branches"?: Array<Schemas["BranchAbout"]>; "members"?: number; };
   "ChurchCreate": { "code": string; "name": string; "legal_name"?: (string | null); "timezone"?: string; "currency"?: string; "logo_url"?: (string | null); "contact_email"?: (string | null); "contact_phone"?: (string | null); "is_active"?: boolean; "website"?: (string | null); "address"?: (string | null); "city"?: (string | null); "country"?: (string | null); "denomination"?: (string | null); "founded_date"?: (string | null); "about"?: (string | null); };
   "ChurchDecision": { "status"?: "active" | "rejected" | "suspended"; "note"?: (string | null); };
   "ChurchList": { "items": Array<Schemas["ChurchRead"]>; "total": number; };
@@ -104,6 +106,9 @@ export interface Schemas {
   "InvitationPreview": { "church_name": string; "branch_name": string; "cell_name"?: (string | null); "email": string; "role"?: (Schemas["Role"] | null); "expires_at": string; "needs_account": boolean; };
   "InvitationRead": { "id": string; "church_id": string; "branch_id": string; "cell_id"?: (string | null); "email": string; "full_name"?: (string | null); "role"?: (Schemas["Role"] | null); "status": Schemas["InvitationStatus"]; "expires_at": string; "invited_by"?: (string | null); "accepted_at"?: (string | null); "accepted_by"?: (string | null); "created_at": string; };
   "InvitationStatus": "pending" | "accepted" | "revoked";
+  "LivePrompt": { "id": string; "question": string; "options": Array<Schemas["PromptOption"]>; "total"?: number; "is_open": boolean; "my_choice"?: (number | null); "created_at": string; };
+  "LiveSermon": { "id": string; "title": string; "series"?: (string | null); "scripture_reference"?: (string | null); "preacher_name"?: (string | null); };
+  "LiveService": { "session_id": string; "branch_id"?: (string | null); "branch_name"?: (string | null); "attendance_date": string; "service_day": Schemas["ServiceDay"]; "closes_at": string; "is_open": boolean; "present"?: number; "expected"?: number; "checked_in"?: boolean; "code"?: (string | null); "sermon"?: (Schemas["LiveSermon"] | null); "prompt"?: (Schemas["LivePrompt"] | null); };
   "MaritalStatus": "single" | "married" | "engaged" | "widowed" | "divorced" | "separated";
   "MeetingFrequency": "weekly" | "fortnightly" | "monthly" | "quarterly" | "ad_hoc";
   "MemberCheckupCreate": { "member_id": string; "checkup_date": string; "status"?: Schemas["CheckupStatus"]; "notes"?: (string | null); };
@@ -132,9 +137,13 @@ export interface Schemas {
   "PersonProfile": { "attendance": Array<Schemas["AttendanceMark-Output"]>; "marked": number; "present": number; "pct": (number | null); "streak": number; "missed": number; "cell_pct": (number | null); "checkups": Array<Schemas["CheckupNote"]>; "departments": Array<Schemas["DepartmentRef"]>; "giving": (Schemas["ProfileGiving"] | null); };
   "ProfileCompletion": { "complete": boolean; "percent": number; "missing": Record<string, string>; };
   "ProfileGiving": { "total": number; "gifts": number; "months": Array<Schemas["GivingMonth"]>; "types": Array<Schemas["GivingType"]>; };
+  "PromptAnswer": { "choice": number; };
+  "PromptAsk": { "question": string; "options": Array<string>; };
+  "PromptOption": { "label": string; "count"?: number; };
   "Role": "super_admin" | "platform_admin" | "church_admin" | "senior_pastor" | "branch_pastor" | "branch_admin" | "cell_leader" | "cell_assistant" | "department_head";
   "RosterAdd": { "user_id": string; "role_in_department"?: (string | null); "joined_date"?: (string | null); };
   "Runtime": { "app_env": string; "dialect": string; "driver": string; "database": string; "python": string; "sqlalchemy": string; "platform": string; "started_at": string; "uptime": string; "uptime_seconds": number; "cookie_secure": boolean; "token_ttl_minutes": number; };
+  "SavedSermonIds": { "items": Array<string>; };
   "ScopeRef": { "role": Schemas["Role"]; "scope_type": Schemas["ScopeType"]; "scope_id"?: (string | null); "church_id"?: (string | null); };
   "ScopeType": "platform" | "church" | "branch" | "cell" | "department";
   "SermonCreate": { "title": string; "description"?: (string | null); "scripture_reference"?: (string | null); "series"?: (string | null); "part"?: (number | null); "preacher_name"?: (string | null); "preacher_id"?: (string | null); "sermon_date": string; "branch_id"?: (string | null); "video_url"?: (string | null); "youtube_video_id"?: (string | null); "audio_url"?: (string | null); "thumbnail_url"?: (string | null); "duration_seconds"?: (number | null); "is_published"?: boolean; "is_active"?: boolean; "notes_url"?: (string | null); "transcript_url"?: (string | null); "tags"?: (string | null); };

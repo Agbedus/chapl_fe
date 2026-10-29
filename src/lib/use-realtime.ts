@@ -168,6 +168,12 @@ export function useRealtime({ getTicket, getUnread }: Options) {
         } catch {
           return;
         }
+        // Every message is also announced to the page, so a screen that
+        // cares about something other than notifications (a live service)
+        // can listen without opening a second socket.
+        if (typeof payload.type === "string" && payload.type !== "ping" && payload.type !== "pong") {
+          window.dispatchEvent(new CustomEvent("chapl:live", { detail: payload }));
+        }
         if (payload.type !== "notification") return;
 
         setUnread((n) => n + 1);

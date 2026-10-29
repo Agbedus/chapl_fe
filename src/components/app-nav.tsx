@@ -33,6 +33,7 @@ import {
   CalendarCheck,
   HeartHandshake,
   House as HomeIcon,
+ MapPin,
 } from "lucide-react";
 
 export type Item = {
@@ -67,7 +68,11 @@ export type Item = {
 export const SECTIONS: { heading: string; items: Item[] }[] = [
   {
     heading: "Overview",
-    items: [{ href: "/app", label: "Dashboard", icon: Home, tone: "var(--cobalt)" }],
+    items: [
+      { href: "/app", label: "Dashboard", icon: Home, tone: "var(--cobalt)" },
+      // Where and when the church meets: for everyone in it.
+      { href: "/app/about", label: "Your church", icon: MapPin, tone: "var(--violet)" },
+    ],
   },
   {
     // What a member comes for.

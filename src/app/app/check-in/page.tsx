@@ -2,6 +2,8 @@ import { X } from "lucide-react";
 
 import { checkIn, closeCheckIn, openCheckIn } from "@/app/actions/manage";
 import { ActionButton, CheckInBox, CheckInOpenEditor } from "@/components/editors";
+import { LeaderLive, SundayPanel } from "@/components/live-service";
+import { LiveRefresh } from "@/components/live-refresh";
 import { Empty, Page, PageHead, Panel } from "@/components/panels";
 import { canRead, canWrite } from "@/lib/access";
 import { api } from "@/lib/api";
@@ -73,6 +75,9 @@ export default async function CheckInPage() {
       />
 
       {/* The member's half. Leaders can check in too — they were there. */}
+      {open.length > 0 ? (
+        <SundayPanel />
+      ) : (
       <Panel
         title={open.length > 0 ? "Check in now" : "Nothing open right now"}
         lede={
@@ -88,9 +93,11 @@ export default async function CheckInPage() {
           <CheckInBox action={checkIn} />
         )}
       </Panel>
+      )}
 
       {leader && (
         <>
+          {live.length > 0 && <LiveRefresh prefix="service." fallback={20} />}
           <Panel title="Open now" accent="var(--gold)">
             {live.length === 0 ? (
               <Empty>No service is open for check-in.{opener ? " Use “Open check-in” to start one." : ""}</Empty>
@@ -116,6 +123,7 @@ export default async function CheckInPage() {
                         />
                       )}
                     </div>
+                    <LeaderLive sessionId={s.id} canRun={opener} />
                   </li>
                 ))}
               </ul>

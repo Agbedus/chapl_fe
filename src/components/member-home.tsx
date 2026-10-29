@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckInPrompt } from "@/components/check-in-prompt";
+import { SundayPanel } from "@/components/live-service";
 import { CalendarDays, Megaphone, Users as UsersIcon } from "lucide-react";
 
 import { raiseCareRequest } from "@/app/actions/manage";
@@ -83,7 +83,7 @@ export function MemberHome({
         </div>
       </header>
 
-      <CheckInPrompt />
+      <SundayPanel />
 
       {/* --- the next thing that happens ---------------------------- */}
       <Panel
