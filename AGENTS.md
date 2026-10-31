@@ -557,9 +557,9 @@ it is back rather than at the next poll. A socket that has heard nothing
 for 70 seconds is closed and redialled (the server pings every 25), and
 coming back `online` redials at once.
 
-On the API, cron sweeps hand their notifications to the web service over
-`POST /realtime/relay` (shared `RELAY_SECRET`), so a birthday or a
-reminder arrives live rather than on the next load.
+On the API, cron sweeps announce their notifications with Postgres
+`NOTIFY` and the web service listens, so a birthday or a reminder
+arrives live rather than on the next load.
 
 ## Caching
 
