@@ -1,4 +1,4 @@
-import { DotCross } from "@/components/dot-cross";
+import { GatheringCross } from "@/components/landing/gathering";
 
 /**
  * The verse the whole product is an argument for.
@@ -52,7 +52,7 @@ export function Scripture() {
       </svg>
 
       <div className="relative mx-auto max-w-3xl px-6 py-24 text-center sm:py-32">
-        <DotCross tone="var(--gold)" gap={4} />
+        <GatheringCross />
 
         <blockquote className="mt-8">
           <p className="head text-balance text-[clamp(1.6rem,3.6vw,2.6rem)] leading-[1.22] text-ink">
@@ -65,9 +65,9 @@ export function Scripture() {
         </blockquote>
 
         <p className="mx-auto mt-9 max-w-md text-[15px] leading-[1.65] text-ink-2">
-          One body and every one of them a name. That is the whole reason
-          Chapl counts the way it does — the church entire on one screen, and
-          not one person rounded away inside it.
+          One body, and every one of them a name. That is why Chapl counts the
+          way it does: the whole church on one screen, and not one person
+          rounded away inside it.
         </p>
       </div>
     </section>

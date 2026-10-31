@@ -1,4 +1,6 @@
-import { Headphones, Play, Video } from "lucide-react";
+import { Bookmark, Headphones, Play, Share2, Video } from "lucide-react";
+
+import { Waveform } from "@/components/landing/waveform";
 
 type Sermon = {
   title: string;
@@ -45,24 +47,19 @@ const bars = Array.from({ length: 68 }, (_, i) => {
   return 16 + v * 84;
 });
 
-const PLAYED = 24;
 
 export function Media() {
   return (
     <section id="media" className="on-dark bg-[#090b10]">
       <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
-        <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-5">
-          <div>
-            <p className="eyebrow text-ink-3">Media room</p>
-            <h2 className="head mt-4 max-w-[16ch] text-[clamp(2rem,4vw,3rem)] text-ink">
-              Sunday keeps preaching all week.
-            </h2>
-          </div>
-          <p className="max-w-sm text-[15px] leading-[1.6] text-ink-2">
-            Upload once. Chapl publishes the video, splits the audio for the
-            podcast feed, and files it under the right series and branch.
-          </p>
-        </div>
+        <p className="eyebrow text-ink-3">Media room</p>
+        <h2 className="head mt-4 max-w-[16ch] text-[clamp(2.2rem,4.6vw,3.5rem)] text-ink">
+          Sunday keeps preaching all week.
+        </h2>
+        <p className="mt-5 max-w-[34rem] text-[17px] leading-[1.6] text-ink-2">
+          Video and audio under the right series and branch. Members save what they mean to come
+          back to, and a shared link opens for anyone, preview and all.
+        </p>
 
         <div className="mt-14 grid gap-px overflow-hidden rounded-2xl bg-line lg:grid-cols-[1.15fr_1fr]">
           {/* Featured */}
@@ -75,34 +72,27 @@ export function Media() {
               {sermons[0].speaker} · Central · {sermons[0].date}
             </p>
 
-            <div className="mt-9 flex items-center gap-5">
+            <div className="mt-9 flex items-start gap-5">
               <button
                 type="button"
                 aria-label={`Play ${sermons[0].title}`}
-                className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-accent text-accent-ink transition-transform hover:scale-105"
+                className="play-button grid h-14 w-14 shrink-0 place-items-center rounded-full bg-accent text-accent-ink"
               >
                 <Play className="h-5 w-5 translate-x-px fill-current" />
               </button>
 
-              <div
-                className="flex h-14 min-w-0 flex-1 items-end gap-[3px]"
-                aria-hidden
-              >
-                {bars.map((h, i) => (
-                  <span
-                    key={i}
-                    className={`w-full rounded-full ${
-                      i < PLAYED ? "bg-accent" : "bg-line-strong"
-                    }`}
-                    style={{ height: `${h}%` }}
-                  />
-                ))}
+              <div className="min-w-0 flex-1">
+                <Waveform bars={bars} length={sermons[0].length} />
               </div>
             </div>
 
-            <div className="tnum mt-3 flex justify-between text-[12px] text-ink-3">
-              <span>13:24</span>
-              <span>{sermons[0].length}</span>
+            <div className="mt-8 flex flex-wrap gap-2" aria-hidden>
+              <span className="tile-action">
+                <Bookmark className="h-3.5 w-3.5" strokeWidth={2} /> Save
+              </span>
+              <span className="tile-action">
+                <Share2 className="h-3.5 w-3.5" strokeWidth={2} /> Share
+              </span>
             </div>
           </div>
 

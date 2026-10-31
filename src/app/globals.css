@@ -1640,136 +1640,398 @@ body:has(.modal-scrim) {
 }
 
 /* ---------------------------------------------------------------
-   The hero picture, held in the dot field
+   The landing page
    ---------------------------------------------------------------
-   The image is not framed by dots, it is made of them where the
-   light runs out. See `components/dot-photo.tsx` for why the
-   spotlight is a moved layer rather than a moved mask.
+   The story's stage is WebGL (`components/landing/dot-stage.tsx`);
+   everything here is the furniture around it. Hover effects are
+   gated on a fine pointer, so a tap on a phone never leaves a tile
+   stuck half-lifted.
    --------------------------------------------------------------- */
 
-.dot-photo {
-  --dot-gap: 7px;
-  --dot-r: 1.45px;
-  /* How far the solid middle reaches before it starts breaking up. */
-  --core: 34%;
-  --fade: 76%;
-
-  position: relative;
-  /*
-   * No frame, no plate, no corner radius.
-   *
-   * All three were fighting the thing itself: an image whose whole idea
-   * is that it stops being an image at its edges cannot also have a
-   * hairline saying exactly where it stops. The `--sunk` plate behind it
-   * was worse — it drew a rounded rectangle *through* the dots, so the
-   * dissolve faded into a visible block rather than into the page.
-   */
+/* Lenis owns the wheel on this page; the browser's own smoothing
+   underneath it would double the easing. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
   overflow: hidden;
-  isolation: isolate;
 }
 
-.dot-photo img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  user-select: none;
-  -webkit-user-drag: none;
+.btn-lg {
+  padding: 0.8rem 1.3rem;
+  font-size: 15px;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.nudge {
+  transition: transform 200ms var(--ease-out);
+}
+.group:hover .nudge {
+  transform: translateX(3px);
 }
 
-/*
- * The dissolve.
- *
- * Union of a soft core and a tiled dot: continuous in the middle,
- * granular at the edges. `add` is the standards spelling and
- * `source-over` the WebKit one — both are needed, and they mean the
- * same thing here.
- */
-.dot-photo-base {
-  -webkit-mask-image:
-    radial-gradient(115% 92% at 50% 42%, #000 var(--core), rgba(0, 0, 0, 0.5) 60%, transparent var(--fade)),
-    radial-gradient(circle at 50% 50%, #000 var(--dot-r), transparent calc(var(--dot-r) + 0.6px));
-  mask-image:
-    radial-gradient(115% 92% at 50% 42%, #000 var(--core), rgba(0, 0, 0, 0.5) 60%, transparent var(--fade)),
-    radial-gradient(circle at 50% 50%, #000 var(--dot-r), transparent calc(var(--dot-r) + 0.6px));
-  -webkit-mask-size: 100% 100%, var(--dot-gap) var(--dot-gap);
-  mask-size: 100% 100%, var(--dot-gap) var(--dot-gap);
-  -webkit-mask-repeat: no-repeat, repeat;
-  mask-repeat: no-repeat, repeat;
-  -webkit-mask-composite: source-over;
-  mask-composite: add;
-}
-
-/*
- * The travelling window.
- *
- * Full-size so its mask centre is the frame centre at rest; moved with
- * translate3d, with the picture inside moved back by the same amount.
- * `will-change` because this is the one element on the page that is
- * genuinely animating every frame.
- */
-.dot-photo-spot {
-  position: absolute;
-  inset: 0;
-  will-change: transform;
-  -webkit-mask-image: radial-gradient(circle 210px at 50% 50%, #000 34%, rgba(0, 0, 0, 0.45) 58%, transparent 76%);
-  mask-image: radial-gradient(circle 210px at 50% 50%, #000 34%, rgba(0, 0, 0, 0.45) 58%, transparent 76%);
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-}
-
-.dot-photo-sharp {
-  will-change: transform;
-}
-
-@media (max-width: 640px) {
-  .dot-photo {
-    --dot-gap: 6px;
-    --dot-r: 1.25px;
+/* Story copy on a phone sits over the drawing's lower edge: a wash of
+   the page colour keeps the words on paper rather than on dots. */
+@media (max-width: 1023px) {
+  .story-copy {
+    position: relative;
+    padding-top: 2.5rem;
   }
-  .dot-photo-spot {
-    -webkit-mask-image: radial-gradient(circle 130px at 50% 50%, #000 34%, transparent 76%);
-    mask-image: radial-gradient(circle 130px at 50% 50%, #000 34%, transparent 76%);
+  .story-copy::before {
+    content: "";
+    position: absolute;
+    inset: -1rem -1.5rem -2.5rem;
+    z-index: -1;
+    background: linear-gradient(to top, var(--paper) 62%, color-mix(in oklab, var(--paper) 0%, transparent));
   }
 }
 
-/*
- * Reduced motion keeps the picture and loses the movement.
- * The dissolve is what the thing *is*; the travelling light is the part
- * that could make somebody feel unwell, so only that goes.
- */
-@media (prefers-reduced-motion: reduce) {
-  .dot-photo-spot,
-  .dot-photo-sharp {
-    transform: none !important;
-    will-change: auto;
-  }
+/* The rail: where you are in the story, as seven dots. */
+.story-rail-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.15rem 0;
 }
-
-/*
- * Scroll reveal — a transition, not a keyframe.
- *
- * Transitions retarget mid-flight; a keyframe restarts from zero. Someone
- * scrolling quickly can cross a section's threshold while it is still
- * arriving, and this is the difference between that reading as smooth and
- * reading as a stutter.
- */
-.reveal {
+.story-rail-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1.25px var(--ink-3);
+  transition: transform 300ms var(--ease-out), background-color 300ms ease, box-shadow 300ms ease;
+}
+.story-rail-label {
+  font-size: 12px;
+  color: var(--ink-3);
   opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 0.55s var(--ease-out), transform 0.55s var(--ease-out);
+  transform: translateX(-4px);
+  transition: opacity 200ms ease, transform 250ms var(--ease-out);
 }
-
-.reveal[data-shown="true"] {
+.story-rail li[data-on] .story-rail-dot {
+  background: var(--cobalt);
+  box-shadow: none;
+  transform: scale(1.35);
+}
+.story-rail-link:hover .story-rail-label,
+.story-rail-link:focus-visible .story-rail-label {
   opacity: 1;
   transform: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .reveal {
+/* The one name, ringed on the stage. */
+.dot-focus {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.dot-focus-ring {
+  position: absolute;
+  left: -22px;
+  top: -22px;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1.5px solid var(--ruby);
+  animation: focus-pulse 2.2s var(--ease-out) infinite;
+}
+@keyframes focus-pulse {
+  from {
+    transform: scale(0.55);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.person-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+  padding: 1rem 1.1rem;
+  box-shadow: var(--elevation);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.4rem 0.7rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .person-card:hover .chip-whatsapp {
+    border-color: #25d366;
+    color: #128c4b;
+  }
+}
+
+/* The week's tiles. */
+.tile {
+  --hue: var(--cobalt);
+  position: relative;
+  display: flex;
+  min-height: 15rem;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+  padding: 1.5rem;
+  transition: transform 400ms var(--ease-out), box-shadow 400ms var(--ease-out), border-color 200ms ease;
+}
+.tile::before {
+  /* A wash of the tile's own hue from the corner, barely there until
+     the pointer arrives. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 80% at 0% 0%, color-mix(in oklab, var(--hue) 9%, transparent), transparent 60%);
+  opacity: 0.5;
+  transition: opacity 400ms ease;
+  pointer-events: none;
+}
+.tile > * {
+  position: relative;
+}
+@media (hover: hover) and (pointer: fine) {
+  .tile:hover {
+    transform: translateY(-3px);
+    border-color: var(--line-strong);
+    box-shadow: var(--elevation-hover);
+  }
+  .tile:hover::before {
     opacity: 1;
-    transform: none;
-    transition: none;
+  }
+}
+.tile-icon {
+  width: 30px;
+  height: 30px;
+  color: var(--hue);
+}
+.tile-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.4rem 0.75rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--paper);
+  transition: transform 160ms var(--ease-out), color 160ms ease, border-color 160ms ease;
+}
+button.tile-action:active {
+  transform: scale(0.96);
+}
+.tile-action[data-on] {
+  color: var(--violet);
+  border-color: color-mix(in oklab, var(--violet) 45%, var(--line));
+}
+
+/* The register: a real button per person. */
+.roll-dot {
+  aspect-ratio: 1;
+  width: 100%;
+  max-width: 16px;
+  border-radius: 999px;
+  background: var(--gold);
+  cursor: pointer;
+  transition: transform 220ms var(--ease-out), background-color 160ms ease, box-shadow 160ms ease;
+}
+.roll-dot[data-away] {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--gold) 70%, transparent);
+}
+.roll-dot:active {
+  transform: scale(0.8);
+}
+@media (hover: hover) and (pointer: fine) {
+  .roll-dot:hover {
+    transform: scale(1.25);
+  }
+}
+.roll-dot:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 2px;
+}
+
+.month {
+  transition: transform 300ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  /* The column lifts, not its dots: GSAP owns each dot's transform. */
+  .month:hover {
+    transform: translateY(-4px);
+  }
+}
+
+/* Teams: each cluster lifts in turn when the tile is reached for. */
+.team {
+  transition: transform 400ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tile:hover .team {
+    transform: translateY(-3px);
+  }
+  .tile:hover .team:nth-child(2) { transition-delay: 40ms; }
+  .tile:hover .team:nth-child(3) { transition-delay: 80ms; }
+  .tile:hover .team:nth-child(4) { transition-delay: 120ms; }
+}
+
+/* Roles: scopes inside scopes, the leader's own lit. */
+.scope {
+  border: 1px dashed var(--line-strong);
+  border-radius: 12px;
+  padding: 0.55rem 0.7rem 0.7rem;
+}
+.scope .scope {
+  margin-top: 0.45rem;
+}
+.scope-label {
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.scope-on {
+  border-style: solid;
+  border-color: color-mix(in oklab, var(--teal) 55%, var(--line));
+  background: color-mix(in oklab, var(--teal) 7%, transparent);
+  transition: background-color 300ms ease, border-color 300ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .tile:hover .scope-on {
+    background: color-mix(in oklab, var(--teal) 13%, transparent);
+  }
+}
+
+/* Small things the icons do when their tile is reached for. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .tile:hover .ring-bell {
+    animation: ring-bell 900ms var(--ease-out);
+    transform-origin: 50% 8%;
+  }
+  .tile:hover .beat {
+    animation: beat 900ms var(--ease-out);
+  }
+    .tile:hover .ripple::before,
+  .tile:hover .ripple::after {
+    animation: ripple 1.4s var(--ease-out) infinite;
+  }
+  .tile:hover .ripple::after {
+    animation-delay: 0.45s;
+  }
+}
+.ripple {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+.ripple::before,
+.ripple::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 999px;
+  border: 1.5px solid var(--hue);
+  opacity: 0;
+}
+@keyframes ring-bell {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(14deg); }
+  40% { transform: rotate(-11deg); }
+  60% { transform: rotate(6deg); }
+  80% { transform: rotate(-3deg); }
+}
+@keyframes beat {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.14); }
+  45% { transform: scale(0.97); }
+  65% { transform: scale(1.06); }
+}
+@keyframes ripple {
+  from { transform: scale(0.7); opacity: 0.7; }
+  to { transform: scale(1.7); opacity: 0; }
+}
+
+/* The media room's waveform, played by the scroll. */
+.wave-bar {
+  background: var(--line-strong);
+  transition: background-color 160ms ease;
+}
+.wave-bar[data-on] {
+  background: var(--accent);
+}
+.play-button {
+  transition: transform 200ms var(--ease-out), box-shadow 300ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .play-button:hover {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 8px color-mix(in oklab, var(--accent) 16%, transparent);
+  }
+}
+.play-button:active {
+  transform: scale(0.95);
+}
+
+/* The member's six doors. */
+.door {
+  --hue: var(--cobalt);
+  display: flex;
+  gap: 1.1rem;
+  align-items: flex-start;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.25rem 1.35rem;
+  background: var(--paper);
+  transition: border-color 200ms ease, transform 400ms var(--ease-out), box-shadow 400ms var(--ease-out);
+}
+.door-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  color: var(--hue);
+  background: color-mix(in oklab, var(--hue) 12%, transparent);
+  transition: transform 400ms var(--ease-out), background-color 300ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .door:hover {
+    border-color: var(--line-strong);
+    transform: translateX(4px);
+    box-shadow: var(--elevation);
+  }
+  .door:hover .door-icon {
+    transform: rotate(-6deg) scale(1.06);
+    background: color-mix(in oklab, var(--hue) 18%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot-focus-ring {
+    animation: none;
+    transform: scale(1);
+  }
+  .tile,
+  .door,
+  .nudge {
+    transition: border-color 200ms ease, box-shadow 200ms ease;
   }
 }
 

@@ -1,56 +1,36 @@
-import { Reveal } from "@/components/reveal";
-import { SiteNav } from "@/components/site-nav";
-import { SiteFooter } from "@/components/site-footer";
-import { Hero } from "@/components/sections/hero";
-import { Structure } from "@/components/sections/structure";
-import { Features } from "@/components/sections/features";
-import { Media } from "@/components/sections/media";
-import { People } from "@/components/sections/people";
-import { Members } from "@/components/sections/members";
-import { Scripture } from "@/components/sections/scripture";
 import { CTA } from "@/components/sections/cta";
+import { Media } from "@/components/sections/media";
+import { Scripture } from "@/components/sections/scripture";
+import { Members } from "@/components/landing/members";
+import { SmoothScroll } from "@/components/landing/smooth-scroll";
+import { Story } from "@/components/landing/story";
+import { Week } from "@/components/landing/week";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteNav } from "@/components/site-nav";
 
+/**
+ * The marketing page, told in the product's own dots.
+ *
+ * The story at the top is the argument: the congregation drawn one dot
+ * per person, moved by the scroll through the church, its branches, its
+ * cells, Sunday's room and one name (`components/landing/story.tsx`).
+ * What follows is the week the product runs, the media room, the
+ * member's side, the verse and the ask.
+ */
 export default function Home() {
   return (
     <>
+      <SmoothScroll />
       <SiteNav />
       <main className="flex-1">
-        {/*
-          The hero runs its own orchestration on load — it is above the
-          fold, so there is nothing to wait for.
-
-          Everything below arrives as it is first reached, once. The page
-          was entirely static below the fold before, which was the right
-          instinct against the usual alternative: sections that re-animate
-          every time you scroll past turn a page into something you fight.
-          `Reveal` keeps that and softens only the first appearance.
-        */}
-        <Hero />
-
-        <Reveal>
-          <Structure />
-        </Reveal>
-        <Reveal>
-          <Features />
-        </Reveal>
-        <Reveal>
-          <Media />
-        </Reveal>
-        <Reveal>
-          <People />
-        </Reveal>
-        <Reveal>
-          <Members />
-        </Reveal>
-
-        {/* The verse sits between the argument and the ask — the last
+        <Story />
+        <Week />
+        <Media />
+        <Members />
+        {/* The verse sits between the argument and the ask: the last
             thing read before being asked to decide. */}
-        <Reveal>
-          <Scripture />
-        </Reveal>
-        <Reveal>
-          <CTA />
-        </Reveal>
+        <Scripture />
+        <CTA />
       </main>
       <SiteFooter />
     </>

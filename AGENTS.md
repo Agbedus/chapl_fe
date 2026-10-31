@@ -55,17 +55,15 @@ Bricolage Grotesque for display, Instrument Sans for everything else.
 
 **The dot** is the atomic unit of the visual language: `.dot` is one person,
 `.dot-hollow` is one person who wasn't there. The congregation field, the
-structure diagram, the closing block, and the logo are all built from it. Keep
+landing story, the closing block, and the logo are all built from it. Keep
 it that way — a new chart type should be asked about before it's added.
 
-**The hero picture** is `public/hero-glass.svg`, generated rather than
-photographed — the palette is derived from stained glass, so the window is
-the palette drawn at full size. It is a placeholder in the sense that
-matters: `DotPhoto` takes any `src`, so dropping a real photograph of the
-church in its place needs no other change. A portrait crop around 4:5 with
-a bright subject and dark edges is what the dissolve flatters — the mask
-fades the picture out at the frame, so an image that is busy at its corners
-loses nothing worth keeping.
+**The hero is the congregation, not a picture of a window.** The
+stained-glass photograph it used to carry is gone: the window is now drawn
+in the people themselves, one dot per member of the sample church, the
+rose taking the six hues in turn and the lights below in coloured columns
+(`lib/dot-scenes.ts`, `windowScene`). It is the palette and the product's
+atom at once, which a photograph could only ever be the first of.
 
 **Christian elements** are drawn from the system's own parts rather than
 imported as clip-art. `components/dot-cross.tsx` builds a Latin cross out
@@ -82,26 +80,50 @@ reads as a sticker.
 
 ## Motion
 
-One orchestrated moment, on page load: the congregation field settles into
-place (`.settle`) under the hero copy (`.rise`), and the picture arrives
-last and slowest — it is the largest thing moving, and matching it to the
-timing of a line of type makes it read as heavier than the rest rather than
-as part of the same gesture.
+**The landing page is one story told in the product's own dots.**
+`components/landing/story.tsx` holds the hero and six chapters over a
+sticky WebGL stage (`dot-stage.tsx`, three.js). The same ~800 points, one
+per person in `congregation.ts`, move through seven scenes as the page
+scrolls: the window, one body, six branches, their cells (hollow if they
+missed Sunday), Sunday's hall filling as people check in, a show of hands
+for *Ask the room*, and one name lit in the care hue. Scenes are pure
+functions in `lib/dot-scenes.ts`, so a resize just asks again.
 
-Below the fold, `components/reveal.tsx` fades each section up eight pixels
-**once**, on an `IntersectionObserver` that disconnects after it fires.
-Scrolling back up finds the page where you left it. It is a CSS transition
-rather than a keyframe, so crossing a threshold mid-flight retargets instead
-of restarting.
+- **Positions blend on the CPU**, each person on their own beat (a stagger
+  by seed), which is what makes a morph read as people moving rather than
+  a slide changing. The shader only draws: round dots, hollow rings, a
+  slow breath. Colours are read off the CSS variables and re-read when the
+  theme toggles, so the dots follow dark mode live.
+- **ScrollTrigger drives it, React never sees it.** `stage-state.ts` is a
+  plain object the scroll writes and the stage reads each frame; routing
+  that through state would render the tree sixty times a second.
+- **The stage sticks inside an absolute layer the height of the story.**
+  A sticky element with a negative bottom margin hangs a full screen past
+  its container; this one lets go exactly where the story ends.
+- **Sunday holds the screen** (190dvh, copy sticky) so the room has time
+  to fill; the counter beside it is the same arrivals the dots draw.
+- three.js loads with `next/dynamic` and `ssr: false`, after the words
+  have painted. No WebGL means an empty stage and copy that stands alone.
 
-The hero picture carries the only per-frame animation on the site: a
-cursor-tracked spotlight that opens a clear window through the dots. It is
-spring-damped in a rAF loop that stops itself once settled, and it moves a
-masked *layer* with `translate3d` rather than moving a mask — see the note
-in `components/dot-photo.tsx`. Coarse pointers never start it, and
-`prefers-reduced-motion` leaves it resting in the centre.
+Below the story, GSAP does the rest, each with a reason: the bento's
+tiles arrive in batches, the giving months rise into their heights, the
+media room's waveform is played by the scroll, the cross gathers out of
+scattered dots before the verse is read, and the congregation gathers
+into one block for the last ask. Hover effects are gated on a fine
+pointer. `Magnetic` leans a CTA toward the cursor on a spring.
 
-`prefers-reduced-motion` is honoured throughout `globals.css`.
+**Lenis** smooths the wheel on the home page only and feeds
+`ScrollTrigger.update` from the same GSAP ticker, so scrubbed scenes move
+with the page instead of a frame behind it. Touch keeps native momentum.
+In development `window.__lenis` is the instance, for driving the page
+from the console.
+
+`prefers-reduced-motion` is honoured throughout: no Lenis, no breathing,
+no cursor, scenes snap instead of morphing, reveals fade without moving,
+and the gatherings start already gathered.
+
+The packages are pinned exactly: `gsap` 3.15.0, `@gsap/react` 2.1.2,
+`three` 0.186.1, `lenis` 1.3.27.
 
 ## The app half
 
