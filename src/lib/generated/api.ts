@@ -136,10 +136,13 @@ export interface Schemas {
   "PeopleImportRow": { "line": number; "full_name"?: (string | null); "email"?: (string | null); "action": string; "reason"?: (string | null); "branch"?: (string | null); "cell"?: (string | null); "household"?: (string | null); "household_role"?: (string | null); };
   "PersonProfile": { "attendance": Array<Schemas["AttendanceMark-Output"]>; "marked": number; "present": number; "pct": (number | null); "streak": number; "missed": number; "cell_pct": (number | null); "checkups": Array<Schemas["CheckupNote"]>; "departments": Array<Schemas["DepartmentRef"]>; "giving": (Schemas["ProfileGiving"] | null); };
   "ProfileCompletion": { "complete": boolean; "percent": number; "missing": Record<string, string>; };
-  "ProfileGiving": { "total": number; "gifts": number; "months": Array<Schemas["GivingMonth"]>; "types": Array<Schemas["GivingType"]>; };
+  "ProfileGiving": { "total": number; "gifts": number; "anonymous"?: number; "anonymous_gifts"?: number; "months": Array<Schemas["GivingMonth"]>; "types": Array<Schemas["GivingType"]>; };
   "PromptAnswer": { "choice": number; };
   "PromptAsk": { "question": string; "options": Array<string>; };
   "PromptOption": { "label": string; "count"?: number; };
+  "PublicChurch": { "id": string; "name": string; "city"?: (string | null); "logo_url"?: (string | null); };
+  "PublicEvent": { "id": string; "title": string; "description"?: (string | null); "event_type": string; "start_date": string; "end_date"?: (string | null); "is_all_day"?: boolean; "location"?: (string | null); "image_url"?: (string | null); "registration_required"?: boolean; "church": Schemas["PublicChurch"]; };
+  "PublicSermon": { "id": string; "title": string; "description"?: (string | null); "scripture_reference"?: (string | null); "series"?: (string | null); "part"?: (number | null); "preacher_name"?: (string | null); "sermon_date": string; "youtube_video_id"?: (string | null); "video_url"?: (string | null); "audio_url"?: (string | null); "thumbnail_url"?: (string | null); "duration_seconds"?: (number | null); "church": Schemas["PublicChurch"]; };
   "Role": "super_admin" | "platform_admin" | "church_admin" | "senior_pastor" | "branch_pastor" | "branch_admin" | "cell_leader" | "cell_assistant" | "department_head";
   "RosterAdd": { "user_id": string; "role_in_department"?: (string | null); "joined_date"?: (string | null); };
   "Runtime": { "app_env": string; "dialect": string; "driver": string; "database": string; "python": string; "sqlalchemy": string; "platform": string; "started_at": string; "uptime": string; "uptime_seconds": number; "cookie_secure": boolean; "token_ttl_minutes": number; };
@@ -166,5 +169,5 @@ export interface Schemas {
   "UserUpdate": { "email"?: (string | null); "full_name"?: (string | null); "phone_number"?: (string | null); "location"?: (string | null); "avatar_url"?: (string | null); "date_of_birth"?: (string | null); "gender"?: (string | null); "is_active"?: (boolean | null); "is_verified"?: (boolean | null); "marital_status"?: (Schemas["MaritalStatus"] | null); "occupation"?: (string | null); "address"?: (string | null); "emergency_contact_name"?: (string | null); "emergency_contact_phone"?: (string | null); "baptism_date"?: (string | null); "confirmation_date"?: (string | null); "notes"?: (string | null); };
   "ValidationError": { "loc": Array<(string | number)>; "msg": string; "type": string; "input"?: unknown; "ctx"?: Record<string, unknown>; };
   "app__schemas__insight__ChurchRef": { "id": (string | null); "name": (string | null); "currency": string; };
-  "app__schemas__user__ChurchRef": { "id": string; "name": string; "status": Schemas["ChurchStatus"]; "is_active": boolean; };
+  "app__schemas__user__ChurchRef": { "id": string; "name": string; "status": Schemas["ChurchStatus"]; "is_active": boolean; "is_owner"?: boolean; };
 }

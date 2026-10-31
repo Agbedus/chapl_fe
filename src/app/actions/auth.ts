@@ -70,11 +70,17 @@ export async function signIn(
   await startSession(result.data.access_token);
 
   const me = result.data.user;
-  // Someone in several churches starts in the first active one and
-  // switches from the side nav; there is no page in between asking.
-  // Platform staff start across every church.
+  // Someone in several churches starts in the one they own, else the
+  // first active one, and switches from the side nav; there is no page in
+  // between asking. Platform staff start across every church.
   if (!me.is_platform_staff && me.churches?.length) {
-    await setChurch((me.churches.find((c) => c.status === "active") ?? me.churches[0]).id);
+    const open = (c: (typeof me.churches)[number]) => c.status === "active" && c.is_active !== false;
+    const start =
+      me.churches.find((c) => c.is_owner && open(c)) ??
+      me.churches.find(open) ??
+      me.churches.find((c) => c.is_owner) ??
+      me.churches[0];
+    await setChurch(start.id);
   }
 
   redirect(next.startsWith("/") && !next.startsWith("//") && !next.includes("\\") ? next : landingFor(me));

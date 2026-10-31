@@ -279,7 +279,9 @@ export default async function AccountPage() {
                 label="You have given"
                 value={money(giving.total, currency)}
                 colour="var(--emerald)"
-                footnote={`${giving.gifts} gift${giving.gifts === 1 ? "" : "s"} recorded`}
+                footnote={`${giving.gifts} gift${giving.gifts === 1 ? "" : "s"} recorded${
+                  giving.anonymous_gifts ? `, ${giving.anonymous_gifts} anonymously` : ""
+                }`}
               />
             ) : (
               <StatCard
@@ -530,7 +532,9 @@ export default async function AccountPage() {
               <Panel
                 fill={balanced}
                 title="What you give for"
-                lede={`${giving.gifts} completed gift${giving.gifts === 1 ? "" : "s"}`}
+                lede={`${giving.gifts} completed gift${giving.gifts === 1 ? "" : "s"}${
+                  giving.anonymous ? ` · ${money(giving.anonymous, currency)} given anonymously, shown only to you` : ""
+                }`}
                 accent="var(--emerald)"
               >
                 <RingPanel

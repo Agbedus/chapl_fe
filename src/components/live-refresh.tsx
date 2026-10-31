@@ -11,7 +11,8 @@ import { useEffect } from "react";
  * message as a `chapl:live` window event, and this listens for the ones
  * whose `type` starts with `prefix`. A burst (forty people answering in
  * a second) is one refresh, not forty. A slow poll covers a socket that
- * is down, so the page is never more than `fallback` seconds behind.
+ * is down, so the page is never more than `fallback` seconds behind, and
+ * a reconnect (`resync`) re-reads at once whatever it missed.
  */
 export function LiveRefresh({ prefix, fallback = 30 }: { prefix: string; fallback?: number }) {
   const router = useRouter();
@@ -26,7 +27,7 @@ export function LiveRefresh({ prefix, fallback = 30 }: { prefix: string; fallbac
     };
     const onLive = (event: Event) => {
       const type = (event as CustomEvent<{ type?: string }>).detail?.type;
-      if (type?.startsWith(prefix)) soon();
+      if (type === "resync" || type?.startsWith(prefix)) soon();
     };
     window.addEventListener("chapl:live", onLive);
     const poll = setInterval(() => {

@@ -15,7 +15,16 @@ const instrument = Instrument_Sans({
   display: "swap",
 });
 
+// Where links in previews resolve: shared pages say `/s/{id}`, and a chat
+// app needs the whole address. Vercel names the production host itself.
+const site =
+  process.env.SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3000");
+
 export const metadata: Metadata = {
+  metadataBase: new URL(site),
   title: "Chapl — one church, every branch, every name",
   description:
     "Chapl holds a multi-site church in one place: branches and cell groups, attendance and sermons, birthdays and follow-ups — plus a door in for every member.",

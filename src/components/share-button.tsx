@@ -27,9 +27,10 @@ function copyByHand(text: string): boolean {
 
 /**
  * Share a sermon or an event: the system share sheet where there is one
- * (phones, Safari), otherwise the link copied. `path` is the page in this
- * app, so the link someone receives opens the same thing — after they
- * sign in, because it is the church's and not the public's.
+ * (phones, Safari), otherwise the link copied. `path` is the public page
+ * (`/s/{id}`, `/e/{id}`), readable without an account and carrying the
+ * preview a chat app shows, so the person it is sent to is not met by a
+ * sign-in wall.
  */
 export function ShareButton({ title, text, path }: { title: string; text?: string; path: string }) {
   const share = async () => {

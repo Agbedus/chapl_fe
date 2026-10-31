@@ -29,8 +29,17 @@ const links = [
  * price of a header that is right, and the page's own content is all
  * static, so the cost is one request-time fetch and no waterfall.
  */
-export async function SiteNav() {
+export async function SiteNav({
+  sections = true,
+  next,
+}: {
+  /** The home page's section links; off on a page that has none of them. */
+  sections?: boolean;
+  /** Where signing in should land, when it is not the dashboard. */
+  next?: string;
+} = {}) {
   const me = await getMe();
+  const signIn = next ? `/signin?next=${encodeURIComponent(next)}` : "/signin";
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-paper/85 backdrop-blur-md">
@@ -39,7 +48,7 @@ export async function SiteNav() {
           <Logo />
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex">
+        {sections && <nav className="hidden items-center gap-8 md:flex">
           {links.map((link) => (
             <a
               key={link.href}
@@ -49,7 +58,7 @@ export async function SiteNav() {
               {link.label}
             </a>
           ))}
-        </nav>
+        </nav>}
 
         <div className="flex items-center gap-2.5">
           <ThemeToggle />
@@ -74,7 +83,7 @@ export async function SiteNav() {
           ) : (
             <>
               <a
-                href="/signin"
+                href={signIn}
                 className="hidden rounded-full px-3.5 py-2 text-[14px] font-medium text-ink-2
                            transition-colors hover:text-ink sm:inline-block"
               >

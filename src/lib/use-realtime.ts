@@ -24,6 +24,14 @@ import { useEffect, useRef, useState } from "react";
  *   it disconnects and re-reads the count when you come back, which is
  *   also how it catches up.
  *
+ * - **A reconnect is a resync.** Whatever was said while the socket was
+ *   down is not replayed, so the second and later opens announce
+ *   `resync` and every live screen re-reads itself.
+ *
+ * - **Silence is a dead socket.** The server pings every 25 seconds; a
+ *   connection that has heard nothing for 70 is closed and redialled
+ *   rather than trusted. Coming back online redials at once.
+ *
  * - **It never renders what it cannot trust.** The socket carries a
  *   title, a kind and an href — that is all the tray shows. Anything
  *   richer is fetched.
@@ -83,6 +91,10 @@ export function useRealtime({ getTicket, getUnread }: Options) {
    * the teardown final.
    */
   const run = useRef(0);
+  // Whether a socket has opened before in this mount: the next open is a
+  // reconnect, and whatever happened in between has to be re-read.
+  const opened = useRef(false);
+  const lastHeard = useRef(0);
 
   useEffect(() => {
     alive.current = true;
@@ -158,10 +170,16 @@ export function useRealtime({ getTicket, getUnread }: Options) {
 
       ws.onopen = () => {
         attempts.current = 0;
+        lastHeard.current = Date.now();
         setConnected(true);
+        if (opened.current) {
+          window.dispatchEvent(new CustomEvent("chapl:live", { detail: { type: "resync" } }));
+        }
+        opened.current = true;
       };
 
       ws.onmessage = (event) => {
+        lastHeard.current = Date.now();
         let payload: LiveNotification & { type?: string };
         try {
           payload = JSON.parse(event.data);
@@ -214,13 +232,32 @@ export function useRealtime({ getTicket, getUnread }: Options) {
       }
     };
 
+    const onOnline = () => {
+      attempts.current = 0;
+      clearTimer();
+      void connect();
+    };
+
+    // A socket can die without a close event (a phone changing networks,
+    // a laptop waking). The server pings every 25 seconds, so 70 of
+    // silence means nobody is on the other end.
+    const watchdog = setInterval(() => {
+      const s = socket.current;
+      if (s && s.readyState === WebSocket.OPEN && Date.now() - lastHeard.current > 70_000) {
+        s.close();
+      }
+    }, 20_000);
+
     void connect();
     document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("online", onOnline);
 
     return () => {
       alive.current = false;
       run.current += 1;
+      clearInterval(watchdog);
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("online", onOnline);
       close();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

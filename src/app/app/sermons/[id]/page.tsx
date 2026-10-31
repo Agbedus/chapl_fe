@@ -50,7 +50,7 @@ export default async function SermonPage({ params }: { params: Promise<{ id: str
         action={
           <div className="flex items-center gap-2">
             <SaveSermonButton action={toggleSavedSermon} id={s.id} saved={saved} />
-            <ShareButton title={s.title} text={byline} path={`/app/sermons/${s.id}`} />
+            <ShareButton title={s.title} text={byline} path={`/s/${s.id}`} />
           </div>
         }
       />

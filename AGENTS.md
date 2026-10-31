@@ -526,6 +526,41 @@ copies the link. **Your church** (`/app/about`, `GET
 /churches/{id}/about`) is for every member: where each branch meets,
 when, and directions — their own branch first.
 
+## Shared links
+
+A shared sermon or event goes to **`/s/{id}`** or **`/e/{id}`**, not to
+the page inside `/app`. Whoever taps a link in a chat is usually not
+signed in and often not a member, and a sign-in wall is where a shared
+link goes to die. The pages read `GET /public/sermons/{id}` and
+`/public/events/{id}` with `auth: false`; the API decides what is open
+(published, church- or branch-wide, active church) and answers `404` for
+the rest, so nothing here has to.
+
+`generateMetadata` gives each page its link preview — title, a line, and
+the sermon's cover (its YouTube thumbnail when it has none) or the
+event's picture. `metadataBase` in the root layout makes those absolute:
+`SITE_URL`, else Vercel's production host. The way in comes *after* the
+content: Sign in carries `?next=` back to the same thing inside the
+product, and someone already signed in gets **Open in Chapl** instead.
+`/signin` honours `next` for a visitor who turns out to be signed in.
+
+`ShareButton` takes the public path. `SiteNav` takes `sections={false}`
+on pages that are not the home page, because its links are anchors into
+it.
+
+## Live, reliably
+
+The socket is not trusted to have heard everything. `use-realtime.ts`
+announces **`resync`** on every open after the first, and `LiveRefresh`
+re-reads on it, so a page that lost its connection catches up the moment
+it is back rather than at the next poll. A socket that has heard nothing
+for 70 seconds is closed and redialled (the server pings every 25), and
+coming back `online` redials at once.
+
+On the API, cron sweeps hand their notifications to the web service over
+`POST /realtime/relay` (shared `RELAY_SECRET`), so a birthday or a
+reminder arrives live rather than on the next load.
+
 ## Caching
 
 Reads are stale-while-revalidate on the server, decided in one place:

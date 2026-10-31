@@ -14,8 +14,11 @@ export default async function SignInPage({
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  if (await getMe()) redirect("/app");
   const params = await searchParams;
+  const next = params.next ?? "";
+  const safe = next.startsWith("/") && !next.startsWith("//") && !next.includes("\\");
+  // Already signed in: go where the link was taking them.
+  if (await getMe()) redirect(safe ? next : "/app");
 
   const note =
     params.verified ? "Your email is confirmed. Sign in to continue."

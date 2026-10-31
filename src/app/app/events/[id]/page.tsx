@@ -25,7 +25,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
   return <Page>
     <Link href="/app/events" className="text-[12px] text-ink-3 hover:underline">Back to calendar</Link>
     <PageHead eyebrow="Calendar" title={e.title} lede={e.description ?? e.location ?? undefined}
-      action={<ShareButton title={e.title} text={e.location ?? undefined} path={`/app/events/${id}`} />} />
+      action={<ShareButton title={e.title} text={e.location ?? undefined} path={`/e/${id}`} />} />
     <Panel title="Registration" accent="var(--violet)">
       <p className="text-[13px]">{new Date(e.start_date).toLocaleString()} · {e.location ?? "Location to follow"}</p>
       {summary.ok ? <div className="mt-3 space-y-3"><p className="text-[12px] text-ink-3">{summary.data.attendees} registered{summary.data.capacity ? ` of ${summary.data.capacity} places` : ""}</p>
