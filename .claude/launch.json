@@ -40,6 +40,18 @@
         "8000"
       ],
       "port": 8000
+    },
+    {
+      "name": "chapl-prod",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "start",
+        "--",
+        "-p",
+        "3001"
+      ],
+      "port": 3001
     }
   ]
 }

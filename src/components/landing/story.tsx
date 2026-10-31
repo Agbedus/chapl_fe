@@ -159,7 +159,10 @@ export function Story() {
   );
 
   return (
-    <div ref={root} id="story" className="relative">
+    <div ref={root} id="story" className="relative -mt-16">
+      {/* Pulled up under the header (h-16), which is translucent: the
+          stage is the full screen from the first frame, not a screen
+          pushed down by the header's height. */}
       {/* The stage: sticky behind everything in this block and released
           exactly at its end. It sticks inside a layer the height of the
           story; a negative margin instead let it hang a screen past it. */}
@@ -185,7 +188,7 @@ export function Story() {
 
       {/* --- the hero ------------------------------------------------ */}
       <section id="top" data-hero className="relative z-10 flex min-h-[100dvh] items-start lg:items-center">
-        <div data-hero-copy className="mx-auto w-full max-w-6xl px-6 pt-20 pb-16 sm:pt-24 lg:pt-0 lg:pb-0">
+        <div data-hero-copy className="mx-auto w-full max-w-6xl px-6 pt-36 pb-16 sm:pt-40 lg:pt-0 lg:pb-0">
           <div className="max-w-[34rem]">
             <h1 className="display rise text-[clamp(2.8rem,6.4vw,5rem)]" style={{ animationDelay: "60ms" }}>
               One church.
