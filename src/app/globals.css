@@ -2800,3 +2800,167 @@ a .sheet {
   max-width: 26rem;
   max-height: none;
 }
+
+/* ---------------------------------------------------------------
+   The notifications inbox
+   ---------------------------------------------------------------
+   Topics down the left, the list beside them. On a phone the topics
+   become a row of chips that scrolls sideways above the list.
+   --------------------------------------------------------------- */
+.notif-layout {
+  display: grid;
+  gap: 1.25rem;
+}
+@media (min-width: 1024px) {
+  .notif-layout {
+    grid-template-columns: 15.5rem minmax(0, 1fr);
+    gap: 2rem;
+    align-items: start;
+  }
+}
+.notif-rail {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+.notif-rail-title {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .notif-rail {
+    position: sticky;
+    top: 5rem;
+    flex-direction: column;
+    gap: 2px;
+    overflow: visible;
+  }
+  .notif-rail-title {
+    display: block;
+    margin: 1.1rem 0.7rem 0.35rem;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+}
+.notif-filter {
+  --hue: var(--ink-2);
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.6rem;
+  border-radius: 10px;
+  padding: 0.5rem 0.7rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  white-space: nowrap;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.notif-icon {
+  color: var(--hue);
+}
+@media (hover: hover) and (pointer: fine) {
+  .notif-filter:hover {
+    background: var(--mist);
+    color: var(--ink);
+  }
+}
+.notif-filter[aria-current="page"] {
+  background: var(--sunk);
+  color: var(--ink);
+  font-weight: 600;
+}
+.notif-count {
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+.notif-badge {
+  display: inline-grid;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  border-radius: 999px;
+  padding: 0 0.35rem;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+.notif-search {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  padding: 0.55rem 0.85rem;
+  transition: border-color 150ms ease;
+}
+.notif-search:focus-within {
+  border-color: var(--line-strong);
+}
+.notif-search input[name="q"] {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  font-size: 13.5px;
+  color: var(--ink);
+  outline: none;
+}
+.notif-day {
+  margin-bottom: 0.4rem;
+  padding-left: 0.25rem;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.notif-list {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+}
+.notif-list > li + li {
+  border-top: 1px solid var(--line-soft);
+}
+.notif-list > li[data-unread] {
+  background: color-mix(in oklab, var(--cobalt) 4%, var(--paper));
+}
+.notif-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  padding: 0.85rem 1rem;
+  transition: background-color 150ms ease;
+}
+a.notif-row:active {
+  background: var(--sunk);
+}
+@media (hover: hover) and (pointer: fine) {
+  a.notif-row:hover {
+    background: var(--mist);
+  }
+}
+.notif-avatar {
+  --hue: var(--cobalt);
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--hue);
+  background: color-mix(in oklab, var(--hue) 13%, transparent);
+}
+.notif-topic {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 11px;
+  color: var(--ink-3);
+}

@@ -569,6 +569,20 @@ copies the link. **Your church** (`/app/about`, `GET
 /churches/{id}/about`) is for every member: where each branch meets,
 when, and directions — their own branch first.
 
+## The notifications inbox
+
+`/app/notifications` is laid out like an inbox: topics down the left
+(Sunday and check-in, Notices, Events, Sermons, Prayer and care, People
+and teams, Church, Giving) with a count each and a badge for how many
+are unread, the list beside them grouped by day, a search above it. On a
+phone the topics become a row of chips. The filters are the URL
+(`?topic=&unread=1&q=&page=`), so a view can be linked to. The page reads
+the latest 200 once and derives the counts, the filtered list and the
+pages from that one set, so they always agree; it says so when you have
+more. A kind maps to a topic in `TOPICS` (a kind like `care.prayer`
+matches `care` by prefix), and an unknown kind lands in Other rather than
+disappearing. New notifications re-read the page through `LiveRefresh`.
+
 ## Shared links
 
 A shared sermon or event goes to **`/s/{id}`** or **`/e/{id}`**, not to
