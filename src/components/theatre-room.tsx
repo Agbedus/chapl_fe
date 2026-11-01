@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Grid3x3, Rainbow } from "lucide-react";
 
-import { seating, type SeatingStyle } from "@/lib/theatre";
+import { hallFor, seating, type SeatingStyle } from "@/lib/theatre";
 
 const KEY = "chaplSeating";
 const CHANGED = "chapl:seating";
@@ -54,7 +54,22 @@ export function TheatreRoom({
     readStyle,
     () => "fan" as const,
   );
-  const hall = seating(style, Math.max(present, expected));
+  // The hall always has a good few seats, so a church still signing its
+  // people up does not look empty: about 120 up to a hundred and twenty
+  // members, 300 beyond, every row whole. Up to that each person has a
+  // seat; past it a seat stands for a few people. The fan's first two
+  // rows are left out so the count sits in an open point.
+  const people = Math.max(present, expected);
+  const hall = seating(style, hallFor(people), {
+    wholeRows: true,
+    skipFront: 2,
+  });
+  const seats = hall.seats.length;
+  const unit = people > seats ? people / seats : 1;
+  const lit =
+    present === 0
+      ? 0
+      : Math.min(seats, Math.max(1, Math.round(present / unit)));
 
   useEffect(() => {
     const node = ref.current;
@@ -83,7 +98,9 @@ export function TheatreRoom({
 
   const b = hall.bounds;
   // The whole first lighting takes about a second and a half, however big.
-  const step = Math.min(12, 1500 / Math.max(1, present));
+  const step = Math.min(14, 1500 / Math.max(1, lit));
+  // Never taller than about 300px, never wider than its seats want.
+  const widest = Math.round(Math.min(b.width * 22, (300 * b.width) / b.height));
   const pct = (v: number, of: number) =>
     `${Math.round((v / of) * 10000) / 100}%`;
   return (
@@ -115,10 +132,7 @@ export function TheatreRoom({
         </div>
       </div>
       {hall.seats.length > 0 && (
-        <div
-          className="theatre-hall"
-          style={{ maxWidth: `${Math.round(b.width * 12)}px` }}
-        >
+        <div className="theatre-hall" style={{ maxWidth: `${widest}px` }}>
           <svg
             viewBox={`${b.left} ${b.top} ${b.width} ${b.height}`}
             width="100%"
@@ -135,12 +149,12 @@ export function TheatreRoom({
               />
             )}
             {hall.seats.map((s, i) =>
-              hall.rank[i] < present ? (
+              hall.rank[i] < lit ? (
                 <circle
                   key={i}
                   cx={s.x}
                   cy={s.y}
-                  r={0.32}
+                  r={0.26}
                   className="theatre-seat"
                   style={{
                     transitionDelay: seen
@@ -153,7 +167,7 @@ export function TheatreRoom({
                   key={i}
                   cx={s.x}
                   cy={s.y}
-                  r={0.27}
+                  r={0.22}
                   className="theatre-empty"
                 />
               ),
@@ -174,6 +188,11 @@ export function TheatreRoom({
             </span>
           </div>
         </div>
+      )}
+      {unit > 1 && (
+        <p className="mt-2 text-center text-[11px] text-ink-3">
+          One dot is about {Math.round(unit)} people.
+        </p>
       )}
     </div>
   );

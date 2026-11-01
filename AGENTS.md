@@ -559,10 +559,14 @@ for each open service on `/app/check-in`, because a live thing is
 watched, not worked through. The first line is the service and its code
 (a leader sees the code as six large boxes and Close check-in; a member
 sees where to type it, or that they are in). Then the room: the headline
-figure and a turnout bar, the hall, one seat a person
-(`lib/theatre.ts`, the phone's `SeatingLayout` ported), drawn as a **fan**
-of rows round the front split into four by three aisles, with the count
-in its point where the pulpit would be, or as **rows** in four blocks
+figure and a turnout bar, the hall
+(`lib/theatre.ts`, the phone's `SeatingLayout` ported): about 120 seats
+up to 120 members and 300 beyond (`hallFor`), every row whole, one person
+a seat until there are more people than seats and then a seat for a few.
+It is drawn as a **fan** of rows round the front split into four blocks
+by three aisles, the edges and aisles straight lines with seats running
+edge to edge in each row, the first two rows left out so the count sits
+in an open point where the pulpit would be, or as **rows** in four blocks
 with the count above the front. The reader picks; the choice lives in
 `localStorage` and is read with `useSyncExternalStore`, so the server
 and first paint say "fan" without a state change in an effect. Seats

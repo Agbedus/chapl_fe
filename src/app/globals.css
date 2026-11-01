@@ -3173,7 +3173,7 @@ a.notif-row:active {
 }
 .theatre-of {
   margin-top: 0.4rem;
-  font-size: clamp(10.5px, 2.2cqw, 13px);
+  font-size: clamp(10px, 1.8cqw, 11.5px);
   color: var(--ink-3);
   white-space: nowrap;
 }
@@ -3194,8 +3194,8 @@ a.notif-row:active {
 .theatre-empty {
   fill: none;
   stroke: var(--gold);
-  stroke-opacity: 0.45;
-  stroke-width: 0.1;
+  stroke-opacity: 0.5;
+  stroke-width: 0.08;
 }
 .live-grid-empty {
   fill: none;
