@@ -51,7 +51,7 @@ export async function SundayPanel() {
   const result = await api<Live | null>("/attendance/live");
   const live = result.ok ? result.data : null;
   if (!live) return <LiveRefresh prefix="service." fallback={300} />;
-  return <LiveBoard live={live} leader={false} />;
+  return <LiveBoard live={live} leader={false} compact />;
 }
 
 /** One open service as the person running it sees it: the live board. */

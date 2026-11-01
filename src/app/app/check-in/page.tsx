@@ -1,5 +1,5 @@
-import { checkIn, openCheckIn } from "@/app/actions/manage";
-import { CheckInBox, CheckInOpenEditor } from "@/components/editors";
+import { askRoom, checkIn, openCheckIn } from "@/app/actions/manage";
+import { AskQuestionEditor, CheckInBox, CheckInOpenEditor } from "@/components/editors";
 import { LeaderLive, SundayPanel } from "@/components/live-service";
 import { LiveRefresh } from "@/components/live-refresh";
 import { Empty, Page, PageHead, Panel } from "@/components/panels";
@@ -55,12 +55,25 @@ export default async function CheckInPage() {
             : "At church? Type the code on the screen to mark yourself present."
         }
         action={
-          opener && branches.length > 0 ? (
-            <CheckInOpenEditor
-              action={openCheckIn}
-              branches={branches}
-              wholeChurch={canAdminChurch(me, churchId)}
-            />
+          opener ? (
+            <span className="flex flex-wrap items-center gap-2">
+              {live.length > 0 && (
+                <AskQuestionEditor
+                  action={askRoom}
+                  sessions={live.map((s) => ({
+                    value: s.id,
+                    label: `${s.branch_name ?? "Whole church"} · ${s.service_day}`,
+                  }))}
+                />
+              )}
+              {branches.length > 0 && (
+                <CheckInOpenEditor
+                  action={openCheckIn}
+                  branches={branches}
+                  wholeChurch={canAdminChurch(me, churchId)}
+                />
+              )}
+            </span>
           ) : undefined
         }
       />

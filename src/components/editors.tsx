@@ -2346,6 +2346,50 @@ export function CheckInOpenEditor({
 }
 
 /**
+ * Ask the room: the secondary button beside "Open check-in", and the
+ * same kind of form (it opens from its button, like every other form on
+ * the page). With more than one service open it asks which; with one it
+ * simply knows. The question lands on every phone in that service.
+ */
+export function AskQuestionEditor({
+  action,
+  sessions,
+}: {
+  action: Action;
+  /** The open services, as options: the branch and day. */
+  sessions: Option[];
+}) {
+  return (
+    <Editor
+      label="Ask question"
+      submit="Ask the room"
+      context="It appears on everyone's phone at once, and the answers come back here as a poll. Anything still open closes first: one question at a time."
+      action={action}
+      tone="var(--sunk)"
+      icon={<Megaphone className="h-3.5 w-3.5" aria-hidden />}
+    >
+      {(state) => (
+        <div className="space-y-4">
+          {sessions.length > 1 ? (
+            <Select label="Which service" name="session_id" options={sessions} required
+                    defaultValue={sessions[0].value} icon={<Building2 className="h-full w-full" />} />
+          ) : (
+            <input type="hidden" name="session_id" value={sessions[0]?.value ?? ""} />
+          )}
+          <Field label="Question" name="question" required autoComplete="off"
+                 placeholder="Question · e.g. Which point spoke to you?"
+                 error={state.fieldErrors?.question}
+                 icon={<Hash className="h-full w-full" />} />
+          <Area label="Answers" name="options" rows={4} required
+                placeholder={"One answer per line, two to six\nGrace\nFaith\nHope"}
+                error={state.fieldErrors?.options} />
+        </div>
+      )}
+    </Editor>
+  );
+}
+
+/**
  * The member's half: type the code from the screen.
  *
  * Inline rather than in a modal — it is one field, and the person is

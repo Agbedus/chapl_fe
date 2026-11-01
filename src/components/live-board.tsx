@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Check, X } from "lucide-react";
 
-import { answerPrompt, askRoom, checkIn, closeCheckIn, closePrompt } from "@/app/actions/manage";
-import { ActionButton, AskRoomBox, CheckInBox, PromptAnswers } from "@/components/editors";
+import { answerPrompt, checkIn, closeCheckIn, closePrompt } from "@/app/actions/manage";
+import { ActionButton, CheckInBox, PromptAnswers } from "@/components/editors";
 import { LiveRefresh } from "@/components/live-refresh";
 import type { Schemas } from "@/lib/generated/api";
 
@@ -70,12 +70,13 @@ function CellCircle({ cell }: { cell: Cell }) {
  * The room: the headline figure and, beneath it, the congregation by cell,
  * each cell its own circle of dots, filling as people check in.
  */
-function Room({ live }: { live: Live }) {
+function Room({ live, compact }: { live: Live; compact: boolean }) {
   const present = live.present ?? 0;
   const expected = live.expected ?? 0;
   const turnout = expected > 0 ? Math.round((present / expected) * 100) : 0;
   const cells = (live.cells ?? []).filter((c) => (c.expected ?? 0) > 0 || (c.present ?? 0) > 0);
-  const shown = cells.slice(0, 36);
+  // The dashboard shows the biggest dozen; the check-in page shows more.
+  const shown = cells.slice(0, compact ? 12 : 36);
   return (
     <section className="live-card">
       <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
@@ -179,10 +180,13 @@ export function LiveBoard({
   leader,
   canRun = false,
   sessionId,
+  compact = false,
 }: {
   live: Live;
   leader: boolean;
   canRun?: boolean;
+  /** The dashboard's version: a dozen cells, the open question only, and a way to the whole board. */
+  compact?: boolean;
   /** The session id, for closing check-in from the leader's board. */
   sessionId?: string;
 }) {
@@ -252,7 +256,7 @@ export function LiveBoard({
       </section>
 
       {/* --- the room: the congregation by cell ---------------------- */}
-      <Room live={live} />
+      <Room live={live} compact={compact} />
 
       {/* --- the questions: every one asked, as polls ---------------- */}
       <section>
@@ -262,7 +266,7 @@ export function LiveBoard({
             <p className="mt-1 text-[13px] text-ink-2">
               {prompts.length === 0
                 ? leader
-                  ? "Nothing asked yet. Put a question to the room."
+                  ? "Nothing asked yet. Use Ask question at the top of the page."
                   : "Nothing has been asked yet."
                 : `${prompts.length} asked this service`}
             </p>
@@ -279,16 +283,18 @@ export function LiveBoard({
           <div className="live-polls">
             {prompts
               .filter((p) => leader || p.id !== open?.id)
+              .slice(0, compact ? (leader ? 1 : 0) : undefined)
               .map((p) => (
                 <Poll key={p.id} prompt={p} canRun={canRun} mine={!leader} />
               ))}
           </div>
         )}
 
-        {canRun && live.is_open && (
-          <div className="live-card mt-4">
-            <p className="live-kicker mb-2">Ask the room</p>
-            <AskRoomBox action={askRoom} sessionId={live.session_id} />
+        {compact && (
+          <div className="mt-4 text-right">
+            <Link href="/app/check-in" className="text-[12.5px] font-medium text-ink-2 hover:text-ink hover:underline">
+              {prompts.length > 1 || (live.cells?.length ?? 0) > 12 ? "All questions and cells" : "Open the full board"} →
+            </Link>
           </div>
         )}
       </section>
