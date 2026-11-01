@@ -50,13 +50,16 @@ export default async function EventsPage() {
   from.setHours(0, 0, 0, 0);
   const to = new Date(from.getTime() + 395 * 24 * 60 * 60 * 1000);
 
-  const [list, branchList, cellList, today, dated] = await Promise.all([
+  const [list, branchList, cellList, today, dated, born] = await Promise.all([
     api<Paged<ChurchEvent>>("/events/?limit=400&sort=start_date&order=asc"),
     api<Paged<Branch>>("/branches/?limit=200&sort=name&order=asc"),
     api<Paged<Cell>>("/cells/?limit=300&sort=code&order=asc"),
     now(),
     api<Schemas["EventOccurrenceList"]>(
       `/events/occurrences?start=${from.toISOString().slice(0, 19)}&end=${to.toISOString().slice(0, 19)}`,
+    ),
+    api<Schemas["BirthdayList"]>(
+      `/events/birthdays?start=${from.toISOString().slice(0, 10)}&end=${to.toISOString().slice(0, 10)}`,
     ),
   ]);
 
@@ -92,7 +95,28 @@ export default async function EventsPage() {
     ? dated.data.items.map((o) => ({ ...byId.get(o.event_id), ...o, id: o.event_id }))
     : rows.map((e) => ({ ...e, event_id: e.id, starts_at: e.start_date, ends_at: e.end_date, repeats: false }));
 
-  const events: CalendarEvent[] = occurrences.map((e) => ({
+  // Birthdays come round every year, so they are read off each person's
+  // date of birth rather than kept as events. All-day, in the attendance
+  // hue, each linking to the person (yours to your own account).
+  const birthdays: CalendarEvent[] = born.ok
+    ? born.data.items.map((b) => ({
+        id: `birthday-${b.user_id}@${b.on}`,
+        href: b.user_id === me.id ? "/app/account" : `/app/people/${b.user_id}`,
+        repeats: true,
+        title: `${b.full_name}${b.turning ? `, ${b.turning}` : ""}`,
+        type: "birthday",
+        tone: "var(--gold)",
+        start: `${b.on}T00:00:00`,
+        end: null,
+        allDay: true,
+        location: null,
+        scope: "Birthday",
+        published: true,
+        needsSignup: false,
+      }))
+    : [];
+
+  const events: CalendarEvent[] = [...occurrences.map((e) => ({
     id: `${e.event_id}@${e.starts_at}`,
     href: `/app/events/${e.event_id}`,
     repeats: Boolean(e.repeats),
@@ -112,7 +136,7 @@ export default async function EventsPage() {
         : "Everyone",
     published: Boolean(e.is_published),
     needsSignup: Boolean((e as { registration_required?: boolean }).registration_required),
-  }));
+  })), ...birthdays];
 
   return (
     <Page fill>
