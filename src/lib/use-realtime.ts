@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { toast } from "@/components/toaster";
+
 /**
  * The live notification feed.
  *
@@ -52,6 +54,43 @@ type Options = {
   /** The count as the server knows it, read on mount and on wake. */
   getUnread: () => Promise<number>;
 };
+
+/**
+ * A notification that arrives while the page is open is announced: a
+ * banner with what it says, and a short soft chime. The chime is made
+ * with the Web Audio API rather than a file, and only after the person
+ * has interacted with the page, which is when a browser allows sound at
+ * all. Turn it off with `localStorage.chaplMute = "1"`.
+ */
+function announce(payload: LiveNotification) {
+  toast(payload.title, "ok");
+  try {
+    if (localStorage.getItem("chaplMute") === "1") return;
+    const Audio = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Audio || document.hidden) return;
+    const ctx = new Audio();
+    if (ctx.state === "suspended") {
+      void ctx.close();
+      return;
+    }
+    const now = ctx.currentTime;
+    [660, 880].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now + i * 0.11);
+      gain.gain.linearRampToValueAtTime(0.06, now + i * 0.11 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.11 + 0.32);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now + i * 0.11);
+      osc.stop(now + i * 0.11 + 0.34);
+    });
+    window.setTimeout(() => void ctx.close(), 800);
+  } catch {
+    /* No sound is better than a failure. */
+  }
+}
 
 export function useRealtime({ getTicket, getUnread }: Options) {
   const [unread, setUnread] = useState(0);
@@ -194,6 +233,7 @@ export function useRealtime({ getTicket, getUnread }: Options) {
         }
         if (payload.type !== "notification") return;
 
+        announce(payload);
         setUnread((n) => n + 1);
         setLatest((current) => {
           // Guard against a duplicate delivery — a reconnect can overlap

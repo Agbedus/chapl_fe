@@ -87,7 +87,7 @@ export function NotificationBell({
         )}
       </button>
 
-      <Popover open={open} onClose={() => setOpen(false)} anchor={trigger} width={340}>
+      <Popover open={open} onClose={() => setOpen(false)} anchor={trigger} width={420}>
         <div className="flex items-center justify-between border-b border-line px-3 py-2">
           <span className="text-[12px] font-semibold">Notifications</span>
           <Link href="/app/notifications" onClick={() => setOpen(false)}
@@ -96,7 +96,7 @@ export function NotificationBell({
           </Link>
         </div>
 
-        <div className="max-h-[20rem] overflow-y-auto p-1.5">
+        <div className="max-h-[min(34rem,70dvh)] overflow-y-auto p-1.5">
           {shown.length === 0 ? (
             <p className="px-2.5 py-8 text-center text-[12px] text-ink-3">
               Nothing new.
