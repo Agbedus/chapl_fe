@@ -196,12 +196,32 @@ function hideAt(scene: Scene, people: Person[], keep: (p: Person) => boolean, x:
   }
 }
 
-/** It starts with one: a single person, large, ringed, alone. */
+/**
+ * It starts with one: a single person, large, at the centre of a faint
+ * field of everyone else, tiny and pale, with a clearing round them. The
+ * field is what the echo moves through; empty, the scene read as a dot
+ * on a blank page.
+ */
 export function oneScene(people: Person[], rect: Rect, you: number): Scene {
   const scene = blank(people.length);
   const cx = rect.x + rect.w / 2;
   const cy = rect.y + rect.h / 2;
-  hideAt(scene, people, (p) => p.index === you, cx, cy);
+  const others = people.filter((p) => p.index !== you);
+  const outer = Math.min(rect.w, rect.h) * 0.5;
+  const clearing = Math.min(56, outer * 0.2);
+  const order = shuffled(others.length, 0x6f6e65);
+  order.forEach((k, slot) => {
+    const p = others[k];
+    // An annulus of even density: the sunflower, pushed out past the clearing.
+    const golden = Math.PI * (3 - Math.sqrt(5));
+    const r = Math.sqrt(clearing ** 2 + (outer ** 2 - clearing ** 2) * ((slot + 0.5) / others.length));
+    scene.x[p.index] = cx + Math.cos(slot * golden) * r;
+    scene.y[p.index] = cy + Math.sin(slot * golden) * r * 0.82;
+    scene.z[p.index] = (p.seed - 0.5) * 40;
+    scene.hue[p.index] = p.branch % 6;
+    scene.alpha[p.index] = 0.22 + p.seed * 0.12;
+    scene.size[p.index] = 0.42;
+  });
   scene.x[you] = cx;
   scene.y[you] = cy;
   scene.hue[you] = 0;

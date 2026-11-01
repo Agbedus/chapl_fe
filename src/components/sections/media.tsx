@@ -44,7 +44,8 @@ const sermons: Sermon[] = [
 // Deterministic waveform — decoration that at least behaves like sound.
 const bars = Array.from({ length: 68 }, (_, i) => {
   const v = Math.abs(Math.sin(i * 1.17) * 0.55 + Math.sin(i * 0.41) * 0.45);
-  return 16 + v * 84;
+  // Whole percentages: these cross to a client component as props.
+  return Math.round(16 + v * 84);
 });
 
 

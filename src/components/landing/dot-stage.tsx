@@ -24,6 +24,8 @@ import {
 
 const ROOM = 5;
 const LAST = 7;
+/** The echo round the one person: one ripple every this many seconds. */
+const RIPPLE_SECONDS = 2.8;
 
 const VERTEX = /* glsl */ `
   attribute vec3 aColor;
@@ -87,7 +89,7 @@ function rectFor(scene: number, w: number, h: number): Rect {
   if (w >= 900) {
     return scene === 0
       ? { x: w * 0.5, y: h * 0.1, w: w * 0.44, h: h * 0.84 }
-      : { x: w * 0.43, y: h * 0.1, w: w * 0.54, h: h * 0.8 };
+      : { x: w * 0.43, y: h * 0.1, w: w * 0.5, h: h * 0.8 };
   }
   return scene === 0
     ? { x: w * 0.06, y: h * 0.53, w: w * 0.88, h: h * 0.4 }
@@ -267,6 +269,18 @@ export default function DotStage() {
       const halfW = width / 2;
       const halfH = height / 2;
 
+      // The echo: a ripple leaves the one person on a steady beat. In
+      // their own scene it runs wide and shoulders the faint dots aside
+      // as it passes; in the door and their cell it is only a small halo.
+      const alone = Math.max(0, 1 - Math.abs(current - 1));
+      const phase = reduce ? 0.35 : (time / RIPPLE_SECONDS) % 1;
+      const reach = 90 + 230 * alone;
+      const radius = phase * reach;
+      const youK = reduce ? (t >= 0.5 ? 1 : 0) : easeInOut(Math.min(1, Math.max(0, (t - people[you].seed * 0.3) / 0.7)));
+      const youX = from.x[you] + (to.x[you] - from.x[you]) * youK;
+      const youY = from.y[you] + (to.y[you] - from.y[you]) * youK;
+      const swell = alone > 0.01 && !reduce ? alone * (1 - phase) * 16 : 0;
+
       for (let i = 0; i < n; i++) {
         const person = people[i];
         // Everyone leaves on their own beat.
@@ -274,6 +288,19 @@ export default function DotStage() {
         let x = from.x[i] + (to.x[i] - from.x[i]) * k;
         let y = from.y[i] + (to.y[i] - from.y[i]) * k;
         const z = from.z[i] + (to.z[i] - from.z[i]) * k;
+
+        if (swell > 0 && i !== you) {
+          const dx = x - youX;
+          const dy = y - youY;
+          const d = Math.hypot(dx, dy);
+          if (d > 0.01) {
+            // A band, not a disc: only the dots the wavefront is passing
+            // through are pushed, and they settle back behind it.
+            const band = Math.exp(-((d - radius) ** 2) / (2 * 24 * 24));
+            x += (dx / d) * band * swell;
+            y += (dy / d) * band * swell;
+          }
+        }
 
         if (hero > 0 && fine && !reduce) {
           let tx = 0;
@@ -339,6 +366,12 @@ export default function DotStage() {
           const sx = (projected.x * 0.5 + 0.5) * width;
           const sy = (-projected.y * 0.5 + 0.5) * height;
           focusEl.style.transform = `translate3d(${sx}px, ${sy}px, 0)`;
+          // The shaded echo grows with the wavefront and fades as it goes.
+          const ring = focusEl.firstElementChild as HTMLElement | null;
+          if (ring) {
+            ring.style.transform = `scale(${Math.max(0.12, radius / 100)})`;
+            ring.style.opacity = String(Math.pow(1 - phase, 1.4));
+          }
         }
         focusEl.style.opacity = String(lit);
       }

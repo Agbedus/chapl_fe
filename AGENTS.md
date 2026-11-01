@@ -93,7 +93,12 @@ as people check in; a show of hands for *Ask the room*; and the payoff,
 the whole church closing back into the door with the one still ringed,
 the numbers counting up and the call to action beside it. Scenes are
 pure functions in `lib/dot-scenes.ts`, so a resize just asks again.
-The ring is a CSS overlay that follows the person's projected position.
+The echo round the one person is a soft shaded disc (CSS, following
+their projected position) scaled and faded by the stage on the same
+beat as a ripple that pushes the faint field of everyone else aside as
+it passes (`RIPPLE_SECONDS`). Anything computed with trig that reaches
+an inline style or a prop is rounded: Node and the browser can disagree
+on a sine's last digit, and React fails hydration on it.
 
 - **Positions blend on the CPU**, each person on their own beat (a stagger
   by seed), which is what makes a morph read as people moving rather than

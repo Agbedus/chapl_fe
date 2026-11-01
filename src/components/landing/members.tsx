@@ -38,7 +38,11 @@ const platforms: { icon: LucideIcon; label: string }[] = [
 ];
 
 const MONTHS = [3, 4, 3, 5, 4, 6, 5, 5, 7, 6, 7, 9];
-const WAVE = Array.from({ length: 34 }, (_, i) => 22 + Math.abs(Math.sin(i * 1.3) * 0.6 + Math.sin(i * 0.37) * 0.4) * 78);
+// Rounded: the server and the browser can disagree on the last digit of a
+// sine, and that digit lands in an inline style React compares on hydration.
+const WAVE = Array.from({ length: 34 }, (_, i) =>
+  Math.round(22 + Math.abs(Math.sin(i * 1.3) * 0.6 + Math.sin(i * 0.37) * 0.4) * 78),
+);
 const PINS = [
   { x: 22, y: 30, hue: "var(--cobalt)" },
   { x: 64, y: 22, hue: "var(--violet)", mine: true },

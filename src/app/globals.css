@@ -1707,16 +1707,17 @@ html.lenis body {
 /* The rail: where you are in the story, as seven dots. */
 /* Wide screens: the story's words hold a column of their own at the
    left, and never run into the drawing. The stage starts at 43% of the
-   width (`rectFor` in dot-stage.tsx); the copy stops 6vw short of it. */
+   width and ends at 93% (`rectFor` in dot-stage.tsx); the copy stops
+   3.5vw short of it, with the same generous margin at both outer edges. */
 @media (min-width: 1024px) {
   .story-gutter {
     max-width: none;
     margin: 0;
-    padding-left: clamp(4.5rem, 8vw, 9rem);
+    padding-left: clamp(5.5rem, 10.5vw, 12rem);
     padding-right: 0;
   }
   [data-chapter] .story-copy {
-    width: min(28rem, calc(43vw - clamp(4.5rem, 8vw, 9rem) - 6vw));
+    width: min(28rem, calc(43vw - clamp(5.5rem, 10.5vw, 12rem) - 3.5vw));
     max-width: none;
   }
 }
@@ -1760,25 +1761,24 @@ html.lenis body {
   pointer-events: none;
   will-change: transform, opacity;
 }
+/* The echo: a soft shaded disc, its edge a little stronger than its
+   middle, scaled and faded by the stage on the same beat as the ripple
+   that pushes the dots (dot-stage.tsx). Never a hard ring. */
 .dot-focus-ring {
   position: absolute;
-  left: -22px;
-  top: -22px;
-  width: 44px;
-  height: 44px;
+  left: -100px;
+  top: -100px;
+  width: 200px;
+  height: 200px;
   border-radius: 999px;
-  border: 1.5px solid var(--ruby);
-  animation: focus-pulse 2.2s var(--ease-out) infinite;
-}
-@keyframes focus-pulse {
-  from {
-    transform: scale(0.55);
-    opacity: 0.9;
-  }
-  to {
-    transform: scale(1.6);
-    opacity: 0;
-  }
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--cobalt) 6%, transparent) 0%,
+    color-mix(in oklab, var(--cobalt) 14%, transparent) 55%,
+    color-mix(in oklab, var(--cobalt) 26%, transparent) 68%,
+    transparent 71%
+  );
+  will-change: transform, opacity;
 }
 
 .person-card {
@@ -2338,8 +2338,7 @@ button.tile-action:active {
 
 @media (prefers-reduced-motion: reduce) {
   .dot-focus-ring {
-    animation: none;
-    transform: scale(1);
+    transform: scale(0.5);
   }
   .quiet-dots::before {
     animation: none;
