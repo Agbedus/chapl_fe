@@ -3078,15 +3078,14 @@ a.notif-row:active {
 }
 .live-cells {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
-  gap: 1.5rem 0.75rem;
-  margin-top: 1.6rem;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 1.25rem 0.75rem;
+  margin-top: 0.75rem;
 }
 .live-cell {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
 }
 .live-cell svg {
   max-width: 100%;
@@ -3106,6 +3105,40 @@ a.notif-row:active {
 }
 .live-dot {
   animation: settle 0.5s var(--ease-out) backwards;
+}
+/* The room as theatre seating. A seat is empty until the room is in view,
+   then fills on its own delay, front rows first. */
+.theatre {
+  margin-top: 1.4rem;
+  max-width: 640px;
+}
+.theatre svg {
+  display: block;
+  height: auto;
+}
+.theatre-seat {
+  fill: var(--gold);
+  opacity: 0;
+  transform: scale(0.6);
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    opacity 320ms var(--ease-out),
+    transform 320ms var(--ease-out);
+}
+.theatre[data-seen] .theatre-seat {
+  opacity: 1;
+  transform: none;
+}
+.theatre-empty,
+.live-grid-empty {
+  fill: none;
+  stroke: var(--gold);
+  stroke-opacity: 0.45;
+  stroke-width: 1.1;
+}
+.live-grid-on {
+  fill: var(--gold);
 }
 .live-polls {
   display: grid;
@@ -3157,5 +3190,61 @@ a.notif-row:active {
   .live-bar span,
   .live-meter span {
     transition: none;
+  }
+  .theatre-seat {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* The "i": an explanation held back until asked for. It scales from
+   just above its trigger rather than appearing from nowhere. */
+.info {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  color: var(--ink-3);
+  cursor: help;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  outline: none;
+}
+.info:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.info-tip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  z-index: 30;
+  width: max-content;
+  max-width: 240px;
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 12px;
+  line-height: 1.45;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) scale(0.97);
+  transform-origin: 50% 100%;
+  transition:
+    opacity 150ms var(--ease-out),
+    transform 150ms var(--ease-out);
+}
+.info:focus .info-tip {
+  opacity: 1;
+  transform: translateX(-50%);
+}
+@media (hover: hover) and (pointer: fine) {
+  .info:hover .info-tip {
+    opacity: 1;
+    transform: translateX(-50%);
   }
 }

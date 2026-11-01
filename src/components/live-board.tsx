@@ -4,6 +4,9 @@ import { Check, X } from "lucide-react";
 import { answerPrompt, checkIn, closeCheckIn, closePrompt } from "@/app/actions/manage";
 import { ActionButton, CheckInBox, PromptAnswers } from "@/components/editors";
 import { LiveRefresh } from "@/components/live-refresh";
+import { Info } from "@/components/info";
+import { TheatreRoom } from "@/components/theatre-room";
+import { DOT_R, PITCH } from "@/lib/theatre";
 import type { Schemas } from "@/lib/generated/api";
 
 type Live = Schemas["LiveService"];
@@ -22,40 +25,34 @@ function clock(iso: string): string {
 }
 
 /**
- * One cell, one circle: its people packed on a sunflower from the middle
- * out, filled for everyone marked present, hollow for everyone who
- * belongs and is not here yet. As people arrive the circle fills from its
- * heart. The size follows the roll, so a big cell reads as a big cell.
+ * One cell as a small grid of the same dots as the room: filled for
+ * everyone marked present, a ring for everyone who belongs and is not
+ * here yet. Square-ish, never wider than ten, so a big cell grows down.
  */
-function CellCircle({ cell }: { cell: Cell }) {
+function CellGrid({ cell }: { cell: Cell }) {
   const expected = cell.expected ?? 0;
-  const present = Math.min(cell.present ?? 0, Math.max(expected, cell.present ?? 0));
+  const present = cell.present ?? 0;
   const n = Math.max(expected, present, 1);
-  const pitch = 8.4;
-  const radius = pitch * Math.sqrt(n) * 0.62 + 5;
-  const golden = Math.PI * (3 - Math.sqrt(5));
-  const dots = Array.from({ length: n }, (_, i) => {
-    const r = pitch * 0.62 * Math.sqrt(i + 0.5);
-    return { x: Math.cos(i * golden) * r, y: Math.sin(i * golden) * r, filled: i < present };
-  });
-  const whole = Math.round(radius * 2 + 4);
+  const columns = Math.min(10, Math.max(3, Math.ceil(Math.sqrt(n))));
+  const rows = Math.ceil(n / columns);
   return (
     <li className="live-cell" title={`${cell.name}: ${present} of ${expected}`}>
       <svg
-        viewBox={`${-whole / 2} ${-whole / 2} ${whole} ${whole}`}
-        width={Math.max(72, whole)}
-        height={Math.max(72, whole)}
+        viewBox={`0 0 ${columns * PITCH} ${rows * PITCH}`}
+        width={columns * PITCH}
+        height={rows * PITCH}
         role="img"
         aria-label={`${cell.name}, ${present} of ${expected} here`}
       >
-        <circle r={radius} fill="none" stroke="var(--line)" strokeWidth="1" />
-        {dots.map((d, i) =>
-          d.filled ? (
-            <circle key={i} cx={d.x} cy={d.y} r="3" fill="var(--gold)" className="live-dot" style={{ animationDelay: `${i * 18}ms` }} />
+        {Array.from({ length: n }, (_, i) => {
+          const cx = (i % columns) * PITCH + PITCH / 2;
+          const cy = Math.floor(i / columns) * PITCH + PITCH / 2;
+          return i < present ? (
+            <circle key={i} cx={cx} cy={cy} r={DOT_R} className="live-grid-on" />
           ) : (
-            <circle key={i} cx={d.x} cy={d.y} r="2.4" fill="none" stroke="var(--gold)" strokeOpacity="0.5" strokeWidth="1.1" />
-          ),
-        )}
+            <circle key={i} cx={cx} cy={cy} r={DOT_R - 0.5} className="live-grid-empty" />
+          );
+        })}
       </svg>
       <p className="live-cell-name">{cell.name}</p>
       <p className="tnum live-cell-count">
@@ -67,8 +64,9 @@ function CellCircle({ cell }: { cell: Cell }) {
 }
 
 /**
- * The room: the headline figure and, beneath it, the congregation by cell,
- * each cell its own circle of dots, filling as people check in.
+ * The room: the headline figure, the hall as theatre seating filling as
+ * people check in, and beneath it the congregation by cell, each cell a
+ * small grid of the same dots.
  */
 function Room({ live, compact }: { live: Live; compact: boolean }) {
   const present = live.present ?? 0;
@@ -81,7 +79,10 @@ function Room({ live, compact }: { live: Live; compact: boolean }) {
     <section className="live-card">
       <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
         <div>
-          <p className="live-kicker">In the room</p>
+          <p className="live-kicker flex items-center gap-1.5">
+            In the room
+            <Info text="One dot is one person in a seat, the front of the room at the top. Filled means they are here." />
+          </p>
           <p className="mt-1 flex items-baseline gap-3">
             <span className="figure tnum text-[clamp(2.6rem,5vw,3.8rem)] leading-none text-ink">{present}</span>
             <span className="text-[14px] text-ink-2">
@@ -97,16 +98,19 @@ function Room({ live, compact }: { live: Live; compact: boolean }) {
         </div>
       </header>
 
-      {shown.length > 0 ? (
-        <>
-          <ul className="live-cells">{shown.map((c) => <CellCircle key={c.id ?? "none"} cell={c} />)}</ul>
-          <p className="mt-4 text-[11.5px] text-ink-3">
-            One dot is one person, one circle a cell. Filled means in the room.
-            {cells.length > shown.length ? ` Showing the ${shown.length} biggest of ${cells.length} cells.` : ""}
+      <TheatreRoom present={present} expected={expected} />
+
+      {shown.length > 0 && (
+        <div className="mt-6 border-t border-line pt-4">
+          <p className="live-kicker flex items-center gap-1.5">
+            By cell
+            <Info text="Each grid is a cell, one dot a person. Filled means they are here." />
           </p>
-        </>
-      ) : (
-        <p className="mt-6 text-[13px] text-ink-3">Nobody belongs to a cell here yet.</p>
+          <ul className="live-cells">{shown.map((c) => <CellGrid key={c.id ?? "none"} cell={c} />)}</ul>
+          {cells.length > shown.length && (
+            <p className="mt-3 text-[11.5px] text-ink-3">{cells.length - shown.length} more cells</p>
+          )}
+        </div>
       )}
     </section>
   );

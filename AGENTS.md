@@ -559,9 +559,13 @@ for each open service on `/app/check-in`, because a live thing is
 watched, not worked through. The first line is the service and its code
 (a leader sees the code as six large boxes and Close check-in; a member
 sees where to type it, or that they are in). Then the room: the headline
-figure and a turnout bar, and the congregation **by cell**, each cell its
-own circle of dots packed from the middle out, filled for who is here, so
-a cell fills from its heart as people arrive. Then **every question asked
+figure and a turnout bar, the hall as **theatre seating**
+(`lib/theatre.ts`, the phone's `TheatreLayout` ported: rows arcing round
+the front, two aisles, one seat a person), which waits empty until it is
+scrolled into view and then fills from the front on CSS transition
+delays, and the congregation **by cell**, each cell a small grid of the
+same dots. Explanations sit behind an `Info` "i" (`components/info.tsx`,
+pure CSS) rather than printed under the figures. Then **every question asked
 as a poll**: bars as long as their share, the open one marked Live, a
 leader's Close answers on it, and Ask the room beneath. A member taps
 their answer on the open question only (`PromptAnswers`) and reads the

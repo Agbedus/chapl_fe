@@ -17,6 +17,8 @@ export interface Schemas {
   "AttentionItem": { "key": string; "label": string; "count": number; "tone": "gold" | "ruby" | "ink"; "href": string; "detail": string; };
   "AuditLogList": { "items": Array<Schemas["AuditLogRead"]>; "total": number; };
   "AuditLogRead": { "id": string; "church_id"?: (string | null); "user_id"?: (string | null); "user_name"?: (string | null); "action": string; "table_name"?: (string | null); "record_id"?: (string | null); "old_data"?: (unknown | null); "new_data"?: (unknown | null); "ip_address"?: (string | null); "user_agent"?: (string | null); "created_at": string; };
+  "BirthdayGreetingCreate": { "message"?: (string | null); };
+  "BirthdayGreetingRead": { "id": string; "recipient_id": string; "year": number; "message"?: (string | null); "created_at": string; };
   "BirthdayList": { "items": Array<Schemas["app__schemas__event__Birthday"]>; "start": string; "end": string; };
   "Body_change_password_api_v1_auth_change_password_post": { "payload"?: (Schemas["ChangePassword"] | null); "current_password"?: string; "new_password"?: string; "confirm_password"?: string; };
   "Body_login_api_v1_auth_login_post": { "grant_type"?: (string | null); "username": string; "password": string; "scope"?: string; "client_id"?: (string | null); "client_secret"?: (string | null); };
@@ -169,7 +171,7 @@ export interface Schemas {
   "UserRegister": { "email": string; "full_name": string; "phone_number"?: (string | null); "location"?: (string | null); "avatar_url"?: (string | null); "date_of_birth"?: (string | null); "gender"?: (string | null); "is_active"?: boolean; "marital_status"?: (Schemas["MaritalStatus"] | null); "occupation"?: (string | null); "address"?: (string | null); "emergency_contact_name"?: (string | null); "emergency_contact_phone"?: (string | null); "baptism_date"?: (string | null); "confirmation_date"?: (string | null); "notes"?: (string | null); "password": string; };
   "UserUpdate": { "email"?: (string | null); "full_name"?: (string | null); "phone_number"?: (string | null); "location"?: (string | null); "avatar_url"?: (string | null); "date_of_birth"?: (string | null); "gender"?: (string | null); "is_active"?: (boolean | null); "is_verified"?: (boolean | null); "marital_status"?: (Schemas["MaritalStatus"] | null); "occupation"?: (string | null); "address"?: (string | null); "emergency_contact_name"?: (string | null); "emergency_contact_phone"?: (string | null); "baptism_date"?: (string | null); "confirmation_date"?: (string | null); "notes"?: (string | null); };
   "ValidationError": { "loc": Array<(string | number)>; "msg": string; "type": string; "input"?: unknown; "ctx"?: Record<string, unknown>; };
-  "app__schemas__event__Birthday": { "user_id": string; "full_name": string; "on": string; "turning"?: (number | null); "avatar_url"?: (string | null); };
+  "app__schemas__event__Birthday": { "user_id": string; "full_name": string; "on": string; "turning"?: (number | null); "avatar_url"?: (string | null); "cell_name"?: (string | null); "branch_name"?: (string | null); "phone"?: (string | null); "is_me"?: boolean; "greeted"?: boolean; };
   "app__schemas__insight__Birthday": { "id": string; "full_name": string; "phone_number": (string | null); "date_of_birth": string; "turns": number; "branch_id": (string | null); };
   "app__schemas__insight__ChurchRef": { "id": (string | null); "name": (string | null); "currency": string; };
   "app__schemas__user__ChurchRef": { "id": string; "name": string; "status": Schemas["ChurchStatus"]; "is_active": boolean; "is_owner"?: boolean; };
