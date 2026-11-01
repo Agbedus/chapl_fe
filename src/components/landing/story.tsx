@@ -204,7 +204,7 @@ export function Story() {
 
       {/* --- the hero ------------------------------------------------ */}
       <section id="top" data-hero className="relative z-10 flex min-h-[100dvh] items-start lg:items-center">
-        <div data-hero-copy className="mx-auto w-full max-w-6xl px-6 pt-36 pb-16 sm:pt-40 lg:pt-0 lg:pb-0">
+        <div data-hero-copy className="story-gutter mx-auto w-full max-w-6xl px-6 pt-36 pb-16 sm:pt-40 lg:pt-0 lg:pb-0">
           <div className="max-w-[34rem]">
             <h1 className="display rise text-[clamp(2.8rem,6.4vw,5.2rem)]" style={{ animationDelay: "60ms" }}>
               One church.
@@ -247,15 +247,15 @@ export function Story() {
               holds ? "min-h-[190dvh] items-start" : "min-h-[100dvh] lg:items-center"
             }`}
           >
-            <div className={`mx-auto w-full max-w-6xl px-6 ${holds ? "self-stretch" : ""}`}>
+            <div className={`story-gutter mx-auto w-full max-w-6xl px-6 ${holds ? "self-stretch" : ""}`}>
               {/* Sunday holds the screen while the room fills: its words
                   stay put for the length of it. */}
               <div
-                className={`story-copy max-w-[27rem] ${
+                className={`story-copy max-w-[28rem] ${
                   holds ? "sticky top-[54dvh] mt-[54dvh] lg:top-[calc(50dvh-9rem)] lg:mt-[calc(50dvh-9rem)]" : ""
                 }`}
               >
-                <h2 data-reveal className="head text-[clamp(2.3rem,4.8vw,4rem)] text-ink">
+                <h2 data-reveal className="head text-[clamp(2.6rem,5.2vw,4.6rem)] text-ink">
                   {chapter.title}
                 </h2>
                 <p data-reveal className="mt-5 text-[17px] leading-[1.62] text-ink-2">

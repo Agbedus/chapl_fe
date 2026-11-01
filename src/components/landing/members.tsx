@@ -9,8 +9,11 @@ import {
   HandCoins,
   Heart,
   HeartHandshake,
+  Globe,
   MapPin,
   Navigation,
+  Smartphone,
+  TabletSmartphone,
   Share2,
   type LucideIcon,
 } from "lucide-react";
@@ -26,6 +29,12 @@ const doors: Door[] = [
   { icon: HandCoins, hue: "var(--emerald)", title: "See what they gave", body: "Their own record, anonymous gifts included, whenever they ask." },
   { icon: HeartHandshake, hue: "var(--ruby)", title: "Ask for prayer or a call", body: "Privately, to the people whose job it is to answer." },
   { icon: MapPin, hue: "var(--teal)", title: "Find their church", body: "Every branch, when it meets, and directions from where they stand." },
+];
+
+const platforms: { icon: LucideIcon; label: string }[] = [
+  { icon: Globe, label: "Web" },
+  { icon: Smartphone, label: "iPhone" },
+  { icon: TabletSmartphone, label: "Android" },
 ];
 
 const MONTHS = [3, 4, 3, 5, 4, 6, 5, 5, 7, 6, 7, 9];
@@ -217,49 +226,68 @@ export function Members() {
 
   return (
     <section ref={root} id="members" className="quiet-dots border-b border-line">
-      <div className="mx-auto grid max-w-6xl gap-14 px-6 py-24 sm:py-32 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
-        <div className="lg:sticky lg:top-24 lg:self-start">
-          <h2 className="head max-w-[14ch] text-[clamp(2.2rem,4.6vw,3.6rem)] text-ink">A door in for every member.</h2>
-          <p className="mt-5 max-w-md text-[17px] leading-[1.6] text-ink-2">
-            The record your office keeps is the app your members sign into, on the web, iPhone and Android. One
-            church, one truth.
-          </p>
-
-          <div className="phone mt-10 hidden sm:block" aria-label={`The member app: ${doors[active].title}`} role="img">
-            <span className="phone-island" aria-hidden />
-            <div className="phone-screen">
-              {doors.map((door, i) => (
-                <div key={door.title} className="phone-page" data-on={i === active ? "" : undefined} aria-hidden>
-                  <Screen index={i} />
-                </div>
+      <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+        {/* Header and body share one column template: the title above the
+            doors at the left, the words about the app above the phone at
+            the right. Two vertical edges, and everything sits on them. */}
+        <header className="members-grid gap-y-6 border-b border-line pb-10 lg:items-end">
+          <h2 className="head max-w-[13ch] text-[clamp(2.4rem,5vw,4rem)] text-ink">A door in for every member.</h2>
+          <div>
+            <p className="text-[16.5px] leading-[1.6] text-ink-2">
+              The record your office keeps is the app your members sign into. One church, one truth, and nothing
+              typed twice.
+            </p>
+            <ul className="mt-5 flex flex-wrap gap-2" aria-label="Where it runs">
+              {platforms.map(({ icon: Icon, label }) => (
+                <li key={label} className="platform">
+                  <Icon className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                  {label}
+                </li>
               ))}
+            </ul>
+          </div>
+        </header>
+
+        {/* The phone sets the height of the row and the six doors share
+            it exactly, so the two columns start and end together. */}
+        <div className="members-grid mt-12 gap-y-10">
+          <ol className="door-list">
+            {doors.map(({ icon: Icon, hue, title, body }, i) => (
+              <li key={title} data-door>
+                <button
+                  type="button"
+                  className="door group"
+                  data-on={i === active ? "" : undefined}
+                  style={{ "--hue": hue } as React.CSSProperties}
+                  onPointerEnter={() => setActive(i)}
+                  onFocus={() => setActive(i)}
+                  onClick={() => setActive(i)}
+                >
+                  <span className="door-icon">
+                    <Icon className="h-[20px] w-[20px]" strokeWidth={1.8} />
+                  </span>
+                  <span className="min-w-0 text-left">
+                    <span className="block text-[16px] font-semibold tracking-tight text-ink">{title}</span>
+                    <span className="mt-1 block text-[14.5px] leading-[1.55] text-ink-2">{body}</span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ol>
+
+          <div className="hidden sm:block">
+            <div className="phone" aria-label={`The member app: ${doors[active].title}`} role="img">
+              <span className="phone-island" aria-hidden />
+              <div className="phone-screen">
+                {doors.map((door, i) => (
+                  <div key={door.title} className="phone-page" data-on={i === active ? "" : undefined} aria-hidden>
+                    <Screen index={i} />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-
-        <ol className="grid gap-3 self-center">
-          {doors.map(({ icon: Icon, hue, title, body }, i) => (
-            <li key={title} data-door>
-              <button
-                type="button"
-                className="door group"
-                data-on={i === active ? "" : undefined}
-                style={{ "--hue": hue } as React.CSSProperties}
-                onPointerEnter={() => setActive(i)}
-                onFocus={() => setActive(i)}
-                onClick={() => setActive(i)}
-              >
-                <span className="door-icon">
-                  <Icon className="h-[20px] w-[20px]" strokeWidth={1.8} />
-                </span>
-                <span className="min-w-0 text-left">
-                  <span className="block text-[16px] font-semibold tracking-tight text-ink">{title}</span>
-                  <span className="mt-1.5 block text-[14.5px] leading-[1.55] text-ink-2">{body}</span>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ol>
       </div>
     </section>
   );

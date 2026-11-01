@@ -1705,6 +1705,22 @@ html.lenis body {
 }
 
 /* The rail: where you are in the story, as seven dots. */
+/* Wide screens: the story's words hold a column of their own at the
+   left, and never run into the drawing. The stage starts at 43% of the
+   width (`rectFor` in dot-stage.tsx); the copy stops 6vw short of it. */
+@media (min-width: 1024px) {
+  .story-gutter {
+    max-width: none;
+    margin: 0;
+    padding-left: clamp(4.5rem, 8vw, 9rem);
+    padding-right: 0;
+  }
+  [data-chapter] .story-copy {
+    width: min(28rem, calc(43vw - clamp(4.5rem, 8vw, 9rem) - 6vw));
+    max-width: none;
+  }
+}
+
 .story-rail-link {
   display: flex;
   align-items: center;
@@ -2001,13 +2017,41 @@ button.tile-action:active {
   transform: scale(0.95);
 }
 
-/* The member's six doors: buttons, since each one changes the phone. */
+/* The member's six doors: buttons, since each one changes the phone.
+   The list fills the phone's height in six equal rows, so the last door
+   ends where the phone does. */
+/* The member section's two columns, shared by its header and its body:
+   the doors (and the title above them) take the room, the phone (and
+   the words above it) take exactly the phone's width. */
+.members-grid {
+  display: grid;
+}
+@media (min-width: 640px) {
+  .members-grid {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    column-gap: 3rem;
+  }
+}
+@media (min-width: 1024px) {
+  .members-grid {
+    column-gap: 4rem;
+  }
+}
+
+.door-list {
+  display: grid;
+  grid-auto-rows: 1fr;
+  gap: 0.75rem;
+}
+.door-list > li {
+  display: flex;
+}
 .door {
   --hue: var(--cobalt);
   display: flex;
   width: 100%;
   gap: 1.1rem;
-  align-items: flex-start;
+  align-items: center;
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 1.15rem 1.3rem;
@@ -2030,14 +2074,13 @@ button.tile-action:active {
 .door[data-on] {
   border-color: color-mix(in oklab, var(--hue) 45%, var(--line));
   box-shadow: var(--elevation);
-  transform: translateX(6px);
 }
 .door[data-on] .door-icon {
   color: var(--paper);
   background: var(--hue);
 }
 .door:active {
-  transform: translateX(6px) scale(0.99);
+  transform: scale(0.99);
 }
 .door:focus-visible {
   outline: 2px solid var(--cobalt);
@@ -2047,8 +2090,8 @@ button.tile-action:active {
 /* The member's phone: a calm frame, its pages crossfading in place. */
 .phone {
   position: relative;
-  width: min(262px, 100%);
-  aspect-ratio: 9 / 18;
+  width: 300px;
+  aspect-ratio: 9 / 18.5;
   border-radius: 44px;
   border: 1px solid var(--line-strong);
   background: var(--paper);
@@ -2057,6 +2100,23 @@ button.tile-action:active {
     0 1px 2px rgb(14 17 22 / 0.05),
     0 30px 60px -30px rgb(14 17 22 / 0.28),
     inset 0 0 0 5px var(--mist);
+}
+.platform {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  padding: 0.4rem 0.75rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+@media (max-width: 767px) {
+  .phone {
+    width: 260px;
+  }
 }
 .phone-island {
   position: absolute;

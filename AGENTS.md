@@ -115,7 +115,12 @@ Below the story, GSAP does the rest, each with a reason. The light
 sections carry `.quiet-dots`: a faint dot grid that breathes, and a
 brighter patch of it following the pointer (`quiet-dots.tsx`, one
 listener for the page). The member section's phone shows each of the six
-doors as it passes the middle of the screen or is pointed at. The FAQ
+doors as it passes the middle of the screen or is pointed at. Its header
+and body share one template (`.members-grid`: the doors' column and the
+phone's 300px), so the title sits over the doors and the intro over the
+phone; the doors split the phone's height in six equal rows, so the two
+columns start and end together. On wide screens the story's copy keeps a
+column of its own (`.story-gutter`), stopping 6vw short of the stage. The FAQ
 opens answers on a `grid-template-rows` transition. the bento's
 tiles arrive in batches, the giving months rise into their heights, the
 media room's waveform is played by the scroll, the cross gathers out of
