@@ -1,4 +1,4 @@
-import { Check, CheckCheck, Lock } from "lucide-react";
+import { Check, CheckCheck, Lock, Phone } from "lucide-react";
 
 import { raiseCareRequest, respondToCare } from "@/app/actions/manage";
 import { ActionButton, CareRequestEditor } from "@/components/editors";
@@ -10,6 +10,7 @@ import { api } from "@/lib/api";
 import type { Schemas } from "@/lib/generated/api";
 import { requireMe } from "@/lib/session";
 import { PersonLink } from "@/components/person";
+import { WhatsAppIcon } from "@/components/contact";
 
 type Request = Schemas["CareRequestRead"];
 
@@ -55,6 +56,9 @@ export default async function CarePage() {
     .sort((a, b) => (rank[a.urgency] ?? 3) - (rank[b.urgency] ?? 3) || a.created_at.localeCompare(b.created_at));
   const closed = all.filter((r) => r.status === "closed").slice(0, 20);
   const waiting = open.filter((r) => r.status === "open").length;
+  // Someone who asked to be rung is waiting on a phone: they go first, in
+  // a panel of their own, with the call and the message a tap away.
+  const callsWaiting = open.filter((r) => r.kind === "call");
 
   // What this person asked for: its own tab for a leader, the page for a member.
   const minePanel = (
@@ -107,6 +111,20 @@ export default async function CarePage() {
             <StatCard label="Closed" value={String(all.length - open.length)} colour="var(--emerald)" footnote="of the latest 200" />
           </section>
 
+          {callsWaiting.length > 0 && (
+            <Panel
+              title={`Asking for a call (${callsWaiting.length})`}
+              lede="They asked to be rung. Call, or message them on WhatsApp, then pick it up."
+              accent="var(--ruby)"
+            >
+              <ul className="divide-y divide-[var(--line)]">
+                {callsWaiting.map((r) => (
+                  <RequestRow key={r.id} request={r} responder={responder} />
+                ))}
+              </ul>
+            </Panel>
+          )}
+
           <Tabs
             tabs={[
               { id: "open", label: "Open", count: open.length },
@@ -147,6 +165,49 @@ export default async function CarePage() {
   );
 }
 
+/**
+ * Call and WhatsApp, for the person who asked. A call request is the
+ * reason to pick up a phone; a prayer request is often best answered with
+ * a message that says someone is praying. Both are ordinary links, so
+ * they open the leader's own dialler and WhatsApp: nothing is sent from
+ * here, and a message only leaves when they press send.
+ */
+function Reach({ request: r }: { request: Request }) {
+  const number = r.member_phone;
+  if (!number) {
+    return <span className="basis-full text-[11.5px] text-ink-3">No phone number on file for them.</span>;
+  }
+  const first = (r.member_name ?? "").split(" ")[0] || "there";
+  const message =
+    r.kind === "call"
+      ? `Hi ${first}, it's your church care team. You asked for a call. Is now a good time?`
+      : `Hi ${first}, we saw your prayer request ("${r.subject}"). We are praying with you.`;
+  const digits = number.replace(/[^\d]/g, "");
+  return (
+    <span className="flex basis-full flex-wrap items-center gap-2">
+      <a href={`tel:${number}`} className={`btn btn-sm ${r.kind === "call" ? "btn-primary" : ""}`}>
+        <Phone className="h-3.5 w-3.5" aria-hidden />
+        Call {first}
+      </a>
+      <a
+        href={`https://wa.me/${digits}?text=${encodeURIComponent(message)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="btn btn-sm gap-1.5"
+        style={{
+          borderColor: "color-mix(in oklab, #25D366 35%, transparent)",
+          background: "color-mix(in oklab, #25D366 10%, transparent)",
+          color: "#128C4A",
+        }}
+      >
+        <WhatsAppIcon className="h-[14px] w-[14px]" />
+        WhatsApp
+      </a>
+      <span className="tnum text-[11.5px] text-ink-3">{number}</span>
+    </span>
+  );
+}
+
 function RequestRow({ request: r, responder }: { request: Request; responder: boolean }) {
   const urgency = URGENCY[r.urgency] ?? URGENCY.whenever;
   return (
@@ -177,6 +238,7 @@ function RequestRow({ request: r, responder }: { request: Request; responder: bo
           {r.status === "acknowledged" && <span>· picked up by {r.acknowledged_by_name ?? "a leader"}</span>}
         </p>
       </div>
+      {r.status !== "closed" && <Reach request={r} />}
       {responder && r.status !== "closed" && (
         <span className="flex shrink-0 items-center gap-1">
           {r.status === "open" && (
