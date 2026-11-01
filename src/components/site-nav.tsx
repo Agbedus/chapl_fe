@@ -6,7 +6,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { getMe } from "@/lib/session";
 
 const links = [
-  { href: "#one-body", label: "How it works" },
+  { href: "#one", label: "How it works" },
   { href: "#week", label: "The week" },
   { href: "#media", label: "Media" },
   { href: "#members", label: "For members" },

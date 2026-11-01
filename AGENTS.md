@@ -58,12 +58,14 @@ Bricolage Grotesque for display, Instrument Sans for everything else.
 landing story, the closing block, and the logo are all built from it. Keep
 it that way — a new chart type should be asked about before it's added.
 
-**The hero is the congregation, not a picture of a window.** The
-stained-glass photograph it used to carry is gone: the window is now drawn
-in the people themselves, one dot per member of the sample church, the
-rose taking the six hues in turn and the lights below in coloured columns
-(`lib/dot-scenes.ts`, `windowScene`). It is the palette and the product's
-atom at once, which a photograph could only ever be the first of.
+**The hero is the app's mark, drawn in the congregation.** A round arch
+of dots with the cross cut out of it and one ringed dot where the arms
+meet: the phone app's `CrossShape` (traced from the film's last frame),
+on the same grid, sampled finer until it holds every member of the sample
+church (`lib/dot-scenes.ts`, `doorScene`). The four lights the cross
+makes and the sill below take the jewel hues as panes of glass. The arch
+is the circle the phone's stepped table approximates (centre row 10,
+radius 10.3), so it stays round at any density.
 
 **Christian elements** are drawn from the system's own parts rather than
 imported as clip-art. `components/dot-cross.tsx` builds a Latin cross out
@@ -80,14 +82,18 @@ reads as a sticker.
 
 ## Motion
 
-**The landing page is one story told in the product's own dots.**
-`components/landing/story.tsx` holds the hero and six chapters over a
-sticky WebGL stage (`dot-stage.tsx`, three.js). The same ~800 points, one
-per person in `congregation.ts`, move through seven scenes as the page
-scrolls: the window, one body, six branches, their cells (hollow if they
-missed Sunday), Sunday's hall filling as people check in, a show of hands
-for *Ask the room*, and one name lit in the care hue. Scenes are pure
-functions in `lib/dot-scenes.ts`, so a resize just asks again.
+**The landing page is one story told in the product's own dots,** to
+the person setting a church up. `components/landing/story.tsx` holds the
+hero and seven chapters over a sticky WebGL stage (`dot-stage.tsx`,
+three.js). The same ~800 points, one per person in `congregation.ts`,
+move through eight scenes: the door; then everyone but one person
+gathers into them and vanishes (*It starts with one*); their cell
+gathers round them; their branch; the whole church; Sunday's hall filling
+as people check in; a show of hands for *Ask the room*; and the payoff,
+the whole church closing back into the door with the one still ringed,
+the numbers counting up and the call to action beside it. Scenes are
+pure functions in `lib/dot-scenes.ts`, so a resize just asks again.
+The ring is a CSS overlay that follows the person's projected position.
 
 - **Positions blend on the CPU**, each person on their own beat (a stagger
   by seed), which is what makes a morph read as people moving rather than
@@ -105,7 +111,12 @@ functions in `lib/dot-scenes.ts`, so a resize just asks again.
 - three.js loads with `next/dynamic` and `ssr: false`, after the words
   have painted. No WebGL means an empty stage and copy that stands alone.
 
-Below the story, GSAP does the rest, each with a reason: the bento's
+Below the story, GSAP does the rest, each with a reason. The light
+sections carry `.quiet-dots`: a faint dot grid that breathes, and a
+brighter patch of it following the pointer (`quiet-dots.tsx`, one
+listener for the page). The member section's phone shows each of the six
+doors as it passes the middle of the screen or is pointed at. The FAQ
+opens answers on a `grid-template-rows` transition. the bento's
 tiles arrive in batches, the giving months rise into their heights, the
 media room's waveform is played by the scroll, the cross gathers out of
 scattered dots before the verse is read, and the congregation gathers

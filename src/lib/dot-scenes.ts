@@ -101,105 +101,184 @@ function sunflower(i: number, n: number, r: number): [number, number] {
 }
 
 /**
- * The stained-glass window the hero used to be a picture of, drawn in
- * the people themselves: a lancet arch with a rose in its head, leaded
- * into panes. The rose's petals take the six hues in turn; the panes
- * below run in coloured columns, the way light falls through glass.
+ * The door: the app's mark drawn at the size of a person's attention. A
+ * round arch of dots with the cross cut out of it, and one ringed dot
+ * where the arms meet: somebody. Traced from the phone app's
+ * `CrossShape` (the film's last frame), on the same grid: 21 columns
+ * either side of a centre column, 27 rows, a 3-wide stem, 4-row arms
+ * reaching six columns out, and the keystone left open.
+ *
+ * Here it holds the whole congregation, so the grid is sampled finer
+ * than the phone's until there is a place for everyone; the cross stays
+ * the same proportion because the mask is in grid units, not dots.
+ *
+ * The lights the cross divides take the jewel hues as panes do, with a
+ * few dots borrowing their neighbour's colour, the way old glass is
+ * never quite one thing.
  */
-export function windowScene(people: Person[], rect: Rect): Scene {
+const HALF = 10;
+const ROWS = 27;
+const ANCHOR_ROW = (8 + 11) / 2;
+// The phone's arch is a table of half-widths ([3, 5, 6, 7, 8, 9, 9] for
+// its top rows), which is this circle stepped to whole dots. Sampled finer,
+// the steps showed as corners; the circle itself is round at any density.
+const SPRING = 10;
+const RADIUS = 10.3;
+
+function doorHas(col: number, row: number): boolean {
+  const c = Math.abs(col);
+  if (row < -0.5 || row > ROWS - 0.5 || c > HALF + 0.3) return false;
+  if (row < SPRING && c * c + (row - SPRING) ** 2 > RADIUS * RADIUS) return false;
+  if (row < 0.6 && c < 0.6) return false; // the keystone
+  if (c <= 1.5 && row >= 3.5 && row <= 21.5) return false; // the stem
+  if (c <= 6.5 && row >= 7.5 && row <= 11.5) return false; // the arms
+  return true;
+}
+
+export function doorScene(people: Person[], rect: Rect, you: number): Scene {
   const n = people.length;
   const scene = blank(n);
-  const width = Math.min(rect.w * 0.8, rect.h * 0.58);
-  const height = width * 1.68;
-  const left = rect.x + (rect.w - width) / 2;
-  const top = rect.y + (rect.h - height) / 2;
-  const half = width / 2;
-  const cx = left + half;
-  // An equilateral pointed arch: its apex stands 0.866 of the span above
-  // the springing line, where the arch meets the walls.
-  const springY = top + width * 0.866;
-  const roseY = springY - width * 0.16;
-  const roseR = width * 0.3;
+  // Grid units to pixels: the door is 20 units wide and 26 tall.
+  const unit = Math.min((rect.w * 0.92) / 20, (rect.h * 0.94) / 26);
+  const cx = rect.x + rect.w / 2;
+  const top = rect.y + (rect.h - unit * 26) / 2;
 
-  // Two-centred (pointed) arch: each side is a circle of radius `width`
-  // centred on the opposite wall.
-  const inside = (x: number, y: number) => {
-    if (y > top + height || x < left || x > left + width) return false;
-    if (y >= springY) return true;
-    const fromLeft = Math.hypot(x - left, y - springY) <= width;
-    const fromRight = Math.hypot(x - (left + width), y - springY) <= width;
-    return fromLeft && fromRight && y >= top;
-  };
-  // The lead between panes: mullions down the lights and a transom under the rose.
-  const lead = (x: number, y: number, pitch: number) => {
-    if (Math.abs(Math.hypot(x - cx, y - roseY) - roseR) < pitch * 0.5) return true;
-    if (y > roseY + roseR + pitch && Math.abs(x - cx) < pitch * 0.5) return true;
-    if (y > roseY + roseR + pitch && Math.abs(Math.abs(x - cx) - half * 0.5) < pitch * 0.45) return true;
-    return Math.abs(y - (springY + width * 0.48)) < pitch * 0.45;
-  };
-
-  // Shrink the pitch until the window holds everyone, then keep an even
-  // spread of exactly `n` of the places.
-  let pitch = Math.sqrt((width * height) / n);
+  // Sample the mask finer until it has a place for everyone but one: the
+  // one is the ringed dot at the crossing.
+  let step = 1;
   let places: [number, number][] = [];
-  for (let attempt = 0; attempt < 40; attempt++) {
+  for (let attempt = 0; attempt < 60; attempt++) {
     places = [];
-    for (let y = top + pitch / 2; y < top + height; y += pitch) {
-      // Every other row nudged half a pitch: glass, not graph paper.
-      const offset = Math.round((y - top) / pitch) % 2 ? pitch / 2 : 0;
-      for (let x = left + pitch / 2 + offset; x < left + width; x += pitch) {
-        if (inside(x, y) && !lead(x, y, pitch)) places.push([x, y]);
+    const columns = Math.floor((2 * HALF) / step) + 1;
+    const rows = Math.floor((ROWS - 1) / step) + 1;
+    const left = -((columns - 1) * step) / 2;
+    for (let j = 0; j < rows; j++) {
+      for (let i = 0; i < columns; i++) {
+        const col = left + i * step;
+        const row = j * step;
+        if (doorHas(col, row)) places.push([col, row]);
       }
     }
-    if (places.length >= n) break;
-    pitch *= 0.97;
+    if (places.length >= n - 1) break;
+    step *= 0.97;
   }
-  const stride = places.length / n;
-  const order = shuffled(n, 0x77696e64);
-  for (let k = 0; k < n; k++) {
-    const i = order[k];
-    const [x, y] = places[Math.floor(k * stride)];
-    scene.x[i] = x;
-    scene.y[i] = y;
+  const random = mulberry32(0x646f6f72);
+  const others = people.filter((p) => p.index !== you);
+  const stride = places.length / others.length;
+  const order = shuffled(others.length, 0x77696e64);
+  order.forEach((k, slot) => {
+    const i = others[k].index;
+    const [col, row] = places[Math.floor(slot * stride)];
+    scene.x[i] = cx + col * unit;
+    scene.y[i] = top + row * unit;
     scene.z[i] = 0;
-    const dx = x - cx;
-    const dy = y - roseY;
-    if (Math.hypot(dx, dy) < roseR) {
-      // Twelve petals, two of each hue, turning about the centre.
-      const petal = Math.floor(((Math.atan2(dy, dx) + Math.PI) / (Math.PI * 2)) * 12);
-      scene.hue[i] = Math.hypot(dx, dy) < roseR * 0.28 ? 4 : petal % 6;
-    } else {
-      // Columns of colour in the lights, deepening toward the sill.
-      const column = Math.floor(((x - left) / width) * 4);
-      const band = Math.floor(((y - top) / height) * 3);
-      scene.hue[i] = [0, 2, 1, 5, 3, 0, 4, 2, 5, 1, 0, 3][(column * 3 + band) % 12];
-    }
-  }
+    // The lights: the cross makes four, and the sill runs beneath.
+    const pane = row > 21.5 ? 4 : row <= 11.5 ? (col < 0 ? 1 : 5) : col < 0 ? 0 : 2;
+    scene.hue[i] = random() < 0.05 ? Math.floor(random() * 6) : pane;
+  });
+  scene.x[you] = cx;
+  scene.y[you] = top + ANCHOR_ROW * unit;
+  scene.z[you] = 20;
+  scene.hue[you] = 0;
+  scene.size[you] = 2.6;
   return scene;
 }
 
-/** One body: everyone in one disc, mixed, the way a congregation sits. */
-export function churchScene(people: Person[], rect: Rect): Scene {
-  const n = people.length;
-  const scene = blank(n);
-  const r = Math.min(rect.w, rect.h) * 0.42;
+/** Everyone else, waiting unseen inside a point: they arrive from there. */
+function hideAt(scene: Scene, people: Person[], keep: (p: Person) => boolean, x: number, y: number) {
+  for (const p of people) {
+    if (keep(p)) continue;
+    scene.x[p.index] = x;
+    scene.y[p.index] = y;
+    scene.z[p.index] = 0;
+    scene.alpha[p.index] = 0;
+    scene.size[p.index] = 0.4;
+  }
+}
+
+/** It starts with one: a single person, large, ringed, alone. */
+export function oneScene(people: Person[], rect: Rect, you: number): Scene {
+  const scene = blank(people.length);
   const cx = rect.x + rect.w / 2;
   const cy = rect.y + rect.h / 2;
-  const order = shuffled(n, 0x63687572);
-  order.forEach((i, k) => {
-    const [dx, dy] = sunflower(k, n, r);
-    scene.x[i] = cx + dx;
-    scene.y[i] = cy + dy;
-    scene.z[i] = (people[i].seed - 0.5) * 60;
-    scene.hue[i] = people[i].branch % 6;
-  });
+  hideAt(scene, people, (p) => p.index === you, cx, cy);
+  scene.x[you] = cx;
+  scene.y[you] = cy;
+  scene.hue[you] = 0;
+  scene.size[you] = 5;
   return scene;
+}
+
+/** Then their cell: the dozen people they sit with, drawn large. */
+export function cellScene(people: Person[], rect: Rect, you: number): Scene {
+  const scene = blank(people.length);
+  const me = people[you];
+  const mine = people.filter((p) => p.branch === me.branch && p.cell === me.cell);
+  const pitch = Math.min(46, rect.w / 7);
+  const rows = Math.ceil(mine.length / 4);
+  const left = rect.x + rect.w / 2 - 1.5 * pitch;
+  const top = rect.y + rect.h / 2 - ((rows - 1) * pitch) / 2;
+  hideAt(scene, people, (p) => mine.includes(p), rect.x + rect.w / 2, rect.y + rect.h / 2);
+  for (const p of mine) {
+    scene.x[p.index] = left + (p.seat % 4) * pitch;
+    scene.y[p.index] = top + Math.floor(p.seat / 4) * pitch;
+    scene.hue[p.index] = 2; // teal: cells
+    scene.fill[p.index] = p.present ? 1 : 0;
+    scene.size[p.index] = 3.2;
+  }
+  scene.hue[you] = 0;
+  scene.fill[you] = 1;
+  scene.size[you] = 3.6;
+  return scene;
+}
+
+/** Then a branch: their cell among its neighbours, the branch's whole roll. */
+export function branchScene(people: Person[], branches: Branch[], rect: Rect, you: number): Scene {
+  const scene = blank(people.length);
+  const b = people[you].branch;
+  const branch = branches[b];
+  // Five cells to a line on a wide stage, four on a phone, as large as
+  // the stage allows: a branch should read as rooms of people, not specks.
+  const perLine = rect.w > 600 ? 5 : 4;
+  const fit = Math.min(
+    (rect.w * 0.94) / (perLine * 5.4),
+    (rect.h * 0.9) / (Math.ceil(branch.cells.length / perLine) * 5.6),
+  );
+  const pitch = Math.max(7, Math.min(22, fit));
+  const gap = pitch * 1.4;
+  const lines = Math.ceil(branch.cells.length / perLine);
+  const tallest = Math.max(...branch.cells.map((c) => Math.ceil(c.members / 4)));
+  const blockH = tallest * pitch + gap;
+  const width = perLine * (4 * pitch + gap) - gap;
+  const left = rect.x + (rect.w - width) / 2;
+  const top = rect.y + (rect.h - lines * blockH) / 2;
+  hideAt(scene, people, (p) => p.branch === b, rect.x + rect.w / 2, rect.y + rect.h / 2);
+  for (const p of people) {
+    if (p.branch !== b) continue;
+    const x0 = left + (p.cell % perLine) * (4 * pitch + gap);
+    const y0 = top + Math.floor(p.cell / perLine) * blockH;
+    scene.x[p.index] = x0 + (p.seat % 4) * pitch;
+    scene.y[p.index] = y0 + Math.floor(p.seat / 4) * pitch;
+    scene.hue[p.index] = b % 6;
+    scene.fill[p.index] = p.present ? 1 : 0;
+    scene.size[p.index] = 1.4;
+  }
+  scene.hue[you] = 0;
+  scene.fill[you] = 1;
+  scene.size[you] = 2.2;
+  return scene;
+}
+
+/** Someone who came on Sunday, in the second branch: the story's "you". */
+export function youOf(people: Person[]): number {
+  const candidates = people.filter((p) => p.present && p.branch === 1);
+  return (candidates[Math.floor(candidates.length / 3)] ?? people[0]).index;
 }
 
 /** Six discs, one per branch, sized by their roll. */
 export function branchesScene(people: Person[], branches: Branch[], rect: Rect): Scene {
   const scene = blank(people.length);
-  const columns = rect.w > rect.h * 1.1 ? 3 : 2;
+  const columns = rect.w > rect.h * 0.95 ? 3 : 2;
   const rows = Math.ceil(branches.length / columns);
   const cellW = rect.w / columns;
   const cellH = rect.h / rows;
@@ -216,51 +295,6 @@ export function branchesScene(people: Person[], branches: Branch[], rect: Rect):
     scene.y[person.index] = cy + dy;
     scene.z[person.index] = (person.seed - 0.5) * 30;
     scene.hue[person.index] = b % 6;
-  });
-  return scene;
-}
-
-/**
- * Every cell as its own small block inside its branch, the same drawing
- * the product's congregation field makes: hollow if they missed Sunday.
- */
-export function cellsScene(people: Person[], branches: Branch[], rect: Rect): Scene {
-  const scene = blank(people.length);
-  const columns = rect.w > rect.h * 1.1 ? 3 : 2;
-  const rows = Math.ceil(branches.length / columns);
-  const colW = rect.w / columns;
-  const rowH = rect.h / rows;
-  const pitch = Math.max(5, Math.min(9, colW / 26));
-  const gap = pitch * 1.6;
-  // Where each cell's block starts, flowed into its branch's tile.
-  const origins = branches.map((branch, b) => {
-    const tileX = rect.x + colW * (b % columns) + colW * 0.08;
-    const tileY = rect.y + rowH * Math.floor(b / columns) + rowH * 0.1;
-    const maxW = colW * 0.84;
-    let x = 0;
-    let y = 0;
-    let lineH = 0;
-    return branch.cells.map((cell) => {
-      const w = 4 * pitch;
-      const h = Math.ceil(cell.members / 4) * pitch;
-      if (x + w > maxW) {
-        x = 0;
-        y += lineH + gap;
-        lineH = 0;
-      }
-      const at = { x: tileX + x, y: tileY + y };
-      x += w + gap;
-      lineH = Math.max(lineH, h);
-      return at;
-    });
-  });
-  people.forEach((person) => {
-    const at = origins[person.branch][person.cell];
-    scene.x[person.index] = at.x + (person.seat % 4) * pitch;
-    scene.y[person.index] = at.y + Math.floor(person.seat / 4) * pitch;
-    scene.z[person.index] = 0;
-    scene.hue[person.index] = person.branch % 6;
-    scene.fill[person.index] = person.present ? 1 : 0;
   });
   return scene;
 }
@@ -330,7 +364,7 @@ export function pollScene(people: Person[], rect: Rect): Scene {
   // share: the longest fills the width and the others are measured by it.
   const depth = 7;
   const longest = Math.ceil(Math.max(...counts) / depth);
-  const pitch = Math.max(5, Math.min(11, (rect.w * 0.9) / longest));
+  const pitch = Math.max(5, Math.min(14, (rect.w * 0.9) / longest));
   const left = rect.x + rect.w * 0.05;
   const bandH = rect.h / POLL.length;
   let next = 0;
@@ -353,31 +387,8 @@ export function pollScene(people: Person[], rect: Rect): Scene {
     scene.z[person.index] = -160;
     scene.hue[person.index] = person.branch % 6;
     scene.fill[person.index] = 0;
-    scene.alpha[person.index] = 0.12;
+    // Faint, not gone: on white a ring at a tenth vanishes entirely.
+    scene.alpha[person.index] = 0.34;
   });
   return scene;
-}
-
-/**
- * And every name: the church dims back into its cells, and one person
- * who has not been seen in three weeks is lit, large, in the care hue.
- */
-export function nameScene(people: Person[], branches: Branch[], rect: Rect, focus: number): Scene {
-  const scene = cellsScene(people, branches, rect);
-  for (let i = 0; i < people.length; i++) {
-    scene.alpha[i] = 0.16;
-    scene.z[i] = -40;
-  }
-  scene.alpha[focus] = 1;
-  scene.size[focus] = 3.4;
-  scene.fill[focus] = 1;
-  scene.hue[focus] = 5; // ruby: care
-  scene.z[focus] = 60;
-  return scene;
-}
-
-/** Someone absent, in a branch near the middle of the drawing. */
-export function focusPerson(people: Person[]): number {
-  const missing = people.filter((p) => !p.present && p.branch === 1);
-  return (missing[Math.floor(missing.length / 2)] ?? people[0]).index;
 }

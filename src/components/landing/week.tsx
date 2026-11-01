@@ -245,7 +245,7 @@ export function Week() {
   ];
 
   return (
-    <section ref={root} id="week" className="border-y border-line bg-mist">
+    <section ref={root} id="week" className="quiet-dots border-y border-line bg-mist">
       <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
         <h2 className="head max-w-[16ch] text-[clamp(2.2rem,4.6vw,3.5rem)] text-ink">The rest of the week.</h2>
         <p className="mt-5 max-w-[34rem] text-[17px] leading-[1.6] text-ink-2">

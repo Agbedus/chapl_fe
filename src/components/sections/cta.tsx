@@ -6,7 +6,7 @@ import { Magnetic } from "@/components/landing/magnetic";
 
 export function CTA() {
   return (
-    <section id="start" className="border-b border-line">
+    <section id="start" className="quiet-dots border-b border-line">
       <div className="mx-auto max-w-6xl px-6 py-24 text-center sm:py-32">
         <div className="mb-12">
           <CrossRule tone="var(--gold)" />

@@ -524,6 +524,19 @@ body {
 
 /* A status or category chip. Colour comes from the caller, because
    the six brights are bound to domains and this must not pick one. */
+.person-avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cobalt);
+  background: color-mix(in oklab, var(--cobalt) 12%, transparent);
+  box-shadow: 0 0 0 1.5px color-mix(in oklab, var(--cobalt) 55%, transparent);
+}
 .chip {
   display: inline-flex;
   align-items: center;
@@ -1988,17 +2001,20 @@ button.tile-action:active {
   transform: scale(0.95);
 }
 
-/* The member's six doors. */
+/* The member's six doors: buttons, since each one changes the phone. */
 .door {
   --hue: var(--cobalt);
   display: flex;
+  width: 100%;
   gap: 1.1rem;
   align-items: flex-start;
   border: 1px solid var(--line);
   border-radius: 16px;
-  padding: 1.25rem 1.35rem;
+  padding: 1.15rem 1.3rem;
   background: var(--paper);
-  transition: border-color 200ms ease, transform 400ms var(--ease-out), box-shadow 400ms var(--ease-out);
+  cursor: pointer;
+  transition: border-color 220ms ease, transform 400ms var(--ease-out), box-shadow 400ms var(--ease-out),
+    background-color 220ms ease;
 }
 .door-icon {
   display: grid;
@@ -2009,17 +2025,254 @@ button.tile-action:active {
   border-radius: 12px;
   color: var(--hue);
   background: color-mix(in oklab, var(--hue) 12%, transparent);
-  transition: transform 400ms var(--ease-out), background-color 300ms ease;
+  transition: transform 400ms var(--ease-out), background-color 300ms ease, color 300ms ease;
+}
+.door[data-on] {
+  border-color: color-mix(in oklab, var(--hue) 45%, var(--line));
+  box-shadow: var(--elevation);
+  transform: translateX(6px);
+}
+.door[data-on] .door-icon {
+  color: var(--paper);
+  background: var(--hue);
+}
+.door:active {
+  transform: translateX(6px) scale(0.99);
+}
+.door:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 3px;
+}
+
+/* The member's phone: a calm frame, its pages crossfading in place. */
+.phone {
+  position: relative;
+  width: min(262px, 100%);
+  aspect-ratio: 9 / 18;
+  border-radius: 44px;
+  border: 1px solid var(--line-strong);
+  background: var(--paper);
+  padding: 12px;
+  box-shadow:
+    0 1px 2px rgb(14 17 22 / 0.05),
+    0 30px 60px -30px rgb(14 17 22 / 0.28),
+    inset 0 0 0 5px var(--mist);
+}
+.phone-island {
+  position: absolute;
+  left: 50%;
+  top: 20px;
+  width: 84px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--ink);
+  transform: translateX(-50%);
+  z-index: 2;
+}
+.phone-screen {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 34px;
+  background: var(--paper);
+}
+.phone-page {
+  position: absolute;
+  inset: 0;
+  padding: 52px 18px 18px;
+  opacity: 0;
+  transform: translateY(10px) scale(0.985);
+  filter: blur(4px);
+  transition: opacity 380ms var(--ease-out), transform 520ms var(--ease-out), filter 380ms ease;
+  pointer-events: none;
+}
+.phone-page[data-on] {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+.screen-kicker {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.screen-title {
+  margin-top: 0.35rem;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.screen-meta {
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+.screen-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 10px;
+  padding: 0.45rem 0.8rem;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--paper);
+}
+.screen-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 0.3rem 0.6rem;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.code-box {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 3 / 4;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--ink);
+}
+.answer {
+  border-radius: 10px;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+}
+.answer-mine {
+  border-color: color-mix(in oklab, var(--cobalt) 50%, var(--line));
+  background: color-mix(in oklab, var(--cobalt) 6%, transparent);
+}
+.sermon-cover {
+  height: 120px;
+  border-radius: 14px;
+  background:
+    radial-gradient(color-mix(in oklab, var(--paper) 55%, transparent) 1.2px, transparent 1.6px) 0 0 / 12px 12px,
+    linear-gradient(140deg, var(--violet), color-mix(in oklab, var(--violet) 55%, var(--cobalt)));
+}
+.map {
+  position: relative;
+  height: 150px;
+  border-radius: 14px;
+  background:
+    radial-gradient(color-mix(in oklab, var(--ink) 12%, transparent) 1px, transparent 1.4px) 0 0 / 10px 10px,
+    var(--mist);
+}
+.map-pin {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: currentColor;
+  transform: translate(-50%, -50%);
+}
+.map-pin-mine {
+  width: 13px;
+  height: 13px;
+  box-shadow: 0 0 0 4px var(--paper), 0 0 0 5.5px currentColor;
+}
+/* Arrivals: the room fills each time its page is shown. */
+.phone-page[data-on] .room-fill .dot {
+  animation: settle 0.45s var(--ease-out) backwards;
+}
+
+/* Questions leaders ask. */
+.faq {
+  border-top: 1px solid var(--line-strong);
+}
+.faq-item {
+  border-bottom: 1px solid var(--line);
+}
+.faq-question {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.35rem 0;
+  text-align: left;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  cursor: pointer;
+}
+.faq-question:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+.faq-mark {
+  color: var(--ink-3);
+  transition: transform 320ms var(--ease-out), color 200ms ease;
+}
+.faq-item[data-open] .faq-mark {
+  transform: rotate(45deg);
+  color: var(--cobalt);
+}
+.faq-answer {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 420ms var(--ease-out), opacity 300ms ease;
+}
+.faq-item[data-open] .faq-answer {
+  grid-template-rows: 1fr;
+  opacity: 1;
 }
 @media (hover: hover) and (pointer: fine) {
-  .door:hover {
-    border-color: var(--line-strong);
-    transform: translateX(4px);
-    box-shadow: var(--elevation);
+  .faq-question:hover .faq-mark {
+    color: var(--ink);
   }
-  .door:hover .door-icon {
-    transform: rotate(-6deg) scale(1.06);
-    background: color-mix(in oklab, var(--hue) 18%, transparent);
+}
+
+/* The quiet field: faint dots behind a section, and a brighter patch
+   of them that follows the pointer. Both are pseudo-elements under the
+   section's content, so nothing above them repaints. */
+.quiet-dots {
+  position: relative;
+  isolation: isolate;
+}
+.quiet-dots::before,
+.quiet-dots::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-size: 26px 26px;
+  background-position: 13px 13px;
+}
+.quiet-dots::before {
+  background-image: radial-gradient(color-mix(in oklab, var(--ink) 13%, transparent) 1.1px, transparent 1.6px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  animation: quiet-breathe 9s ease-in-out infinite alternate;
+}
+.quiet-dots::after {
+  background-image: radial-gradient(color-mix(in oklab, var(--cobalt) 70%, transparent) 1.4px, transparent 2px);
+  -webkit-mask-image: radial-gradient(circle 190px at var(--qx, -400px) var(--qy, -400px), #000, transparent 72%);
+  mask-image: radial-gradient(circle 190px at var(--qx, -400px) var(--qy, -400px), #000, transparent 72%);
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .quiet-dots:hover::after {
+    opacity: 0.55;
+  }
+}
+@keyframes quiet-breathe {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -2027,6 +2280,15 @@ button.tile-action:active {
   .dot-focus-ring {
     animation: none;
     transform: scale(1);
+  }
+  .quiet-dots::before {
+    animation: none;
+  }
+  .phone-page,
+  .faq-answer {
+    transition: opacity 200ms ease;
+    transform: none;
+    filter: none;
   }
   .tile,
   .door,

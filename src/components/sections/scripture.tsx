@@ -19,7 +19,7 @@ import { GatheringCross } from "@/components/landing/gathering";
  */
 export function Scripture() {
   return (
-    <section className="relative overflow-hidden border-b border-line bg-mist">
+    <section className="quiet-dots relative overflow-hidden border-b border-line bg-mist">
       {/*
         The window again, at the scale of the page.
 

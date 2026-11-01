@@ -8,21 +8,22 @@ import { stage, SCENE_COUNT } from "@/components/landing/stage-state";
 import { branches } from "@/lib/congregation";
 import {
   HUES,
+  branchScene,
   branchesScene,
-  cellsScene,
-  churchScene,
-  focusPerson,
-  nameScene,
+  cellScene,
+  doorScene,
+  oneScene,
   peopleOf,
   pollScene,
   roomFill,
   roomScene,
-  windowScene,
+  youOf,
   type Rect,
   type Scene,
 } from "@/lib/dot-scenes";
 
-const ROOM = 4;
+const ROOM = 5;
+const LAST = 7;
 
 const VERTEX = /* glsl */ `
   attribute vec3 aColor;
@@ -85,8 +86,8 @@ function easeInOut(t: number) {
 function rectFor(scene: number, w: number, h: number): Rect {
   if (w >= 900) {
     return scene === 0
-      ? { x: w * 0.52, y: h * 0.12, w: w * 0.42, h: h * 0.8 }
-      : { x: w * 0.47, y: h * 0.14, w: w * 0.48, h: h * 0.72 };
+      ? { x: w * 0.5, y: h * 0.1, w: w * 0.44, h: h * 0.84 }
+      : { x: w * 0.43, y: h * 0.1, w: w * 0.54, h: h * 0.8 };
   }
   return scene === 0
     ? { x: w * 0.06, y: h * 0.53, w: w * 0.88, h: h * 0.4 }
@@ -128,7 +129,9 @@ export default function DotStage() {
 
     const people = peopleOf(branches);
     const n = people.length;
-    const focusIndex = focusPerson(people);
+    // The story's one person: ringed in the door, alone, in their cell,
+    // in their branch, and ringed again when the door fills.
+    const you = youOf(people);
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(30, 1, 1, 8000);
@@ -203,13 +206,14 @@ export default function DotStage() {
       const pitch = Math.sqrt((hero.w * hero.h * 0.36) / n);
       uniforms.uBase.value = Math.min(7.5, Math.max(4.2, pitch * 0.5));
       scenes = [
-        windowScene(people, rectFor(0, width, height)),
-        churchScene(people, rectFor(1, width, height)),
-        branchesScene(people, branches, rectFor(2, width, height)),
-        cellsScene(people, branches, rectFor(3, width, height)),
-        roomScene(people, rectFor(4, width, height)),
-        pollScene(people, rectFor(5, width, height)),
-        nameScene(people, branches, rectFor(6, width, height), focusIndex),
+        doorScene(people, rectFor(0, width, height), you),
+        oneScene(people, rectFor(1, width, height), you),
+        cellScene(people, rectFor(2, width, height), you),
+        branchScene(people, branches, rectFor(3, width, height), you),
+        branchesScene(people, branches, rectFor(4, width, height)),
+        roomScene(people, rectFor(5, width, height)),
+        pollScene(people, rectFor(6, width, height)),
+        doorScene(people, rectFor(7, width, height), you),
       ];
       dirty = true;
     };
@@ -246,7 +250,9 @@ export default function DotStage() {
       current = reduce ? Math.round(stage.target) : current + (stage.target - current) * (1 - Math.exp(-dt * 7));
       if (Math.abs(stage.target - current) < 0.0005) current = stage.target;
       const moving = previous !== current || dirty;
-      const hero = Math.max(0, 1 - current);
+      // The door can be touched at both ends of the story: the hero, and
+      // the payoff when it fills again.
+      const hero = Math.max(0, 1 - current, current - (LAST - 1));
       if (reduce && !moving) return;
 
       const segment = Math.min(Math.floor(current), SCENE_COUNT - 2);
@@ -321,12 +327,14 @@ export default function DotStage() {
       group.rotation.y = tilt.y + (reduce ? 0 : Math.sin(time * 0.35) * 0.05 * depth);
       uniforms.uTime.value = time;
 
-      // The ring round the one name, laid over the canvas in CSS so it
-      // can be crisp and say who it is.
+      // The ring round the one person, laid over the canvas in CSS so it
+      // stays crisp: there while the story is about them (the door, alone,
+      // their cell), fading as their branch surrounds them, and back when
+      // the door fills at the end.
       if (focusEl) {
-        const lit = Math.max(0, Math.min(1, current - 5));
+        const lit = Math.max(Math.max(0, Math.min(1, 3 - current)), Math.max(0, Math.min(1, current - (LAST - 1))));
         if (lit > 0.01) {
-          projected.set(pos[focusIndex * 3], pos[focusIndex * 3 + 1], pos[focusIndex * 3 + 2]);
+          projected.set(pos[you * 3], pos[you * 3 + 1], pos[you * 3 + 2]);
           projected.applyMatrix4(group.matrixWorld).project(camera);
           const sx = (projected.x * 0.5 + 0.5) * width;
           const sy = (-projected.y * 0.5 + 0.5) * height;
