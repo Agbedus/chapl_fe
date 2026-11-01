@@ -2964,3 +2964,198 @@ a.notif-row:active {
   font-size: 11px;
   color: var(--ink-3);
 }
+
+/* ---------------------------------------------------------------
+   The live Sunday board
+   ---------------------------------------------------------------
+   A live thing is watched, not worked through, so this is laid out as
+   a dashboard of its own: cards on a calm field, a first line that is
+   the service and its code, the room as circles of dots, and every
+   question as a poll. See components/live-board.tsx.
+   --------------------------------------------------------------- */
+.live-board {
+  display: grid;
+  gap: 1rem;
+}
+.live-card {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper);
+  padding: 1.35rem 1.5rem;
+}
+.live-kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.live-beat {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--ruby);
+  box-shadow: 0 0 0 0 color-mix(in oklab, var(--ruby) 45%, transparent);
+  animation: live-beat 2s var(--ease-out) infinite;
+}
+@keyframes live-beat {
+  70% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+.live-head {
+  display: grid;
+  gap: 1.5rem;
+  background: linear-gradient(135deg, color-mix(in oklab, var(--gold) 7%, var(--paper)), var(--paper) 55%);
+}
+@media (min-width: 900px) {
+  .live-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 3rem;
+  }
+}
+.live-sermon {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin-top: 0.9rem;
+  font-size: 12.5px;
+}
+.live-sermon:hover span:nth-child(2) {
+  text-decoration: underline;
+}
+.live-code-wrap {
+  min-width: 0;
+}
+.live-code {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.5rem;
+}
+.live-code span {
+  display: grid;
+  width: clamp(2.4rem, 5vw, 3.6rem);
+  aspect-ratio: 3 / 4;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--paper);
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3.4vw, 2.4rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  box-shadow: var(--elevation);
+}
+.live-here {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--emerald);
+}
+.live-meter {
+  width: 9rem;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--sunk);
+}
+.live-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--gold);
+  transition: width 700ms var(--ease-out);
+}
+.live-cells {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
+  gap: 1.5rem 0.75rem;
+  margin-top: 1.6rem;
+}
+.live-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.live-cell svg {
+  max-width: 100%;
+  height: auto;
+}
+.live-cell-name {
+  margin-top: 0.45rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--ink-2);
+}
+.live-cell-count {
+  font-size: 11.5px;
+}
+.live-dot {
+  animation: settle 0.5s var(--ease-out) backwards;
+}
+.live-polls {
+  display: grid;
+  gap: 1rem;
+}
+@media (min-width: 900px) {
+  .live-polls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.live-poll[data-open] {
+  border-color: color-mix(in oklab, var(--ruby) 40%, var(--line));
+  box-shadow: var(--elevation);
+}
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ruby);
+  background: color-mix(in oklab, var(--ruby) 12%, transparent);
+}
+.live-bar {
+  height: 10px;
+  margin-top: 0.4rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--sunk);
+}
+.live-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: color-mix(in oklab, var(--cobalt) 45%, var(--sunk));
+  transition: width 700ms var(--ease-out);
+}
+.live-bar[data-leading] span {
+  background: var(--cobalt);
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-beat,
+  .live-dot {
+    animation: none;
+  }
+  .live-bar span,
+  .live-meter span {
+    transition: none;
+  }
+}

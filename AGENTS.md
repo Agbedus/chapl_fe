@@ -553,6 +553,21 @@ the same room, the answers coming in, **Ask the room** and **Close
 answers**. Who answered what is never sent anywhere; the room sees
 counts.
 
+**The live board is designed apart from the rest of the app.**
+`components/live-board.tsx` is used for the member's dashboard panel and
+for each open service on `/app/check-in`, because a live thing is
+watched, not worked through. The first line is the service and its code
+(a leader sees the code as six large boxes and Close check-in; a member
+sees where to type it, or that they are in). Then the room: the headline
+figure and a turnout bar, and the congregation **by cell**, each cell its
+own circle of dots packed from the middle out, filled for who is here, so
+a cell fills from its heart as people arrive. Then **every question asked
+as a poll**: bars as long as their share, the open one marked Live, a
+leader's Close answers on it, and Ask the room beneath. A member taps
+their answer on the open question only (`PromptAnswers`) and reads the
+rest as results. `LiveService.prompts` and `.cells` (API 1.9) feed it;
+`prompt` stays the newest, for screens that show one at a time.
+
 **Live without a second socket.** The bell's connection announces every
 message as a `chapl:live` window event; `LiveRefresh` listens for a
 prefix (`service.`) and calls `router.refresh()`, coalescing a burst of

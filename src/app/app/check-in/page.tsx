@@ -1,7 +1,5 @@
-import { X } from "lucide-react";
-
-import { checkIn, closeCheckIn, openCheckIn } from "@/app/actions/manage";
-import { ActionButton, CheckInBox, CheckInOpenEditor } from "@/components/editors";
+import { checkIn, openCheckIn } from "@/app/actions/manage";
+import { CheckInBox, CheckInOpenEditor } from "@/components/editors";
 import { LeaderLive, SundayPanel } from "@/components/live-service";
 import { LiveRefresh } from "@/components/live-refresh";
 import { Empty, Page, PageHead, Panel } from "@/components/panels";
@@ -18,13 +16,6 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 function day(iso: string): string {
   const d = new Date(`${iso.slice(0, 10)}T12:00:00`);
   return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
-}
-
-/** A UTC time from the API, as `6:30 pm` in the church's day. */
-function clock(iso: string): string {
-  const d = new Date(iso.endsWith("Z") ? iso : `${iso}Z`);
-  const h = d.getHours() % 12 || 12;
-  return `${h}:${String(d.getMinutes()).padStart(2, "0")} ${d.getHours() < 12 ? "am" : "pm"}`;
 }
 
 /**
@@ -75,9 +66,9 @@ export default async function CheckInPage() {
       />
 
       {/* The member's half. Leaders can check in too — they were there. */}
-      {open.length > 0 ? (
+      {open.length > 0 && !(leader && live.length > 0) ? (
         <SundayPanel />
-      ) : (
+      ) : open.length > 0 ? null : (
       <Panel
         title={open.length > 0 ? "Check in now" : "Nothing open right now"}
         lede={
@@ -98,37 +89,13 @@ export default async function CheckInPage() {
       {leader && (
         <>
           {live.length > 0 && <LiveRefresh prefix="service." fallback={20} />}
-          <Panel title="Open now" accent="var(--gold)">
-            {live.length === 0 ? (
+          {live.length === 0 ? (
+            <Panel title="Open now" accent="var(--gold)">
               <Empty>No service is open for check-in.{opener ? " Use “Open check-in” to start one." : ""}</Empty>
-            ) : (
-              <ul className="grid gap-2 sm:grid-cols-2">
-                {live.map((s) => (
-                  <li key={s.id} className="sheet sheet-mist">
-                    <p className="text-[12px] text-ink-3">
-                      {s.branch_name ?? "Whole church"} · <span className="capitalize">{s.service_day}</span> {day(s.attendance_date)}
-                    </p>
-                    <p className="figure mt-1 text-[40px] tracking-[0.2em] text-ink">{s.code}</p>
-                    <div className="mt-1 flex items-center justify-between gap-2 text-[12px] text-ink-2">
-                      <span>
-                        <span className="tnum font-semibold text-ink">{s.checked_in}</span> checked in · closes {clock(s.closes_at)}
-                      </span>
-                      {opener && (
-                        <ActionButton
-                          action={closeCheckIn}
-                          fields={{ id: s.id }}
-                          label="Close"
-                          icon={<X className="h-3 w-3" aria-hidden />}
-                          confirm="Stop taking check-ins for this service?"
-                        />
-                      )}
-                    </div>
-                    <LeaderLive sessionId={s.id} canRun={opener} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
+            </Panel>
+          ) : (
+            live.map((s) => <LeaderLive key={s.id} sessionId={s.id} canRun={opener} />)
+          )}
 
           {past.length > 0 && (
             <Panel title="Last two weeks" accent="var(--ink-3)" quiet>

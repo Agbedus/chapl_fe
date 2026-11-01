@@ -106,9 +106,10 @@ export interface Schemas {
   "InvitationPreview": { "church_name": string; "branch_name": string; "cell_name"?: (string | null); "email": string; "role"?: (Schemas["Role"] | null); "expires_at": string; "needs_account": boolean; };
   "InvitationRead": { "id": string; "church_id": string; "branch_id": string; "cell_id"?: (string | null); "email": string; "full_name"?: (string | null); "role"?: (Schemas["Role"] | null); "status": Schemas["InvitationStatus"]; "expires_at": string; "invited_by"?: (string | null); "accepted_at"?: (string | null); "accepted_by"?: (string | null); "created_at": string; };
   "InvitationStatus": "pending" | "accepted" | "revoked";
+  "LiveCell": { "id"?: (string | null); "name": string; "expected"?: number; "present"?: number; };
   "LivePrompt": { "id": string; "question": string; "options": Array<Schemas["PromptOption"]>; "total"?: number; "is_open": boolean; "my_choice"?: (number | null); "created_at": string; };
   "LiveSermon": { "id": string; "title": string; "series"?: (string | null); "scripture_reference"?: (string | null); "preacher_name"?: (string | null); };
-  "LiveService": { "session_id": string; "branch_id"?: (string | null); "branch_name"?: (string | null); "attendance_date": string; "service_day": Schemas["ServiceDay"]; "closes_at": string; "is_open": boolean; "present"?: number; "expected"?: number; "checked_in"?: boolean; "code"?: (string | null); "sermon"?: (Schemas["LiveSermon"] | null); "prompt"?: (Schemas["LivePrompt"] | null); };
+  "LiveService": { "session_id": string; "branch_id"?: (string | null); "branch_name"?: (string | null); "attendance_date": string; "service_day": Schemas["ServiceDay"]; "closes_at": string; "is_open": boolean; "present"?: number; "expected"?: number; "checked_in"?: boolean; "code"?: (string | null); "sermon"?: (Schemas["LiveSermon"] | null); "prompt"?: (Schemas["LivePrompt"] | null); "prompts"?: Array<Schemas["LivePrompt"]>; "cells"?: Array<Schemas["LiveCell"]>; };
   "MaritalStatus": "single" | "married" | "engaged" | "widowed" | "divorced" | "separated";
   "MeetingFrequency": "weekly" | "fortnightly" | "monthly" | "quarterly" | "ad_hoc";
   "MemberCheckupCreate": { "member_id": string; "checkup_date": string; "status"?: Schemas["CheckupStatus"]; "notes"?: (string | null); };
