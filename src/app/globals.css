@@ -3041,14 +3041,14 @@ a.notif-row:active {
 }
 .live-code span {
   display: grid;
-  width: clamp(2.4rem, 5vw, 3.6rem);
+  width: clamp(2rem, 5vw, 3.6rem);
   aspect-ratio: 3 / 4;
   place-items: center;
   border: 1px solid var(--line-strong);
   border-radius: 12px;
   background: var(--paper);
   font-family: var(--font-display);
-  font-size: clamp(1.5rem, 3.4vw, 2.4rem);
+  font-size: clamp(1.25rem, 3.4vw, 2.4rem);
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--ink);
@@ -3106,15 +3106,76 @@ a.notif-row:active {
 .live-dot {
   animation: settle 0.5s var(--ease-out) backwards;
 }
-/* The room as theatre seating. A seat is empty until the room is in view,
-   then fills on its own delay, front rows first. */
-.theatre {
-  margin-top: 1.4rem;
-  max-width: 640px;
+/* The room, one seat a person. A seat is a ring until the room is in
+   view, then lights on its own delay, scattered, the way people arrive. */
+.theatre-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
 }
-.theatre svg {
+.theatre-switch {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 10px;
+  background: var(--sunk);
+}
+.theatre-switch button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 26px;
+  border-radius: 8px;
+  color: var(--ink-3);
+  transition:
+    background-color 150ms var(--ease-out),
+    color 150ms var(--ease-out);
+}
+.theatre-switch button[aria-pressed="true"] {
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+}
+.theatre-switch button:active {
+  transform: scale(0.95);
+}
+.theatre-hall {
+  position: relative;
+  margin-inline: auto;
+  container-type: inline-size;
+}
+.theatre-hall svg {
   display: block;
   height: auto;
+  overflow: visible;
+}
+.theatre-front {
+  stroke: var(--line-strong);
+  stroke-width: 0.18;
+  stroke-linecap: round;
+}
+.theatre-count {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1;
+  pointer-events: none;
+}
+.theatre-count .figure {
+  font-size: clamp(1.9rem, 10cqw, 4.2rem);
+  line-height: 0.9;
+  color: var(--ink);
+}
+.theatre-of {
+  margin-top: 0.4rem;
+  font-size: clamp(10.5px, 2.2cqw, 13px);
+  color: var(--ink-3);
+  white-space: nowrap;
 }
 .theatre-seat {
   fill: var(--gold);
@@ -3130,7 +3191,12 @@ a.notif-row:active {
   opacity: 1;
   transform: none;
 }
-.theatre-empty,
+.theatre-empty {
+  fill: none;
+  stroke: var(--gold);
+  stroke-opacity: 0.45;
+  stroke-width: 0.1;
+}
 .live-grid-empty {
   fill: none;
   stroke: var(--gold);
@@ -3246,5 +3312,11 @@ a.notif-row:active {
   .info:hover .info-tip {
     opacity: 1;
     transform: translateX(-50%);
+  }
+}
+
+@media (max-width: 520px) {
+  .theatre-head .live-meter {
+    display: none;
   }
 }

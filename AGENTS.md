@@ -559,11 +559,15 @@ for each open service on `/app/check-in`, because a live thing is
 watched, not worked through. The first line is the service and its code
 (a leader sees the code as six large boxes and Close check-in; a member
 sees where to type it, or that they are in). Then the room: the headline
-figure and a turnout bar, the hall as **theatre seating**
-(`lib/theatre.ts`, the phone's `TheatreLayout` ported: rows arcing round
-the front, two aisles, one seat a person), which waits empty until it is
-scrolled into view and then fills from the front on CSS transition
-delays, and the congregation **by cell**, each cell a small grid of the
+figure and a turnout bar, the hall, one seat a person
+(`lib/theatre.ts`, the phone's `SeatingLayout` ported), drawn as a **fan**
+of rows round the front split into four by three aisles, with the count
+in its point where the pulpit would be, or as **rows** in four blocks
+with the count above the front. The reader picks; the choice lives in
+`localStorage` and is read with `useSyncExternalStore`, so the server
+and first paint say "fan" without a state change in an effect. Seats
+wait as rings until the room is scrolled into view, then light in a
+scattered order (people do not arrive in rows) on CSS transition delays, and the congregation **by cell**, each cell a small grid of the
 same dots. Explanations sit behind an `Info` "i" (`components/info.tsx`,
 pure CSS) rather than printed under the figures. Then **every question asked
 as a poll**: bars as long as their share, the open one marked Live, a

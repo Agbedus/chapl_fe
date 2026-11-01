@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { Check, X } from "lucide-react";
 
-import { answerPrompt, checkIn, closeCheckIn, closePrompt } from "@/app/actions/manage";
+import {
+  answerPrompt,
+  checkIn,
+  closeCheckIn,
+  closePrompt,
+} from "@/app/actions/manage";
 import { ActionButton, CheckInBox, PromptAnswers } from "@/components/editors";
 import { LiveRefresh } from "@/components/live-refresh";
 import { Info } from "@/components/info";
@@ -48,9 +53,21 @@ function CellGrid({ cell }: { cell: Cell }) {
           const cx = (i % columns) * PITCH + PITCH / 2;
           const cy = Math.floor(i / columns) * PITCH + PITCH / 2;
           return i < present ? (
-            <circle key={i} cx={cx} cy={cy} r={DOT_R} className="live-grid-on" />
+            <circle
+              key={i}
+              cx={cx}
+              cy={cy}
+              r={DOT_R}
+              className="live-grid-on"
+            />
           ) : (
-            <circle key={i} cx={cx} cy={cy} r={DOT_R - 0.5} className="live-grid-empty" />
+            <circle
+              key={i}
+              cx={cx}
+              cy={cy}
+              r={DOT_R - 0.5}
+              className="live-grid-empty"
+            />
           );
         })}
       </svg>
@@ -72,33 +89,35 @@ function Room({ live, compact }: { live: Live; compact: boolean }) {
   const present = live.present ?? 0;
   const expected = live.expected ?? 0;
   const turnout = expected > 0 ? Math.round((present / expected) * 100) : 0;
-  const cells = (live.cells ?? []).filter((c) => (c.expected ?? 0) > 0 || (c.present ?? 0) > 0);
+  const cells = (live.cells ?? []).filter(
+    (c) => (c.expected ?? 0) > 0 || (c.present ?? 0) > 0,
+  );
   // The dashboard shows the biggest dozen; the check-in page shows more.
   const shown = cells.slice(0, compact ? 12 : 36);
   return (
     <section className="live-card">
-      <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
-        <div>
-          <p className="live-kicker flex items-center gap-1.5">
-            In the room
-            <Info text="One dot is one person in a seat, the front of the room at the top. Filled means they are here." />
-          </p>
-          <p className="mt-1 flex items-baseline gap-3">
-            <span className="figure tnum text-[clamp(2.6rem,5vw,3.8rem)] leading-none text-ink">{present}</span>
-            <span className="text-[14px] text-ink-2">
-              of {expected} {live.branch_name ? `in ${live.branch_name}` : "in the church"}
-            </span>
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="live-meter" role="img" aria-label={`${turnout} percent here`}>
+      <TheatreRoom
+        present={present}
+        expected={expected}
+        where={live.branch_name ? `in ${live.branch_name}` : "in the church"}
+      >
+        <p className="live-kicker flex items-center gap-1.5 whitespace-nowrap">
+          In the room
+          <Info text="One dot is one person in a seat. It lights up when they check in. Switch between a fan and rows to match your hall." />
+        </p>
+        <div className="ml-auto flex items-center gap-2.5">
+          <div
+            className="live-meter"
+            role="img"
+            aria-label={`${turnout} percent here`}
+          >
             <span style={{ width: `${Math.min(100, turnout)}%` }} />
           </div>
-          <span className="tnum text-[13px] font-semibold text-ink">{turnout}%</span>
+          <span className="tnum text-[13px] font-semibold text-ink">
+            {turnout}%
+          </span>
         </div>
-      </header>
-
-      <TheatreRoom present={present} expected={expected} />
+      </TheatreRoom>
 
       {shown.length > 0 && (
         <div className="mt-6 border-t border-line pt-4">
@@ -106,9 +125,15 @@ function Room({ live, compact }: { live: Live; compact: boolean }) {
             By cell
             <Info text="Each grid is a cell, one dot a person. Filled means they are here." />
           </p>
-          <ul className="live-cells">{shown.map((c) => <CellGrid key={c.id ?? "none"} cell={c} />)}</ul>
+          <ul className="live-cells">
+            {shown.map((c) => (
+              <CellGrid key={c.id ?? "none"} cell={c} />
+            ))}
+          </ul>
           {cells.length > shown.length && (
-            <p className="mt-3 text-[11.5px] text-ink-3">{cells.length - shown.length} more cells</p>
+            <p className="mt-3 text-[11.5px] text-ink-3">
+              {cells.length - shown.length} more cells
+            </p>
           )}
         </div>
       )}
@@ -122,13 +147,26 @@ function Room({ live, compact }: { live: Live; compact: boolean }) {
  * ones asked before it keep their results, so the whole service can be
  * read at once.
  */
-function Poll({ prompt, canRun, mine }: { prompt: Prompt; canRun: boolean; mine: boolean }) {
+function Poll({
+  prompt,
+  canRun,
+  mine,
+}: {
+  prompt: Prompt;
+  canRun: boolean;
+  mine: boolean;
+}) {
   const total = prompt.total ?? 0;
   const most = Math.max(0, ...prompt.options.map((o) => o.count ?? 0));
   return (
-    <article className="live-card live-poll" data-open={prompt.is_open ? "" : undefined}>
+    <article
+      className="live-card live-poll"
+      data-open={prompt.is_open ? "" : undefined}
+    >
       <header className="flex items-start justify-between gap-3">
-        <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-ink">{prompt.question}</h3>
+        <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-ink">
+          {prompt.question}
+        </h3>
         {prompt.is_open ? (
           <span className="live-pill">Live</span>
         ) : (
@@ -143,26 +181,45 @@ function Poll({ prompt, canRun, mine }: { prompt: Prompt; canRun: boolean; mine:
           return (
             <li key={option.label}>
               <div className="flex items-baseline justify-between gap-3 text-[13px]">
-                <span className={leading ? "font-semibold text-ink" : "text-ink-2"}>
+                <span
+                  className={leading ? "font-semibold text-ink" : "text-ink-2"}
+                >
                   {option.label}
-                  {mine && prompt.my_choice === i && <span className="ml-1.5 text-[11px] text-cobalt">yours</span>}
+                  {mine && prompt.my_choice === i && (
+                    <span className="ml-1.5 text-[11px] text-cobalt">
+                      yours
+                    </span>
+                  )}
                 </span>
                 <span className="tnum shrink-0 text-ink">
                   {count}
-                  <span className="ml-1.5 text-[11.5px] text-ink-3">{share}%</span>
+                  <span className="ml-1.5 text-[11.5px] text-ink-3">
+                    {share}%
+                  </span>
                 </span>
               </div>
               <div className="live-bar" data-leading={leading ? "" : undefined}>
-                <span style={{ width: `${total > 0 ? Math.max(share, count > 0 ? 3 : 0) : 0}%` }} />
+                <span
+                  style={{
+                    width: `${total > 0 ? Math.max(share, count > 0 ? 3 : 0) : 0}%`,
+                  }}
+                />
               </div>
             </li>
           );
         })}
       </ul>
       <footer className="mt-4 flex items-center justify-between gap-3 text-[11.5px] text-ink-3">
-        <span className="tnum">{total} {total === 1 ? "answer" : "answers"}</span>
+        <span className="tnum">
+          {total} {total === 1 ? "answer" : "answers"}
+        </span>
         {canRun && prompt.is_open && (
-          <ActionButton action={closePrompt} fields={{ id: prompt.id }} label="Close answers" icon={<X className="h-3 w-3" aria-hidden />} />
+          <ActionButton
+            action={closePrompt}
+            fields={{ id: prompt.id }}
+            label="Close answers"
+            icon={<X className="h-3 w-3" aria-hidden />}
+          />
         )}
       </footer>
     </article>
@@ -209,15 +266,28 @@ export function LiveBoard({
           <p className="live-kicker">
             <span className="live-beat" aria-hidden /> Live · {where}
           </p>
-          <h2 className="head mt-2 text-[clamp(1.5rem,3vw,2.1rem)] text-ink">{weekday(live.service_day)} service</h2>
+          <h2 className="head mt-2 text-[clamp(1.5rem,3vw,2.1rem)] text-ink">
+            {weekday(live.service_day)} service
+          </h2>
           <p className="mt-1 text-[13px] text-ink-2">
-            {live.is_open ? `Check-in open until ${clock(live.closes_at)}` : `Closed at ${clock(live.closes_at)}`}
+            {live.is_open
+              ? `Check-in open until ${clock(live.closes_at)}`
+              : `Closed at ${clock(live.closes_at)}`}
           </p>
           {live.sermon && (
-            <Link href={`/app/sermons/${live.sermon.id}`} className="live-sermon">
+            <Link
+              href={`/app/sermons/${live.sermon.id}`}
+              className="live-sermon"
+            >
               <span className="text-ruby">Today&rsquo;s message</span>
-              <span className="font-semibold text-ink">{live.sermon.title}</span>
-              {live.sermon.scripture_reference && <span className="text-ink-3">{live.sermon.scripture_reference}</span>}
+              <span className="font-semibold text-ink">
+                {live.sermon.title}
+              </span>
+              {live.sermon.scripture_reference && (
+                <span className="text-ink-3">
+                  {live.sermon.scripture_reference}
+                </span>
+              )}
             </Link>
           )}
         </div>
@@ -225,7 +295,11 @@ export function LiveBoard({
         {leader ? (
           <div className="live-code-wrap">
             <p className="live-kicker">Check-in code</p>
-            <div className="live-code" role="img" aria-label={`Check-in code ${live.code ?? ""}`}>
+            <div
+              className="live-code"
+              role="img"
+              aria-label={`Check-in code ${live.code ?? ""}`}
+            >
               {code.map((ch, i) => (
                 <span key={i}>{ch.trim()}</span>
               ))}
@@ -246,12 +320,15 @@ export function LiveBoard({
           <div className="live-code-wrap">
             {live.checked_in ? (
               <p className="live-here">
-                <Check className="h-5 w-5" aria-hidden /> You are checked in. Welcome!
+                <Check className="h-5 w-5" aria-hidden /> You are checked in.
+                Welcome!
               </p>
             ) : (
               <>
                 <p className="live-kicker">Check in</p>
-                <p className="mb-2 mt-1 text-[12.5px] text-ink-2">Type the code shown at church.</p>
+                <p className="mb-2 mt-1 text-[12.5px] text-ink-2">
+                  Type the code shown at church.
+                </p>
                 <CheckInBox action={checkIn} />
               </>
             )}
@@ -296,8 +373,14 @@ export function LiveBoard({
 
         {compact && (
           <div className="mt-4 text-right">
-            <Link href="/app/check-in" className="text-[12.5px] font-medium text-ink-2 hover:text-ink hover:underline">
-              {prompts.length > 1 || (live.cells?.length ?? 0) > 12 ? "All questions and cells" : "Open the full board"} →
+            <Link
+              href="/app/check-in"
+              className="text-[12.5px] font-medium text-ink-2 hover:text-ink hover:underline"
+            >
+              {prompts.length > 1 || (live.cells?.length ?? 0) > 12
+                ? "All questions and cells"
+                : "Open the full board"}{" "}
+              →
             </Link>
           </div>
         )}
