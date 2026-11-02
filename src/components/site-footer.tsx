@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Logo } from "@/components/logo";
 
 const columns = [
@@ -53,9 +55,9 @@ export function SiteFooter() {
           © {new Date().getFullYear()} Chapl
         </p>
         <div className="flex gap-5 text-[13px] text-ink-3">
-          <a href="#" className="transition-colors hover:text-ink">
+          <Link href="/privacy" className="transition-colors hover:text-ink">
             Privacy
-          </a>
+          </Link>
           <a href="#" className="transition-colors hover:text-ink">
             Terms
           </a>

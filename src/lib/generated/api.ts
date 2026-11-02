@@ -2,6 +2,8 @@
 export interface Schemas {
   "Absentee": { "id": string; "full_name": string; "phone_number": (string | null); "branch": string; "cell": (string | null); "last_present": (string | null); };
   "AccountCounts": { "total": number; "unverified": number; "stale": number; "new_week": number; };
+  "AccountDeletionRequest": { "password": string; };
+  "AccountDeletionScheduled": { "deletion_scheduled_for": string; "msg": string; };
   "AssignmentCreate": { "role": Schemas["Role"]; "scope_type": Schemas["ScopeType"]; "scope_id"?: (string | null); "user_id": string; };
   "AssignmentList": { "items": Array<Schemas["AssignmentRead"]>; "total": number; };
   "AssignmentRead": { "role": Schemas["Role"]; "scope_type": Schemas["ScopeType"]; "scope_id"?: (string | null); "id": string; "user_id"?: (string | null); "church_id"?: (string | null); "is_active": boolean; "granted_by"?: (string | null); "granted_at": string; "revoked_at"?: (string | null); "revoked_by"?: (string | null); };
@@ -161,7 +163,7 @@ export interface Schemas {
   "Slice": { "label": string; "value": number; };
   "StaffOverview": { "church_status": Record<string, number>; "registrations": Array<Schemas["Slice"]>; "new_churches_week": number; "accounts": Schemas["AccountCounts"]; "attention": Array<Schemas["AttentionItem"]>; };
   "Stat": { "name": string; "count": number; "resource": string; };
-  "Token": { "access_token": string; "token_type"?: string; "user": Schemas["UserMe"]; "church_id"?: (string | null); };
+  "Token": { "access_token": string; "token_type"?: string; "user": Schemas["UserMe"]; "church_id"?: (string | null); "deletion_cancelled"?: boolean; };
   "Total": { "name": string; "count": number; };
   "TrendPoint": { "date": string; "marked": number; "present": number; "absent": number; "pct": number; };
   "UserCreate": { "email": string; "full_name": string; "phone_number"?: (string | null); "location"?: (string | null); "avatar_url"?: (string | null); "date_of_birth"?: (string | null); "gender"?: (string | null); "is_active"?: boolean; "marital_status"?: (Schemas["MaritalStatus"] | null); "occupation"?: (string | null); "address"?: (string | null); "emergency_contact_name"?: (string | null); "emergency_contact_phone"?: (string | null); "baptism_date"?: (string | null); "confirmation_date"?: (string | null); "notes"?: (string | null); "password": string; };

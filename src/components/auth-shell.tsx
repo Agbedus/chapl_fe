@@ -39,6 +39,14 @@ export function AuthShell({
           <div className="mt-8">{children}</div>
 
           {footer && <div className="mt-8 text-[13px] text-ink-3">{footer}</div>}
+
+          {/* Every signed-out page asks for, or leads to, someone's details,
+              so each says where to read what happens to them. */}
+          <p className="mt-6 text-[12.5px] text-ink-3">
+            <Link href="/privacy" className="hover:text-ink hover:underline">
+              Privacy policy
+            </Link>
+          </p>
         </div>
       </div>
 
