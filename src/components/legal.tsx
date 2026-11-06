@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Children, isValidElement, type ReactNode } from "react";
 
+import { LegalToc } from "@/components/legal-toc";
 import { CrossRule } from "@/components/dot-cross";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteNav } from "@/components/site-nav";
@@ -81,15 +82,7 @@ export function LegalPage({
             <nav aria-label="On this page" className="hidden lg:block">
               <div className="sticky top-24 max-h-[calc(100dvh-8rem)] overflow-y-auto pr-2">
                 <p className="eyebrow text-ink-3">On this page</p>
-                <ol className="mt-4 space-y-2 border-l border-line pl-4 text-[13.5px] leading-[1.45]">
-                  {toc.map((item) => (
-                    <li key={item.id}>
-                      <a href={`#${item.id}`} className="text-ink-3 transition-colors hover:text-ink">
-                        {item.title}
-                      </a>
-                    </li>
-                  ))}
-                </ol>
+                <LegalToc items={toc} />
               </div>
             </nav>
 
