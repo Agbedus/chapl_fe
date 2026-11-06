@@ -632,18 +632,21 @@ product, and someone already signed in gets **Open in Chapl** instead.
 on pages that are not the home page, because its links are anchors into
 it.
 
-## The privacy policy
+## The legal pages
 
-`/privacy` is the policy the App Store and Google Play listings link to
-(the phone app's `PRIVACY_POLICY_URL`), so it is public, reads with no
-API behind it beyond the header's `getMe()`, and is linked from the
-footer and from every signed-out page through `AuthShell`. It is written
-from what the API, the phone app and this site actually collect; a
-change that collects something new changes this page too. What only a
-person can decide — the operator's legal name, the address, the law it
-answers to — is the `FILL` table at the top of the page, and a `null`
-there renders as a marked gap with a "being finalised" note, never as a
-guess. It still wants a legal read before the first store submission.
+`/privacy`, `/terms` and `/eula` are what the App Store and Google Play
+listings link to (the phone app's `PRIVACY_POLICY_URL` is the first), so
+they are public, read nothing from the API beyond the header's
+`getMe()`, and are linked from the footer and, through `AuthShell`, from
+every signed-out page. They share one frame and one set of facts in
+`components/legal.tsx`: `LEGAL` names the operator, address, contact,
+email provider, backup period, minimum age and governing law once, so
+the three cannot disagree. Some of those are working defaults the owner
+chose to publish and revisit. The privacy policy is written from what
+the API, the phone app and this site actually collect; a change that
+collects something new changes it too. The EULA carries the terms Apple
+requires of a custom licence agreement — keep them if it is rewritten.
+None of the three has had a legal read yet.
 
 ## Live, reliably
 

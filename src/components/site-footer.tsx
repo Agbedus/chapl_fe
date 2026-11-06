@@ -58,9 +58,12 @@ export function SiteFooter() {
           <Link href="/privacy" className="transition-colors hover:text-ink">
             Privacy
           </Link>
-          <a href="#" className="transition-colors hover:text-ink">
+          <Link href="/terms" className="transition-colors hover:text-ink">
             Terms
-          </a>
+          </Link>
+          <Link href="/eula" className="transition-colors hover:text-ink">
+            Licence
+          </Link>
         </div>
       </div>
     </footer>

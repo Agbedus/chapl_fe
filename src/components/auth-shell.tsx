@@ -46,6 +46,10 @@ export function AuthShell({
             <Link href="/privacy" className="hover:text-ink hover:underline">
               Privacy policy
             </Link>
+            <span className="mx-2">·</span>
+            <Link href="/terms" className="hover:text-ink hover:underline">
+              Terms
+            </Link>
           </p>
         </div>
       </div>
