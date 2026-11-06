@@ -130,6 +130,25 @@ export default function TermsPage() {
         </p>
       </Section>
 
+      <Section id="relationship" title="6A. Between a church and its members">
+        <p>
+          Chapl connects a church and its members; it is not a party to what passes between them. The church
+          decides who joins, what roles people hold, what is recorded and who sees it. Disagreements between
+          a member and a church, or between members, are for them to settle. We can help a member reach the
+          church about their information, but we do not decide membership, discipline, pastoral matters or
+          doctrine, and nothing in Chapl is religious, medical, legal or financial advice.
+        </p>
+      </Section>
+
+      <Section id="care" title="6B. Care requests and emergencies">
+        <p>
+          A prayer or call request is passed to church leaders; it is not an emergency service and may not be
+          read straight away. If you or someone else is in danger, or you need urgent medical or mental
+          health help, contact the emergency services or a crisis line where you are. Do not rely on Chapl
+          for anything urgent.
+        </p>
+      </Section>
+
       <Section id="giving" title="7. Giving">
         <p>
           Chapl records gifts a church receives; it does not take, hold or move money. Any gift is between
@@ -142,6 +161,28 @@ export default function TermsPage() {
           Chapl itself — its software, design, name and logo — belongs to us and our licensors. These terms
           give you a right to use it, not any ownership of it. The phone apps are licensed under the{" "}
           <Link href="/eula" className={link}>licence agreement</Link>.
+        </p>
+      </Section>
+
+      <Section id="reports" title="8A. Reporting content and copyright">
+        <p>
+          To report content that breaks these terms, or an account that is misused, write to <Contact />{" "}
+          with where to find it and why it is a problem. If you believe something in Chapl infringes your
+          copyright, send us your name and contact details, what is infringed, where it appears, a statement
+          that you believe in good faith that its use is not authorised, and that your notice is accurate. We
+          will act promptly, which may include removing it, and may tell the person who added it. We end
+          the accounts of people who repeatedly infringe.
+        </p>
+      </Section>
+
+      <Section id="security" title="8B. Security and your devices">
+        <p>
+          Keep your phone and browser up to date, use a screen lock, and sign out of shared devices. You are
+          responsible for your own devices and connections, and for any charges your network makes. Do not
+          use Chapl on a device that has been modified to remove its security, such as a jailbroken or rooted
+          phone. Tell us of any weakness you find at <Contact /> and give us reasonable time to fix it before
+          you share it; we will not take action against good-faith research that respects other people&rsquo;s
+          data.
         </p>
       </Section>
 
@@ -160,6 +201,23 @@ export default function TermsPage() {
           available but do not promise it will be uninterrupted, and we may suspend it for maintenance,
           security or reasons outside our control. If we introduce charges, we will tell you first, and
           nothing will be charged without your agreement.
+        </p>
+      </Section>
+
+      <Section id="beta" title="10A. Early features">
+        <p>
+          Some features may be labelled early, beta or preview. They may change, be unreliable or be removed,
+          and our promises about the rest of Chapl apply to them only as far as the law requires.
+        </p>
+      </Section>
+
+      <Section id="stores" title="10B. Apple and Google">
+        <p>
+          If you use the app from the App Store or Google Play, these terms are between you and us, not Apple
+          or Google, which are not responsible for the app, its support or any claim about it. Their rules for
+          apps and, for Apple, the licence terms in our{" "}
+          <Link href="/eula" className={link}>licence agreement</Link>, also apply, and they may enforce those
+          against you.
         </p>
       </Section>
 
@@ -246,6 +304,25 @@ export default function TermsPage() {
           </li>
           <li>
             <B>Notices.</B> We send notices to the email on your account; you send them to <Contact />.
+          </li>
+          <li>
+            <B>Electronic communications.</B> You agree that we may give you notices and records
+            electronically, and that they satisfy any legal requirement that they be in writing.
+          </li>
+          <li>
+            <B>Export and sanctions.</B> You will not use Chapl where doing so would breach export or
+            sanctions law.
+          </li>
+          <li>
+            <B>Language and headings.</B> If these terms are translated, the English version prevails.
+            Headings are for convenience only and do not change the meaning.
+          </li>
+          <li>
+            <B>No partnership.</B> Nothing here makes you our agent, partner or employee, or us yours.
+          </li>
+          <li>
+            <B>Third parties.</B> Apart from Apple and Google as described above, nobody who is not a party to
+            these terms has a right to enforce them.
           </li>
         </Bullets>
       </Section>

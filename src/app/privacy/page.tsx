@@ -32,6 +32,26 @@ export default function PrivacyPage() {
         anything in this policy, write to <Contact />.
       </p>
 
+      <Section id="glance" title="At a glance">
+        <Bullets>
+          <li>Your church puts you in Chapl; we run the service it lives in.</li>
+          <li>We collect what is needed to run a church: who you are, where you belong, when you came, and what you ask for.</li>
+          <li>Church leaders see what their role needs. Other members see very little.</li>
+          <li>We never sell your information, show ads, or track you across other apps or sites.</li>
+          <li>You can see, correct and delete your information. Account deletion is in the app and takes 30 days.</li>
+        </Bullets>
+      </Section>
+
+      <Section id="scope" title="What this policy covers">
+        <p>
+          It covers personal information we handle through Chapl: the iPhone, iPad and Android apps, this
+          website, and email we send or receive about them. It does not cover other sites and services Chapl
+          links to, or what your church does outside Chapl, such as paper registers or its own website.
+          Where this policy says &ldquo;personal information&rdquo; it means information that identifies you,
+          or could reasonably be used to.
+        </p>
+      </Section>
+
       <Section id="who" title="Who is responsible for your information">
         <p>
           Chapl works for your <B>church</B>. You are on Chapl because your church invited you, or
@@ -89,6 +109,19 @@ export default function PrivacyPage() {
             Events you sign up for and reminders you set, sermons you save, notifications we send you,
             and birthday wishes you send (the person you send one to sees your name and message).
           </Item>
+          <Item what="Other people's details">
+            An emergency contact&rsquo;s name and number, and household members your church links to you.
+            If you give us someone else&rsquo;s details, you confirm they know and are happy for you to.
+          </Item>
+          <Item what="Device information">
+            Standard technical details sent with every request: app version, operating system, language and
+            time zone, and the IP address. We use them to run, secure and fix Chapl, not to identify you
+            across other services.
+          </Item>
+          <Item what="Notification settings">
+            Whether you switched on Sunday reminders, which are scheduled on your phone. Where push
+            notifications are offered and you allow them, a device token so Apple or Google can deliver them.
+          </Item>
           <Item what="Messages to us">
             What you write when you email us, so we can answer.
           </Item>
@@ -114,6 +147,17 @@ export default function PrivacyPage() {
         <p>
           <B>Where it comes from.</B> Most of it from you, and the rest from your church: the person who
           invited you, and the leaders who keep the register, record gifts and follow up.
+        </p>
+      </Section>
+
+      <Section id="sensitive" title="Sensitive information">
+        <p>
+          Church life involves information the law treats as especially sensitive: religious belief and
+          practice, health (in prayer and care requests), marital status and information about children.
+          We handle it only to provide Chapl to your church, we keep it behind the roles your church grants,
+          and we never use it for advertising, profiling or anything unrelated to caring for the church. Give
+          only what you are comfortable sharing: you decide what to write in a care request, and you can keep
+          one private to the pastors.
         </p>
       </Section>
 
@@ -145,6 +189,25 @@ export default function PrivacyPage() {
         <p>
           Where we rely on your consent, you can withdraw it at any time by writing to <Contact />;
           that does not affect what was done before.
+        </p>
+      </Section>
+
+      <Section id="cookies" title="Cookies and local storage">
+        <dl className="border-b border-line">
+          <Item what="Session cookie">
+            Keeps you signed in on this website. Set when you sign in, removed when you sign out or after two
+            days. Strictly necessary; httpOnly, so scripts on the page cannot read it.
+          </Item>
+          <Item what="Church choice">Remembers which church you are looking at. Strictly necessary.</Item>
+          <Item what="Display settings">
+            Your light or dark theme and the way you like the Sunday room drawn, kept in your browser&rsquo;s
+            local storage. Never sent to us.
+          </Item>
+        </dl>
+        <p>
+          We set no advertising, analytics or tracking cookies. Because the only cookies are strictly
+          necessary, there is no banner to accept. If your browser sends a &ldquo;Do Not Track&rdquo; or
+          similar signal, nothing changes, because we do not track you.
         </p>
       </Section>
 
@@ -256,6 +319,17 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
+      <Section id="choices" title="Your choices">
+        <Bullets>
+          <li><B>What you share.</B> Most profile details are optional. Leave out what you would rather not give.</li>
+          <li><B>Photo.</B> Add, change or remove it in Profile at any time.</li>
+          <li><B>Reminders and notifications.</B> Switch Sunday reminders off in Profile, and manage notifications in your phone&rsquo;s settings.</li>
+          <li><B>Care requests.</B> Choose whether a request goes to your cell leader and pastors, or to pastors only.</li>
+          <li><B>Anonymous giving.</B> Ask your church to keep a gift off reports that show names.</li>
+          <li><B>Email.</B> We send only what your account needs. There is nothing to unsubscribe from.</li>
+        </Bullets>
+      </Section>
+
       <Section id="rights" title="Your rights">
         <p>Under {LEGAL.dataLaw}, and similar laws where you live, you can:</p>
         <Bullets>
@@ -274,6 +348,26 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
+      <Section id="regions" title="If you live outside Ghana">
+        <p>
+          <B>European Economic Area, United Kingdom and Switzerland.</B> You have the rights above under the
+          GDPR and UK GDPR, you may complain to your local supervisory authority, and where we send your
+          information outside those regions we rely on contractual safeguards such as standard contractual
+          clauses.
+        </p>
+        <p>
+          <B>California and other US states.</B> You can ask to know what personal information we collect,
+          use and disclose, to correct or delete it, and not to be discriminated against for doing so. We do
+          not sell or share personal information for advertising, as those words are defined by those laws,
+          and we do not knowingly collect information from anyone under 16 without a parent&rsquo;s or
+          guardian&rsquo;s involvement. You may use an authorised agent to make a request.
+        </p>
+        <p>
+          <B>Anywhere else.</B> You have the rights your local law gives you; write to us and we will honour
+          them as far as the law requires.
+        </p>
+      </Section>
+
       <Section id="children" title="Children">
         <p>
           Chapl is not meant for children under {LEGAL.minimumAge} without a parent&rsquo;s or
@@ -288,6 +382,23 @@ export default function PrivacyPage() {
           We will post any change here and update the date at the top. If a change materially affects
           how your information is used, we will also tell you in the app or by email before it takes
           effect.
+        </p>
+      </Section>
+
+      <Section id="links" title="Other sites and services">
+        <p>
+          Chapl links to and embeds services we do not run, such as YouTube, maps, WhatsApp and your
+          phone&rsquo;s dialler. Following a link leaves Chapl, and the other service&rsquo;s privacy policy
+          applies from there. We do not control them and are not responsible for what they do.
+        </p>
+      </Section>
+
+      <Section id="complaints" title="Questions and complaints">
+        <p>
+          We take privacy seriously and keep one address for it: write to <Contact /> with &ldquo;Privacy&rdquo;
+          in the subject. We acknowledge within a few days, reply in full within one month, and tell you if
+          we need longer and why. If you are not satisfied, you may complain to {LEGAL.regulator}, or to your
+          local data protection authority.
         </p>
       </Section>
 

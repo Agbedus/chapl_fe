@@ -59,6 +59,34 @@ export default function EulaPage() {
         </Bullets>
       </Section>
 
+      <Section id="permissions" title="2A. What the App can reach">
+        <p>
+          The App asks for as little as it can. It opens your photos or camera only when you choose to add a
+          profile photo, may ask to send notifications such as Sunday and event reminders, and uses the
+          internet to talk to Chapl. It does not use your location, contacts or microphone. You can change
+          these permissions in your phone&rsquo;s settings at any time; some features will not work without
+          them.
+        </p>
+      </Section>
+
+      <Section id="data" title="2B. Your data and content">
+        <p>
+          What you and your church put into Chapl is yours, as the{" "}
+          <Link href="/terms" className={link}>terms of service</Link> say; this agreement gives us no more
+          rights over it. How it is handled is set out in the{" "}
+          <Link href="/privacy" className={link}>privacy policy</Link>. Removing the App does not delete your
+          account; see the policy for how to do that.
+        </p>
+      </Section>
+
+      <Section id="open-source" title="2C. Open-source components">
+        <p>
+          The App includes software from others under open-source licences. Those licences apply to those
+          parts, and nothing here limits rights they give you. A list of them is shown in the App&rsquo;s
+          licence screen where the platform provides one, or on request to <Contact />.
+        </p>
+      </Section>
+
       <Section id="support" title="3. Maintenance and support">
         <p>
           We alone are responsible for maintaining and supporting the App, as described here or as the law
@@ -135,6 +163,20 @@ export default function EulaPage() {
         </p>
       </Section>
 
+      <Section id="google" title="10A. Google Play">
+        <p>
+          For the Android app, Google&rsquo;s terms for Google Play apply alongside this agreement. Google
+          is not a party to this agreement, is not responsible for the App, and has no duty to support it.
+          Any warranty or product claim is ours, not Google&rsquo;s, as far as the law allows.
+        </p>
+      </Section>
+
+      <Section id="feedback" title="10B. Feedback">
+        <p>
+          If you send us suggestions about the App, we may use them without payment or obligation to you.
+        </p>
+      </Section>
+
       <Section id="ending" title="11. Ending">
         <p>
           This licence lasts until you or we end it. You can end it by deleting the App. It ends
@@ -162,8 +204,11 @@ export default function EulaPage() {
       <Section id="contact" title="14. Contact and general">
         <p>
           Questions, complaints or claims about the App go to {LEGAL.operator}, {LEGAL.address}, <Contact />.
-          If any part of this agreement is unenforceable, the rest stays in force. We may update it, and will
-          post the new version here with its date.
+          If any part of this agreement is unenforceable, the rest stays in force. Not enforcing a part is not
+          giving it up. This agreement, with the terms of service and privacy policy, is everything agreed
+          about the App; you may not transfer it, but we may to a successor. We may update it, and will post
+          the new version here with its date; using the App after that means you accept it. If this agreement
+          is translated, the English version prevails.
         </p>
       </Section>
     </LegalPage>

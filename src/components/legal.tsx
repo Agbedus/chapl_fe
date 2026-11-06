@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Children, isValidElement, type ReactNode } from "react";
 
 import { CrossRule } from "@/components/dot-cross";
 import { SiteFooter } from "@/components/site-footer";
@@ -43,9 +43,12 @@ const PAGES = [
 ];
 
 /**
- * The frame every legal page sits in: the site's header, one reading
- * column, and the other two documents at the foot. Public, because the
- * store listings link here and whoever opens them has no account yet.
+ * The frame every legal page sits in: the site's header at the landing
+ * pages' width, a contents rail that follows the reader, one reading
+ * column, and the other two documents at the foot. The rail is built
+ * from the `Section`s among the children, so a page lists its sections
+ * once. Public, because the store listings link here and whoever opens
+ * them has no account yet.
  */
 export function LegalPage({
   eyebrow,
@@ -58,17 +61,44 @@ export function LegalPage({
   path: string;
   children: ReactNode;
 }) {
+  const toc = Children.toArray(children).flatMap((child) =>
+    isValidElement<{ id?: string; title?: string }>(child) && child.type === Section && child.props.id
+      ? [{ id: child.props.id, title: child.props.title ?? "" }]
+      : [],
+  );
   return (
     <>
       <SiteNav sections={false} />
       <main className="flex-1">
-        <article className="mx-auto max-w-2xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
-          <p className="eyebrow text-cobalt">{eyebrow}</p>
-          <h1 className="head mt-3 text-[clamp(2rem,5vw,2.75rem)] text-ink">{title}</h1>
-          <p className="mt-3 text-[13.5px] text-ink-3">Last updated {LEGAL.updated}</p>
-          <div className="mt-8 space-y-4 text-[16px] leading-[1.7] text-ink-2">{children}</div>
+        <div className="mx-auto w-full max-w-6xl px-6 pb-20 pt-10 sm:pt-14">
+          <header className="max-w-3xl">
+            <p className="eyebrow text-cobalt">{eyebrow}</p>
+            <h1 className="head mt-3 text-[clamp(2rem,5vw,3rem)] text-ink">{title}</h1>
+            <p className="mt-3 text-[13.5px] text-ink-3">Last updated {LEGAL.updated}</p>
+          </header>
 
-          <div className="my-12">
+          <div className="mt-10 grid gap-10 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-16">
+            <nav aria-label="On this page" className="hidden lg:block">
+              <div className="sticky top-24 max-h-[calc(100dvh-8rem)] overflow-y-auto pr-2">
+                <p className="eyebrow text-ink-3">On this page</p>
+                <ol className="mt-4 space-y-2 border-l border-line pl-4 text-[13.5px] leading-[1.45]">
+                  {toc.map((item) => (
+                    <li key={item.id}>
+                      <a href={`#${item.id}`} className="text-ink-3 transition-colors hover:text-ink">
+                        {item.title}
+                      </a>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </nav>
+
+            <article className="min-w-0 max-w-3xl space-y-4 text-[16px] leading-[1.7] text-ink-2 lg:max-w-none">
+              {children}
+            </article>
+          </div>
+
+          <div className="my-14">
             <CrossRule />
           </div>
           <nav aria-label="Legal" className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[14px]">
@@ -81,7 +111,7 @@ export function LegalPage({
               Back to Chapl
             </Link>
           </nav>
-        </article>
+        </div>
       </main>
       <SiteFooter />
     </>
@@ -91,7 +121,7 @@ export function LegalPage({
 export function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
     <section id={id} className="scroll-mt-24">
-      <h2 className="head mt-12 text-[22px] text-ink">{title}</h2>
+      <h2 className="head mt-12 text-[24px] text-ink">{title}</h2>
       <div className="mt-4 space-y-4 text-[15px] leading-[1.7] text-ink-2">{children}</div>
     </section>
   );
@@ -100,7 +130,7 @@ export function Section({ id, title, children }: { id: string; title: string; ch
 /** One row of a definition list: the thing, then what it means. */
 export function Item({ what, children }: { what: string; children: ReactNode }) {
   return (
-    <div className="grid gap-1 border-t border-line py-3.5 sm:grid-cols-[13rem_1fr] sm:gap-6">
+    <div className="grid gap-1 border-t border-line py-3.5 sm:grid-cols-[14rem_1fr] sm:gap-8">
       <dt className="text-[14px] font-semibold text-ink">{what}</dt>
       <dd className="text-[14.5px] leading-[1.65] text-ink-2">{children}</dd>
     </div>
