@@ -69,6 +69,9 @@ export default async function SermonsPage({
           ? "Nothing saved yet. Save a sermon to come back to it."
           : writer ? "No sermons yet. Add the last one preached." : "No sermons yet."
       }
+      emptyAction={
+        writer && !onlySaved ? <SermonEditor action={saveSermon} branches={branches} /> : undefined
+      }
       action={
         <div className="flex flex-wrap items-center gap-2">
           {views}

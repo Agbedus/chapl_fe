@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { DonutChart, TrendChart } from "@/components/charts";
-import { Empty, Page, Panel, RingPanel, Stat } from "@/components/panels";
+import { Empty, Page, PageHead, Panel, RingPanel, Stat } from "@/components/panels";
 import { recordGift } from "@/app/actions/manage";
 import { canWrite } from "@/lib/access";
 import { GiftEditor } from "@/components/editors";
@@ -139,50 +139,41 @@ export default async function GivingPage({
 
   return (
     <Page>
-      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div className="min-w-0">
-          <p className="eyebrow text-ink-3">Activity</p>
-          <h1 className="head mt-2 text-[26px] tracking-[-0.025em] sm:text-[30px]">
-            <span className="grad-text">Giving</span>
-            <span className="ml-3 align-middle text-[11px] font-medium uppercase tracking-[0.14em] text-ink-3">
-              {data.church.name}
-            </span>
-          </h1>
-          <p className="mt-1.5 text-[12.5px] text-ink-3">
-            Completed gifts, all time {money(data.giving_total, currency)} ·{" "}
-            {total.toLocaleString()} recorded
-          </p>
-        </div>
+      <PageHead
+        eyebrow="Activity"
+        title="Giving"
+        lede={`Completed gifts, all time ${money(data.giving_total, currency)} · ${total.toLocaleString()} recorded`}
+        action={
+          canWrite(me, "donation") ? (
+            /*
+              The ledger could be read and never written to, which made this
+              page a report on a table nothing in the product could fill.
+              Online giving writes its own rows; this is the plate, the
+              transfer and the envelope.
 
-        {/*
-          The ledger could be read and never written to, which made this
-          page a report on a table nothing in the product could fill.
-          Online giving writes its own rows; this is the plate, the
-          transfer and the envelope.
-
-          `today` is resolved here rather than in the form: `new Date()`
-          in a client render disagrees between the server pass and the
-          hydration pass, and React throws away the subtree to fix it.
-        */}
-        {canWrite(me, "donation") && (
-        <GiftEditor
-          action={recordGift}
-          currency={currency}
-          today={new Date().toISOString().slice(0, 10)}
-          people={
-            people.ok
-              ? people.data.items.map((p) => ({
-                  value: p.id,
-                  label: `${p.full_name} · ${p.email}`,
-                }))
-              : []
-          }
-        />
-        )}
-      </header>
+              `today` is resolved here rather than in the form: `new Date()`
+              in a client render disagrees between the server pass and the
+              hydration pass, and React throws away the subtree to fix it.
+            */
+            <GiftEditor
+              action={recordGift}
+              currency={currency}
+              today={new Date().toISOString().slice(0, 10)}
+              people={
+                people.ok
+                  ? people.data.items.map((p) => ({
+                      value: p.id,
+                      label: `${p.full_name} · ${p.email}`,
+                    }))
+                  : []
+              }
+            />
+          ) : undefined
+        }
+      />
 
       {/* ---------------- the shape of it ---------------- */}
-      <section className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <section className="stat-row">
         <Stat
           label={isPartial ? "This month so far" : "This month"}
           value={thisMonth ? money(thisMonth.total, currency, true) : "—"}
@@ -283,7 +274,7 @@ export default async function GivingPage({
         ) : (
           <>
             <div className="-mx-1 overflow-x-auto px-1">
-              <table className="w-full border-collapse">
+              <table className="dtable w-full border-collapse">
                 <thead>
                   <tr className="border-b border-line">
                     {["Given", "Amount", "Type", "Method", "Receipt", "Status"].map((label, i) => (

@@ -233,7 +233,7 @@ export default async function AccountPage() {
       >
         {/* ================= your life in the church ================= */}
         <div className="flex flex-col gap-3">
-          <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+          <section className="stat-row">
             <StatCard
               label="Your turnout"
               value={stats?.pct != null ? String(stats.pct) : "—"}

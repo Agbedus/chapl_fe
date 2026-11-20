@@ -105,7 +105,7 @@ export default async function CarePage() {
       {leader && (
         <>
           {queue && !queue.ok && <Notice kind="error">{queue.error.detail}</Notice>}
-          <section className="grid gap-2 sm:grid-cols-3">
+          <section className="stat-row">
             <StatCard label="Waiting" value={String(waiting)} colour="var(--ruby)" footnote="nobody has picked these up" />
             <StatCard label="In hand" value={String(open.length - waiting)} colour="var(--gold)" footnote="picked up, not yet closed" />
             <StatCard label="Closed" value={String(all.length - open.length)} colour="var(--emerald)" footnote="of the latest 200" />

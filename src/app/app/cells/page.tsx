@@ -272,7 +272,7 @@ export default async function CellsPage({
         }
       />
 
-      <section className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="stat-row">
         <StatCard
           label="Cells"
           value={String(rows.length)}
@@ -381,6 +381,7 @@ export default async function CellsPage({
           action={saveCell}
           canEdit={canWrite}
           empty="No cells yet. Add one inside a branch."
+          emptyAction={{ href: "/app/branches", label: "Go to branches" }}
           footer={[
             `${rows.length} cells`,
             `${branches.length} branches`,

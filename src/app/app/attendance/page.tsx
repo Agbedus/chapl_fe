@@ -141,7 +141,7 @@ export default async function AttendancePage({
         }
       />
 
-      <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+      <section className="stat-row">
         <StatCard
           label="Turnout"
           value={String(service.pct)}

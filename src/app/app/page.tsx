@@ -6,7 +6,7 @@ import {
   DonutChart, GaugeChart, MultiRingChart, Sparkline, TrendChart,
 } from "@/components/charts";
 import { CongregationField } from "@/components/congregation";
-import { Empty, Key, Page, Panel, Ring, RingPanel, StatCard } from "@/components/panels";
+import { Calm, Empty, Key, Page, PageHead, Panel, Ring, RingPanel, StatCard } from "@/components/panels";
 import { StaffQueue } from "@/components/staff-queue";
 import { SetupChecklist } from "@/components/setup-checklist";
 import { api } from "@/lib/api";
@@ -14,11 +14,11 @@ import { turnoutColour } from "@/lib/palette";
 import { currentChurchId, requireMe } from "@/lib/session";
 import { settleCheckup } from "@/app/actions/manage";
 import { WorkQueue, type QueueItem } from "@/components/work-queue";
-import { isPlainMember } from "@/lib/access";
+import { canWrite, isPlainMember } from "@/lib/access";
 import { MemberDashboard } from "@/app/app/member";
 import { CHURCH_STATUS_LABEL, CHURCH_STATUS_TONE, ROLE_LABEL } from "@/lib/types";
 import type { ChurchStatus } from "@/lib/types";
-import type { Dashboard, Invitation, Paged } from "@/lib/types";
+import type { Dashboard, Invitation, Me, Paged } from "@/lib/types";
 
 export const metadata = { title: "Dashboard — Chapl" };
 
@@ -155,6 +155,7 @@ export default async function DashboardPage() {
   return (
     <View
       data={result.data}
+      me={me}
       firstName={me.full_name.split(" ")[0]}
       invitations={invites?.ok ? invites.data.total : 0}
       pending={invites?.ok ? invites.data.items : []}
@@ -166,6 +167,7 @@ export default async function DashboardPage() {
 
 function View({
   data,
+  me,
   firstName,
   invitations,
   pending,
@@ -173,6 +175,7 @@ function View({
   activity,
 }: {
   data: Dashboard;
+  me: Me;
   firstName: string;
   invitations: number;
   pending: Invitation[];
@@ -197,6 +200,8 @@ function View({
    * presence check.
    */
   const showGiving = data.giving_total != null && data.giving_types.length > 0;
+  // Four rings share the twelve columns three each; without giving, three share them four each.
+  const ringSpan = showGiving ? "xl:col-span-3" : "xl:col-span-4";
   const givingWindow = data.giving_months.reduce((sum, m) => sum + m.total, 0);
   const givingThisMonth = data.giving_months.at(-1)?.total ?? null;
 
@@ -346,20 +351,16 @@ function View({
   return (
     <Page>
       {/* ---------------- header + the actions of the week ---------------- */}
-      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div className="min-w-0">
-          <p className="eyebrow text-ink-3">Overview</p>
-          <h1 className="head mt-2 text-[26px] tracking-[-0.025em] sm:text-[30px]">
-            <span className="grad-text">{platform ? "Every church" : data.church.name}</span>
-          </h1>
-          <p className="mt-1.5 text-[12.5px] text-ink-3">
-            {latest
-              ? `Last service ${shortDate(latest.date)} · ${latest.present.toLocaleString()} of ${latest.marked.toLocaleString()} marked`
-              : `Good to see you, ${firstName}.`}
-          </p>
-        </div>
-
-        <div className="page-actions flex flex-wrap items-center gap-2">
+      <PageHead
+        eyebrow="Overview"
+        title={platform ? "Every church" : (data.church.name ?? "Your church")}
+        lede={
+          latest
+            ? `Last service ${shortDate(latest.date)} · ${latest.present.toLocaleString()} of ${latest.marked.toLocaleString()} marked`
+            : `Good to see you, ${firstName}.`
+        }
+        action={
+          <div className="flex flex-wrap items-center gap-2">
           {platform && data.health && (
             <span
               className="chip"
@@ -395,8 +396,9 @@ function View({
               </Link>
             </>
           )}
-        </div>
-      </header>
+          </div>
+        }
+      />
 
       <SundayPanel />
 
@@ -409,8 +411,9 @@ function View({
           and it was sitting under ten charts. It names the people and the
           cells rather than counting them: a signpost to a list you then
           have to search is not the work, it is a second search. */}
-      <section className="grid gap-2 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+      <section className="grid gap-2 lg:grid-cols-12">
         <Panel
+          span="lg:col-span-6"
           title="Needs you"
           lede={
             platform
@@ -436,6 +439,7 @@ function View({
           movement are visible at all.
         */}
         <Panel
+          span="lg:col-span-6"
           title="Turnout"
           lede={`Share of those marked · last ${data.trend.length} services`}
           accent="var(--gold)"
@@ -480,7 +484,11 @@ function View({
               </ul>
             </>
           ) : (
-            <Empty>No attendance recorded yet.</Empty>
+            <Empty
+              action={canWrite(me, "attendance") ? { href: "/app/attendance/register", label: "Take the register" } : undefined}
+            >
+              No attendance recorded yet.
+            </Empty>
           )}
         </Panel>
       </section>
@@ -548,7 +556,7 @@ function View({
           which way", which is the question a bare number always provokes
           and never settles. Each card is a link, so the number and the
           way into it are the same target. */}
-      <section className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="stat-row">
         <StatCard
           href="/app/people"
           label="People"
@@ -635,9 +643,10 @@ function View({
           Each is one whole split into a handful of parts, which is the
           only question a ring answers well. More slices than this and it
           is a bar chart wearing a circle. */}
-      <section className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-2 md:grid-cols-2 xl:grid-cols-12">
         {showGiving && (
           <Panel
+            span={ringSpan}
             title="Giving"
             lede={`By type · ${data.giving_months.length} months`}
             accent="var(--emerald)"
@@ -664,11 +673,22 @@ function View({
         )}
 
         <Panel
+          span={ringSpan}
           title="Cell health"
           lede={`${data.cells.length} cells by turnout`}
           accent="var(--teal)"
         >
-          {data.cells.length > 0 ? (
+          {data.cells.length > 0 && atRisk === 0 ? (
+            <Calm
+              items={bands.map((b) => ({
+                label: b.label,
+                colour: BAND_TONE[b.label],
+                value: String(b.value),
+              }))}
+            >
+              No cells at risk.
+            </Calm>
+          ) : data.cells.length > 0 ? (
             <RingPanel
               value={String(atRisk)}
               label="at risk"
@@ -688,12 +708,26 @@ function View({
               }))}
             />
           ) : (
-            <Empty>No cells yet.</Empty>
+            <Empty
+              action={canWrite(me, "cell") ? { href: "/app/cells", label: "Add a cell" } : undefined}
+            >
+              No cells yet.
+            </Empty>
           )}
         </Panel>
 
-        <Panel title="Pastoral care" accent="var(--ruby)">
-          {careTotal > 0 ? (
+        <Panel span={ringSpan} title="Pastoral care" accent="var(--ruby)">
+          {careTotal > 0 && followUps === 0 ? (
+            <Calm
+              items={care.map((c) => ({
+                label: c.label,
+                colour: CARE_TONE[c.label] ?? "var(--sunk)",
+                value: String(c.value),
+              }))}
+            >
+              Nobody is waiting on a call.
+            </Calm>
+          ) : careTotal > 0 ? (
             <RingPanel
               value={String(followUps)}
               label="need a call"
@@ -718,6 +752,7 @@ function View({
         </Panel>
 
         <Panel
+          span={ringSpan}
           title="Age"
           accent="var(--violet)"
           aside={
@@ -754,12 +789,13 @@ function View({
       </section>
 
       {/* ---------------- branch by branch, and the long lines ---------------- */}
-      <section className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+      <section className="grid gap-2 lg:grid-cols-12">
         {/* Concentric rings, not slices: branches do not add up to a
             whole, they are independent fractions of the same 100. Nested,
             they share a start angle and a scale, so the ranking reads off
             the arc lengths without anyone reading a number. */}
         <Panel
+          span="lg:col-span-3"
           title="Turnout by branch"
           accent="var(--violet)"
           aside={
@@ -791,11 +827,16 @@ function View({
               }))}
             />
           ) : (
-            <Empty>No branches with anyone on the roll.</Empty>
+            <Empty
+              action={canWrite(me, "branch") ? { href: "/app/branches", label: "Add a branch" } : undefined}
+            >
+              No branches with anyone on the roll.
+            </Empty>
           )}
         </Panel>
 
         <Panel
+          span={showGiving ? "lg:col-span-3" : "lg:col-span-6"}
           title="Membership"
           accent="var(--cobalt)"
           aside={
@@ -823,6 +864,7 @@ function View({
 
         {showGiving ? (
           <Panel
+            span="lg:col-span-6"
             title="Giving over time"
             accent="var(--emerald)"
             aside={
@@ -842,7 +884,7 @@ function View({
             />
           </Panel>
         ) : (
-          <Panel title="Last service" accent="var(--gold)">
+          <Panel span="lg:col-span-3" title="Last service" accent="var(--gold)">
             {latest ? (
               <Ring
                 height={186}

@@ -549,7 +549,7 @@ export default async function ChurchPage({
 
         {/* ================= the church, measured ================= */}
         <div className="flex flex-col gap-3">
-          <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+          <section className="stat-row">
             <StatCard
               label="On the roll"
               value={church.member_count.toLocaleString()}

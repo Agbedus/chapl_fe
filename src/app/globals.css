@@ -3320,3 +3320,106 @@ a.notif-row:active {
     display: none;
   }
 }
+
+/* ===================================================================
+   Content-area polish
+   =================================================================== */
+
+/* --- the page head ------------------------------------------------
+ * One head for every page: kicker, title, a line of prose, and the
+ * page's own actions on the right, bottom-aligned with the title block
+ * so a tall action group does not float above it. */
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  padding-bottom: 0.25rem;
+}
+
+/* --- the stat row --------------------------------------------------
+ * Four cards stacked on a phone are more than a screen of scrolling
+ * before the thing the page is about (the directory, the register)
+ * appears. Below 640px the row becomes one swipeable strip that bleeds
+ * to the screen edge; from there up it is equal columns. */
+.stat-row {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 1024px) {
+  .stat-row {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-template-columns: none;
+  }
+}
+@media (max-width: 639px) {
+  .stat-row {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.5rem;
+    margin-inline: -1rem;
+    padding-inline: 1rem;
+    scroll-padding-inline: 1rem;
+    scroll-snap-type: x proximity;
+    overscroll-behavior-x: contain;
+  }
+  .stat-row > * {
+    flex: 0 0 min(64%, 14rem);
+    scroll-snap-align: start;
+  }
+}
+
+/* --- the profile nudge --------------------------------------------- */
+.profile-prompt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.375rem 0.5rem 0.375rem 0.875rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+/* --- empty states -------------------------------------------------- */
+.empty-state {
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--mist) 70%, transparent);
+  padding: 1.75rem 1rem;
+  text-align: center;
+}
+
+/* --- tables ---------------------------------------------------------
+ * Row actions stay out of the way until the row is pointed at or
+ * focused: a column of identical "Edit" and "Delete" buttons is a
+ * column of noise that outweighs the data beside it. Touch has no
+ * hover, so there they are always shown. Long text is cut with an
+ * ellipsis so one email address cannot push a column wide. */
+.dtable td {
+  max-width: 34ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dtable td[data-actions] {
+  max-width: none;
+  overflow: visible;
+}
+@media (hover: hover) and (pointer: fine) {
+  .dtable td[data-actions] > * {
+    opacity: 0;
+    transition: opacity 0.12s ease;
+  }
+  .dtable tr:hover td[data-actions] > *,
+  .dtable tr:focus-within td[data-actions] > * {
+    opacity: 1;
+  }
+}
+.dtable tbody tr {
+  height: 2.5rem;
+}

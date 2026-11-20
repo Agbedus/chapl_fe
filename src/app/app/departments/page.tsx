@@ -155,7 +155,7 @@ export default async function DepartmentsPage() {
         }
       />
 
-      <section className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="stat-row">
         <StatCard
           label="Departments"
           value={String(rows.length)}
@@ -202,6 +202,11 @@ export default async function DepartmentsPage() {
           columns={columns}
           rows={tableRows}
           empty="No departments yet."
+          emptyAction={
+            canWrite(me, "department") ? (
+              <DepartmentEditor action={saveDepartment} branches={branchChoices} />
+            ) : undefined
+          }
           footer={[
             `${rows.length} teams`,
             "",

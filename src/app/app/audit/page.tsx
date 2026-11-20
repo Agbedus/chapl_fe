@@ -193,7 +193,7 @@ export default async function AuditPage({
         title="Audit log"
       />
 
-      <section className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="stat-row">
         <StatCard label="Entries" value={total.toLocaleString()} colour="var(--cobalt)"
                   footnote={term || params.table ? "matching this filter" : "all time"} />
         <StatCard label="On this page" value={String(entries.length)} colour="var(--violet)"

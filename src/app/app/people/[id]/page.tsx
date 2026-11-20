@@ -290,7 +290,7 @@ export default async function PersonPage({
       >
         {/* ================= their life in the church ================= */}
         <div className="flex flex-col gap-3">
-          <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+          <section className="stat-row">
             <StatCard
               label="Turnout"
               value={stats?.pct != null ? String(stats.pct) : "—"}

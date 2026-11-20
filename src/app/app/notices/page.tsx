@@ -134,7 +134,7 @@ export default async function NoticesPage() {
         }
       />
 
-      <section className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="stat-row">
         <StatCard label="Live" value={String(live)} colour="var(--cobalt)"
           footnote={`of ${rows.length} posted`} />
         <StatCard label="Pinned" value={String(pinned)} colour="var(--gold)"
@@ -148,6 +148,11 @@ export default async function NoticesPage() {
       <Panel fill title="Every notice" accent="var(--cobalt)">
         <DataTable fill columns={columns} rows={tableRows}
           empty="Nothing posted yet."
+          emptyAction={
+            canWrite(me, "notice") && audiences.length > 0 ? (
+              <NoticeEditor action={saveNotice} audiences={audiences} />
+            ) : undefined
+          }
           footer={[`${rows.length} notices`, `${urgent} urgent`, "", "", "", "", `${live} live`]} />
       </Panel>
     </Page>

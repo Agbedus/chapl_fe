@@ -27,7 +27,7 @@ export default function Loading() {
         <Skeleton className="h-8 w-28 rounded-full" />
       </div>
 
-      <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+      <section className="stat-row">
         <SkeletonStat />
         <SkeletonStat />
         <SkeletonStat />

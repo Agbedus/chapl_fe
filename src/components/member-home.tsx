@@ -4,7 +4,7 @@ import { CalendarDays, Megaphone, Users as UsersIcon } from "lucide-react";
 
 import { raiseCareRequest } from "@/app/actions/manage";
 import { CareRequestEditor } from "@/components/editors";
-import { Empty, Page, Panel, StatCard } from "@/components/panels";
+import { Empty, Page, PageHead, Panel, StatCard } from "@/components/panels";
 import type { ChurchEvent, Me, Notice, PersonProfile } from "@/lib/types";
 
 /**
@@ -58,30 +58,28 @@ export function MemberHome({
 
   return (
     <Page>
-      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div className="min-w-0">
-          <p className="eyebrow text-ink-3">Welcome</p>
-          <h1 className="head mt-2 text-[26px] tracking-[-0.025em] sm:text-[30px]">
-            Hello, {first}
-          </h1>
-          <p className="mt-1.5 text-[12.5px] text-ink-3">
-            {[branchName, cellName].filter(Boolean).join(" · ") ||
-              "You are not placed in a branch yet"}
-          </p>
-        </div>
-        <div className="page-actions flex items-center gap-2">
-          {/* The one action a member has. It sits in the header rather
-              than at the bottom of the page because somebody who needs it
-              should not have to scroll past their attendance to find it. */}
-          <CareRequestEditor action={raiseCareRequest} />
-          {next && (
-            <Link href="/app/events" className="btn btn-quiet btn-sm">
-              <CalendarDays className="h-3.5 w-3.5" aria-hidden />
-              What&apos;s on
-            </Link>
-          )}
-        </div>
-      </header>
+      <PageHead
+        eyebrow="Welcome"
+        title={`Hello, ${first}`}
+        lede={
+          [branchName, cellName].filter(Boolean).join(" · ") ||
+          "You are not placed in a branch yet"
+        }
+        action={
+          <div className="flex items-center gap-2">
+            {/* The one action a member has. It sits in the header rather
+                than at the bottom of the page because somebody who needs it
+                should not have to scroll past their attendance to find it. */}
+            <CareRequestEditor action={raiseCareRequest} />
+            {next && (
+              <Link href="/app/events" className="btn btn-quiet btn-sm">
+                <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+                What&apos;s on
+              </Link>
+            )}
+          </div>
+        }
+      />
 
       <SundayPanel />
 
@@ -111,7 +109,7 @@ export function MemberHome({
       </Panel>
 
       {/* --- their own figures -------------------------------------- */}
-      <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+      <section className="stat-row">
         <StatCard
           label="Your turnout"
           value={profile?.pct != null ? String(profile.pct) : "—"}

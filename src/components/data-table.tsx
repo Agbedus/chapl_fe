@@ -1,5 +1,6 @@
 "use client";
 
+import { Empty } from "@/components/panels";
 import { Check, Pencil, X } from "lucide-react";
 import { useActionState, useState, type ReactNode } from "react";
 
@@ -62,6 +63,7 @@ export function DataTable({
   action,
   canEdit = false,
   empty,
+  emptyAction,
   fill = false,
   footer,
 }: {
@@ -70,6 +72,8 @@ export function DataTable({
   action?: (state: FormState, data: FormData) => Promise<FormState>;
   canEdit?: boolean;
   empty: string;
+  /** The first step out of an empty table: a link, or a form trigger. */
+  emptyAction?: { href: string; label: string } | ReactNode;
   /** Take the rest of the panel and scroll the rows inside it. */
   fill?: boolean;
   /** One cell per column, pinned to the bottom. Totals, usually. */
@@ -80,15 +84,13 @@ export function DataTable({
 
   if (rows.length === 0) {
     return (
-      <p className="rounded-lg bg-mist px-4 py-10 text-center text-[12.5px] text-ink-3">
-        {empty}
-      </p>
+      <Empty action={emptyAction}>{empty}</Empty>
     );
   }
 
   return (
     <div className={fill ? "table-fill -mx-1 px-1" : "-mx-1 overflow-x-auto px-1"}>
-      <table className="w-full border-collapse">
+      <table className="dtable w-full border-collapse">
         <thead>
           <tr className="border-b border-line">
             {columns.map((column) => (
@@ -124,6 +126,7 @@ export function DataTable({
                 {columns.map((column, i) => (
                   <td
                     key={column.key}
+                    data-actions={column.key === "actions" ? "" : undefined}
                     className={`px-2.5 py-2.5 text-[12.5px] text-ink-2 ${
                       column.align === "right" ? "tnum text-right" : "text-left"
                     }`}
@@ -132,7 +135,7 @@ export function DataTable({
                   </td>
                 ))}
                 {editable && (
-                  <td className="px-1 py-2.5 text-right">
+                  <td data-actions="" className="px-1 py-2.5 text-right">
                     {row.fields && row.fields.length > 0 ? (
                       <button
                         type="button"

@@ -50,7 +50,7 @@ export default async function HouseholdsPage({
 
       {!list.ok && <Notice kind="error">{list.error.detail}</Notice>}
 
-      <section className="grid gap-2 sm:grid-cols-3">
+      <section className="stat-row">
         <StatCard label="Households" value={String(list.ok ? list.data.total : 0)} colour="var(--cobalt)" footnote={q ? `matching “${q}”` : "on the books"} />
         <StatCard label="People in them" value={String(housed)} colour="var(--teal)" footnote="across those shown" />
         <StatCard

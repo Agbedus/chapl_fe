@@ -33,6 +33,7 @@ export async function RecordTable<T extends { id: string }>({
   path,
   columns,
   empty,
+  emptyAction,
   searchParams,
   action,
 }: {
@@ -43,6 +44,8 @@ export async function RecordTable<T extends { id: string }>({
   path: string;
   columns: Column<T>[];
   empty: string;
+  /** The first step out of an empty table. */
+  emptyAction?: { href: string; label: string } | React.ReactNode;
   searchParams: Promise<{ page?: string }>;
   /** A control beside the count — "Add a sermon". */
   action?: React.ReactNode;
@@ -84,11 +87,11 @@ export async function RecordTable<T extends { id: string }>({
         {!result.ok ? (
           <Empty>{result.error.detail}</Empty>
         ) : result.data.items.length === 0 ? (
-          <Empty>{empty}</Empty>
+          <Empty action={emptyAction}>{empty}</Empty>
         ) : (
           <>
             <div className="-mx-2 overflow-x-auto px-2">
-              <table className="w-full border-collapse">
+              <table className="dtable w-full border-collapse">
                 <thead>
                   <tr className="border-b border-line">
                     {columns.map((column) => (

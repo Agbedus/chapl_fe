@@ -1,3 +1,4 @@
+import { Check } from "lucide-react";
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 
@@ -38,16 +39,12 @@ export function PageHead({
   action?: ReactNode;
 }) {
   return (
-    <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+    <header className="page-head">
       <div className="min-w-0">
-        <h1 className="head text-[19px] tracking-[-0.02em]">
-          {title}
-          <span className="ml-2.5 align-middle text-[11px] font-medium uppercase tracking-[0.14em] text-ink-3">
-            {eyebrow}
-          </span>
-        </h1>
+        <p className="eyebrow text-ink-3">{eyebrow}</p>
+        <h1 className="head mt-1.5 text-[24px] tracking-[-0.025em] sm:text-[26px]">{title}</h1>
         {lede && (
-          <p className="measure mt-1 text-[12.5px] leading-[1.5] text-ink-3">{lede}</p>
+          <p className="measure mt-1.5 text-[12.5px] leading-[1.5] text-ink-3">{lede}</p>
         )}
       </div>
       {action && <div className="page-actions shrink-0">{action}</div>}
@@ -138,11 +135,91 @@ export function Panel({
   );
 }
 
-export function Empty({ children }: { children: ReactNode }) {
+/**
+ * Nothing here yet.
+ *
+ * A bare line of faded text tells somebody a thing is empty and leaves
+ * them to work out what to do about it. Give it an `action` and the empty
+ * state becomes the first step instead — the same button the page would
+ * have shown once there was something in it, so a new church is led
+ * through the product by its blank spaces.
+ *
+ * Only pass an `action` the reader is allowed to take; a button that
+ * always 403s is worse than no button.
+ */
+export function Empty({
+  children,
+  title,
+  action,
+}: {
+  children: ReactNode;
+  /** A short heading above the explanation. */
+  title?: string;
+  /** The next step: a link, or any node (a form trigger). */
+  action?: { href: string; label: string } | ReactNode;
+}) {
+  const link =
+    action && typeof action === "object" && "href" in action && "label" in action
+      ? (action as { href: string; label: string })
+      : null;
   return (
-    <p className="rounded-2xl border border-dashed border-line bg-mist/70 px-4 py-8 text-center text-[12.5px] leading-relaxed text-ink-3">
-      {children}
-    </p>
+    <div className="empty-state">
+      {title && <p className="text-[13px] font-semibold text-ink">{title}</p>}
+      <p className="measure mx-auto text-[12.5px] leading-relaxed text-ink-3">{children}</p>
+      {link ? (
+        <Link href={link.href} className="btn btn-quiet btn-sm mt-3">
+          {link.label}
+        </Link>
+      ) : action ? (
+        <div className="mt-3">{action as ReactNode}</div>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * The good news, said in one line.
+ *
+ * A donut whose only message is "0 at risk" draws a full ring to say
+ * nothing is wrong, and spends the whole panel doing it. When the figure
+ * the chart exists to show is zero, say so plainly and keep the breakdown
+ * as a short key beneath — the chart returns the day there is something
+ * for it to show.
+ */
+export function Calm({
+  children,
+  items,
+}: {
+  children: ReactNode;
+  items?: { label: string; colour: string; value: string }[];
+}) {
+  return (
+    <div>
+      <p className="flex items-center gap-2 rounded-xl bg-mist px-3 py-3 text-[12.5px] text-ink-2">
+        <span
+          className="grid h-5 w-5 shrink-0 place-items-center rounded-full"
+          style={{
+            background: "color-mix(in oklab, var(--emerald) 16%, transparent)",
+            color: "var(--emerald)",
+          }}
+          aria-hidden
+        >
+          <Check className="h-3 w-3" strokeWidth={3} />
+        </span>
+        {children}
+      </p>
+      {items && items.length > 0 && (
+        <ul className="mt-3 space-y-1.5">
+          {items.map((item) => (
+            <li key={item.label} className="flex items-center gap-2 text-[12px]">
+              <span className="dot" style={{ color: item.colour }} aria-hidden />
+              <span className="text-ink-2">{item.label}</span>
+              <span className="tnum ml-auto text-ink-3">{item.value}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

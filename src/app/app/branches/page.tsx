@@ -203,7 +203,7 @@ export default async function BranchesPage() {
         action={canWrite && churchId ? <BranchEditor action={saveBranch} /> : undefined}
       />
 
-      <section className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="stat-row">
         <StatCard
           label="Sites"
           value={String(rows.length)}
@@ -313,6 +313,7 @@ export default async function BranchesPage() {
           action={saveBranch}
           canEdit={canWrite}
           empty="No branches yet. Add the first one before adding people."
+          emptyAction={canWrite && churchId ? <BranchEditor action={saveBranch} /> : undefined}
           footer={[
             `${rows.length} sites`,
             "",
