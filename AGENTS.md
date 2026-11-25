@@ -120,10 +120,14 @@ on a sine's last digit, and React fails hydration on it.
   the church arrives over the first eleven seconds, each on their own
   seed, popping as they land. The count under the door is those same
   arrivals, painted only when it changes. Reduced motion shows everyone in.
-- **A dot is somebody.** With a fine pointer the cursor leans on the dots
-  a little and lights the ones it is over (it no longer scatters them: you
-  cannot meet somebody who is running away), and the nearest dot gets a
-  card with a name (`nameOf`, fixed by index) and their cell.
+- **A dot is somebody, in every scene.** With a fine pointer the cursor
+  leans on the dots a little and lights the ones it is over (it no longer
+  scatters them: you cannot meet somebody who is running away), and the
+  nearest drawn dot, found in screen space, gets a card with a name and
+  their cell. `nameOf` gives all 798 a different name, fixed by index, and
+  calls the ringed one **You**. The card carries a note for the scene it
+  is met in: in the room or not here yet, here or missed last Sunday,
+  raised a hand or stayed home.
 - **Numbers are made of dots** (`dot-numeral.tsx`): a 5x7 matrix per digit,
   lit cells the figure, unlit cells faint hollow rings. `DotNumeral`
   renders every slot the number will ever need so it never changes width;
@@ -144,8 +148,18 @@ on a sine's last digit, and React fails hydration on it.
 - **The stage sticks inside an absolute layer the height of the story.**
   A sticky element with a negative bottom margin hangs a full screen past
   its container; this one lets go exactly where the story ends.
-- **Sunday holds the screen** (190dvh, copy sticky) so the room has time
-  to fill; the counter beside it is the same arrivals the dots draw.
+- **Sunday counts with the scroll, and holds.** The count starts as the
+  chapter comes up from the bottom of the screen. On a wide screen, if
+  its words reach the middle (level with the room) before everyone is in,
+  the page holds there: Lenis is stopped through `chapl:scroll-lock`,
+  pinned with `chapl:scroll-to`, and the wheel, touch and keys feed the
+  count instead of moving the page, until the room is full and the story
+  goes on. Scrolling up while held counts down and then lets go; a link
+  out (`a[href^='#']`) lets go at once. A phone and reduced motion keep a
+  plain scroll-driven fill, because pinning a thumb is worse. The bar
+  under the count fills with it.
+- **Chapters are numbered in dots** (`01`–`07`), and the cell, branch and
+  church chapters carry their figures in a card beside the words.
 - three.js loads with `next/dynamic` and `ssr: false`, after the words
   have painted. No WebGL means an empty stage and copy that stands alone.
 
@@ -181,7 +195,16 @@ node, so hide a button with a wrapper, not a class on it.
 Below the story, GSAP does the rest, each with a reason. The light
 sections carry `.quiet-dots`: a faint dot grid that breathes, and a
 brighter patch of it following the pointer (`quiet-dots.tsx`, one
-listener for the page). The member section's phone shows each of the six
+listener for the page). **Try Sunday** (`try-sunday.tsx`, `#try`, between the week and the media
+room) lets a visitor do what a member does: the screen at the front
+shows the code in dots, the phone takes six characters (or "Type it for
+me"), and the right code seats you, ringed, in a room of 120 whose count
+the screen and phone share, then puts the question up with your hand in
+your answer. Nothing leaves the page. The media room's waveform is
+columns of dots that the scroll plays until somebody touches it; after
+that, play runs in real time and a click, drag or arrow key seeks. The
+week's tiles and the members' doors are drawn in `DotArt` too, in
+`currentColor`, so each takes its own hue. The member section's phone shows each of the six
 doors as it passes the middle of the screen or is pointed at. Its header
 and body share one template (`.members-grid`: the doors' column and the
 phone's 300px), so the title sits over the doors and the intro over the

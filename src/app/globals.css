@@ -2088,11 +2088,37 @@ button.tile-action:active {
 }
 
 /* The media room's waveform, played by the scroll. */
-.wave-bar {
-  background: var(--line-strong);
-  transition: background-color 160ms ease;
+/* The sermon's waveform, as columns of dots: lit up to where it has played. */
+.dot-wave {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  align-items: end;
+  gap: 3px;
+  height: 64px;
+  cursor: pointer;
+  touch-action: none;
+  border-radius: 6px;
 }
-.wave-bar[data-on] {
+.dot-wave:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 4px;
+}
+.dot-wave-col {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 2px;
+}
+.dot-wave-col i {
+  width: 100%;
+  max-width: 5px;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: var(--line-strong);
+  transition: background-color 120ms ease;
+}
+.dot-wave-col[data-on] i {
   background: var(--accent);
 }
 .play-button {
@@ -3747,6 +3773,15 @@ a.notif-row:active {
 }
 
 /* --- the Sunday count under the door -------------------------------- */
+/* The hairline nave behind the door (drawn by the stage). */
+.nave {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--ink);
+  pointer-events: none;
+}
 .hero-live {
   position: absolute;
   left: 0;
@@ -4222,6 +4257,13 @@ a.notif-row:active {
   margin-top: auto;
   padding-top: 2.5rem;
   color: #ffc247;
+}
+/* A numeral is drawn in ink; on the dark screen it takes the screen's own colours. */
+.try-screen .dm {
+  color: inherit;
+}
+.try-screen-foot .dm {
+  color: #eef0f4;
 }
 .try-code .dm-c:not([data-on]) {
   box-shadow: inset 0 0 0 1px rgba(255, 194, 71, 0.09);

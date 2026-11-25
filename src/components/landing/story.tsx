@@ -231,7 +231,14 @@ export function Story() {
             }
           }
           if (hold.phase === "holding" && Math.abs(window.scrollY - hold.y) > 1) jump(hold.y);
-          if (hold.phase === "released-up" && top > 2) hold.phase = "idle";
+          // Let go upward, then turned round and came back down before
+          // leaving: hold again where it was, rather than letting the page
+          // run on with the room half full.
+          if (hold.phase === "released-up" && top < -2) {
+            hold.y = window.scrollY + top;
+            jump(hold.y);
+            setPhase("holding");
+          } else if (hold.phase === "released-up" && top > 2) hold.phase = "idle";
           // Well above it again, with the stage on another scene: reset, so
           // the room fills again on the next pass.
           if (hold.phase === "done" && top > vh) {

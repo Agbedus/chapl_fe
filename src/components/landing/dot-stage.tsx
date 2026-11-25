@@ -142,6 +142,7 @@ export default function DotStage() {
   const meetWhere = useRef<HTMLSpanElement>(null);
   const meetNote = useRef<HTMLSpanElement>(null);
   const live = useRef<HTMLDivElement>(null);
+  const nave = useRef<SVGSVGElement>(null);
   const liveNumeral = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -253,6 +254,7 @@ export default function DotStage() {
     let scenes: Scene[] = [];
     let dists: Float32Array[] = [];
     const liveEl = live.current;
+    const naveEl = nave.current;
     const liveNumeralEl = liveNumeral.current;
     const layout = () => {
       width = el.clientWidth || window.innerWidth;
@@ -298,6 +300,26 @@ export default function DotStage() {
       if (liveEl) {
         liveEl.style.left = `${hero.x + hero.w / 2}px`;
         liveEl.style.top = `${hero.y + hero.h + 22}px`;
+      }
+      // The nave the door stands in: one hairline arch a step outside it,
+      // and a ring round the crossing, as faint as a watermark. The same
+      // grid as doorScene (20 units wide, 26 tall, the arch's centre on row
+      // 10), so it sits round the door at any size. Wide screens only; on
+      // a phone the door is small and the line would only be clutter.
+      if (naveEl) {
+        if (width >= 900) {
+          const unit = Math.min((hero.w * 0.92) / 20, (hero.h * 0.94) / 26);
+          const cx = hero.x + hero.w / 2;
+          const top = hero.y + (hero.h - unit * 26) / 2;
+          const r = 11.9 * unit;
+          const cy = top + 10 * unit;
+          const bottom = top + 27.4 * unit;
+          const f = (v: number) => v.toFixed(1);
+          naveEl.setAttribute("viewBox", `0 0 ${width} ${height}`);
+          naveEl.innerHTML =
+            `<path d="M${f(cx - r)} ${f(bottom)} L${f(cx - r)} ${f(cy)} A${f(r)} ${f(r)} 0 0 1 ${f(cx + r)} ${f(cy)} L${f(cx + r)} ${f(bottom)}" fill="none" stroke="currentColor" stroke-opacity="0.09" stroke-width="1" vector-effect="non-scaling-stroke"/>` +
+            `<circle cx="${f(cx)}" cy="${f(top + 9.5 * unit)}" r="${f(unit * 3.2)}" fill="none" stroke="currentColor" stroke-opacity="0.06" stroke-width="1"/>`;
+        } else naveEl.innerHTML = "";
       }
       dirty = true;
     };
@@ -508,6 +530,7 @@ export default function DotStage() {
       } else if (liveEl) {
         liveEl.style.opacity = String(clamp01(1 - current * 2.4));
       }
+      if (naveEl) naveEl.style.opacity = String(clamp01(1 - current * 2.4));
 
       position.needsUpdate = true;
       color.needsUpdate = true;
@@ -645,6 +668,8 @@ export default function DotStage() {
 
   return (
     <div ref={host} className="absolute inset-0" aria-hidden>
+      <svg ref={nave} className="nave" style={{ opacity: 0 }} />
+
       <div ref={focus} className="dot-focus" style={{ opacity: 0 }}>
         <span className="dot-focus-ring" />
       </div>

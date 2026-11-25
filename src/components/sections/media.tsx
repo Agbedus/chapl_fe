@@ -43,14 +43,6 @@ const sermons: Sermon[] = [
   },
 ];
 
-// Deterministic waveform — decoration that at least behaves like sound.
-const bars = Array.from({ length: 68 }, (_, i) => {
-  const v = Math.abs(Math.sin(i * 1.17) * 0.55 + Math.sin(i * 0.41) * 0.45);
-  // Whole percentages: these cross to a client component as props.
-  return Math.round(16 + v * 84);
-});
-
-
 export function Media() {
   return (
     <section id="media" className="band on-dark !bg-[#090b10]">
@@ -75,18 +67,8 @@ export function Media() {
               {sermons[0].speaker} · Central · {sermons[0].date}
             </p>
 
-            <div className="mt-9 flex items-start gap-5">
-              <button
-                type="button"
-                aria-label={`Play ${sermons[0].title}`}
-                className="play-button grid h-14 w-14 shrink-0 place-items-center rounded-full bg-accent text-accent-ink"
-              >
-                <Play className="h-5 w-5 translate-x-px fill-current" />
-              </button>
-
-              <div className="min-w-0 flex-1">
-                <Waveform bars={bars} length={sermons[0].length} />
-              </div>
+            <div className="mt-9">
+              <Waveform title={sermons[0].title} length={sermons[0].length} />
             </div>
 
             <div className="mt-8 flex flex-wrap gap-2" aria-hidden>
