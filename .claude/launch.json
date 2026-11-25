@@ -29,7 +29,7 @@
     },
     {
       "name": "chapl-api",
-      "runtimeExecutable": "/Users/yawdonkor/Desktop/git-repos/chapl/.venv/bin/python",
+      "runtimeExecutable": "/Users/yawdonkor/Desktop/web-dev/fastdev/bin/python",
       "runtimeArgs": [
         "-m",
         "uvicorn",
