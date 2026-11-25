@@ -2,15 +2,9 @@
 
 import { useRef, useState } from "react";
 import {
-  Bookmark,
   Check,
-  ClipboardCheck,
-  Hand,
-  HandCoins,
   Heart,
-  HeartHandshake,
   Globe,
-  MapPin,
   Navigation,
   Smartphone,
   TabletSmartphone,
@@ -19,16 +13,19 @@ import {
 } from "lucide-react";
 
 import { gsap, ScrollTrigger, useGSAP } from "@/components/landing/motion";
+import { DotArt, type ArtName } from "@/components/landing/dot-art";
+import { DotNumeral } from "@/components/landing/dot-numeral";
+import { Stopped } from "@/components/landing/stop";
 
-type Door = { icon: LucideIcon; hue: string; title: string; body: string };
+type Door = { art: ArtName; hue: string; title: string; body: string };
 
 const doors: Door[] = [
-  { icon: ClipboardCheck, hue: "var(--gold)", title: "Check in with a code", body: "Six letters on the screen at the front, and they are counted." },
-  { icon: Hand, hue: "var(--cobalt)", title: "Answer the room", body: "The question the pastor asks arrives on their phone. One tap." },
-  { icon: Bookmark, hue: "var(--violet)", title: "Keep a sermon", body: "Save it, listen on the way home, send it to a friend." },
-  { icon: HandCoins, hue: "var(--emerald)", title: "See what they gave", body: "Their own record, anonymous gifts included, whenever they ask." },
-  { icon: HeartHandshake, hue: "var(--ruby)", title: "Ask for prayer or a call", body: "Privately, to the people whose job it is to answer." },
-  { icon: MapPin, hue: "var(--teal)", title: "Find their church", body: "Every branch, when it meets, and directions from where they stand." },
+  { art: "checkin", hue: "var(--gold)", title: "Check in with a code", body: "Six letters on the screen at the front, and they are counted." },
+  { art: "hand", hue: "var(--cobalt)", title: "Answer the room", body: "The question the pastor asks arrives on their phone. One tap." },
+  { art: "play", hue: "var(--violet)", title: "Keep a sermon", body: "Save it, listen on the way home, send it to a friend." },
+  { art: "coins", hue: "var(--emerald)", title: "See what they gave", body: "Their own record, anonymous gifts included, whenever they ask." },
+  { art: "pray", hue: "var(--ruby)", title: "Ask for prayer or a call", body: "Privately, to the people whose job it is to answer." },
+  { art: "pin", hue: "var(--teal)", title: "Find their church", body: "Every branch, when it meets, and directions from where they stand." },
 ];
 
 const platforms: { icon: LucideIcon; label: string }[] = [
@@ -76,7 +73,10 @@ function Screen({ index }: { index: number }) {
               <span key={i} className="dot" style={{ color: "var(--gold)", animationDelay: `${i * 22}ms` }} />
             ))}
           </div>
-          <p className="screen-meta mt-3">412 of 560 here</p>
+          <p className="screen-meta mt-3">
+            <DotNumeral className="dm-inline" value="412" cell="1.9px" /> of{" "}
+            <DotNumeral className="dm-inline" value="560" cell="1.9px" /> here
+          </p>
         </>
       );
     case 1:
@@ -130,7 +130,10 @@ function Screen({ index }: { index: number }) {
       return (
         <>
           <p className="screen-kicker">Your giving, 2026</p>
-          <p className="figure tnum mt-1 text-[26px] leading-none text-ink">GHS 4,820</p>
+          <p className="mt-1.5 flex items-end gap-2 text-ink">
+            <span className="figure text-[15px] leading-none text-ink-3">GHS</span>
+            <DotNumeral value="4,820" template="0,000" label="4,820 Ghana cedis" cell="2.9px" />
+          </p>
           <div className="mt-5 flex items-end gap-[6px]" aria-hidden>
             {MONTHS.map((n, m) => (
               <div key={m} className="flex flex-col-reverse gap-[3px]" style={{ color: "var(--emerald)" }}>
@@ -140,7 +143,10 @@ function Screen({ index }: { index: number }) {
               </div>
             ))}
           </div>
-          <p className="screen-meta mt-4">GHS 600 of it given anonymously. Only you see that here.</p>
+          <p className="screen-meta mt-4">
+            GHS <DotNumeral className="dm-inline" value="600" cell="1.9px" /> of it given anonymously. Only you see that
+            here.
+          </p>
         </>
       );
     case 4:
@@ -178,7 +184,10 @@ function Screen({ index }: { index: number }) {
             ))}
           </div>
           <p className="screen-title mt-3">Adenta</p>
-          <p className="screen-meta">Sundays at 7:30 and 10:00</p>
+          <p className="screen-meta">
+            Sundays at <DotNumeral className="dm-inline" value="7:30" template="0:00" cell="1.7px" /> and{" "}
+            <DotNumeral className="dm-inline" value="10:00" template="00:00" cell="1.7px" />
+          </p>
           <span className="screen-button mt-3" style={{ background: "var(--teal)" }}>
             <Navigation className="h-3.5 w-3.5" strokeWidth={2.2} /> Directions
           </span>
@@ -209,7 +218,7 @@ export function Members() {
           {
             autoAlpha: 1,
             x: 0,
-            duration: 1,
+            duration: 0.8,
             ease: "expo.out",
             scrollTrigger: { trigger: door, start: "top 88%", toggleActions: "play none none reverse" },
           },
@@ -229,13 +238,14 @@ export function Members() {
   );
 
   return (
-    <section ref={root} id="members" className="quiet-dots border-b border-line">
-      <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+    <section ref={root} id="members" className="band quiet-dots">
+      <div className="frame px-6 py-24 sm:px-10 sm:py-32">
         {/* Header and body share one column template: the title above the
             doors at the left, the words about the app above the phone at
             the right. Two vertical edges, and everything sits on them. */}
         <header className="members-grid gap-y-6 border-b border-line pb-10 lg:items-end">
-          <h2 className="head max-w-[13ch] text-[clamp(2.4rem,5vw,4rem)] text-ink">A door in for every member.</h2>
+          <h2 className="head max-w-[13ch] text-[clamp(2.4rem,5vw,4rem)] text-ink"><Stopped>A door in for every member.</Stopped>
+          </h2>
           <div>
             <p className="text-[16.5px] leading-[1.6] text-ink-2">
               The record your office keeps is the app your members sign into. One church, one truth, and nothing
@@ -256,7 +266,7 @@ export function Members() {
             it exactly, so the two columns start and end together. */}
         <div className="members-grid mt-12 gap-y-10">
           <ol className="door-list">
-            {doors.map(({ icon: Icon, hue, title, body }, i) => (
+            {doors.map(({ art, hue, title, body }, i) => (
               <li key={title} data-door>
                 <button
                   type="button"
@@ -268,7 +278,8 @@ export function Members() {
                   onClick={() => setActive(i)}
                 >
                   <span className="door-icon">
-                    <Icon className="h-[20px] w-[20px]" strokeWidth={1.8} />
+                    {/* Drawn in the page's dots, in the door's own hue. */}
+                    <DotArt art={art} cell="4px" gap="2px" still />
                   </span>
                   <span className="min-w-0 text-left">
                     <span className="block text-[16px] font-semibold tracking-tight text-ink">{title}</span>

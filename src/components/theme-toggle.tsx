@@ -3,7 +3,7 @@
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 
-export function ThemeToggle() {
+export function ThemeToggle({ className = "rounded-full" }: { className?: string } = {}) {
   const { resolvedTheme, setTheme } = useTheme();
 
   // Which face shows is decided by the `dark` class in CSS, not by React
@@ -14,7 +14,7 @@ export function ThemeToggle() {
       type="button"
       onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
       aria-label="Toggle dark mode"
-      className="grid h-9 w-9 place-items-center rounded-full border border-line text-ink-2 transition-colors hover:border-line-strong hover:text-ink"
+      className={`grid h-9 w-9 place-items-center border border-line text-ink-2 transition-colors hover:border-line-strong hover:text-ink ${className}`}
     >
       <Moon className="h-[17px] w-[17px] dark:hidden" strokeWidth={1.9} />
       <Sun

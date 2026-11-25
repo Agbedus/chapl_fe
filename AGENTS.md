@@ -100,11 +100,44 @@ it passes (`RIPPLE_SECONDS`). Anything computed with trig that reaches
 an inline style or a prop is rounded: Node and the browser can disagree
 on a sine's last digit, and React fails hydration on it.
 
-- **Positions blend on the CPU**, each person on their own beat (a stagger
-  by seed), which is what makes a morph read as people moving rather than
-  a slide changing. The shader only draws: round dots, hollow rings, a
+- **Positions blend on the CPU**, each person on their own beat, which is
+  what makes a morph read as people moving rather than a slide changing.
+  The beat is **distance from the one ringed person**, not a random seed:
+  a scene change is called in from them and spreads outward as one gesture
+  (`journey()` in the tick, fed by per-scene distance arrays built in
+  `layout()`). Each dot then travels on an arc, always curving the same way
+  round, rising toward the viewer in flight, and lands on a damped spring
+  (`spring()`, one small overshoot, pure in its input so scrolling back
+  retraces it). Colour, fill and alpha use the spring's value *clamped*;
+  position and size use it raw, which is the landing pop. The shader only draws: round dots, hollow rings, a
   slow breath. Colours are read off the CSS variables and re-read when the
   theme toggles, so the dots follow dark mode live.
+- **Lit dots glow.** A second `Points` shares the geometry and every
+  uniform and draws the same dots larger as a soft falloff, lit ones only
+  (a hollow ring gives off nothing). Additive by night, a faint tint by
+  day; the theme observer switches it.
+- **The door has a Sunday.** The hero opens part-filled and the rest of
+  the church arrives over the first eleven seconds, each on their own
+  seed, popping as they land. The count under the door is those same
+  arrivals, painted only when it changes. Reduced motion shows everyone in.
+- **A dot is somebody.** With a fine pointer the cursor leans on the dots
+  a little and lights the ones it is over (it no longer scatters them: you
+  cannot meet somebody who is running away), and the nearest dot gets a
+  card with a name (`nameOf`, fixed by index) and their cell.
+- **Numbers are made of dots** (`dot-numeral.tsx`): a 5x7 matrix per digit,
+  lit cells the figure, unlit cells faint hollow rings. `DotNumeral`
+  renders every slot the number will ever need so it never changes width;
+  `paintNumeral` rewrites which cells are lit on the nodes, so GSAP can
+  count without React. The module is deliberately not a client module.
+  **Every figure on the landing page is drawn this way**: counts, times,
+  percentages and money (the font has `: . , %` as well as digits; a
+  `template` such as `"00:00"` or `"0,000"` fixes the shape so punctuation
+  stays put while the digits change). In a line of text use `.dm-inline`.
+  What stays text on purpose: digits inside a sentence of prose, dates,
+  and citations (`Acts 1:13`, `Romans 12:5`), which are words that happen
+  to be numbered, not figures.
+- **The dot count is the people.** 798 dots are 798 people and no scene
+  adds one for decoration; anything decorative is drawn as a line.
 - **ScrollTrigger drives it, React never sees it.** `stage-state.ts` is a
   plain object the scroll writes and the stage reads each frame; routing
   that through state would render the tree sixty times a second.
@@ -115,6 +148,35 @@ on a sine's last digit, and React fails hydration on it.
   to fill; the counter beside it is the same arrivals the dots draw.
 - three.js loads with `next/dynamic` and `ssr: false`, after the words
   have painted. No WebGL means an empty stage and copy that stands alone.
+
+**The page has three habits, and they are the same in every section.**
+Every heading ends on the ringed dot (`components/landing/stop.tsx`: `Stop`,
+or `Stopped` for a string) where its full stop would be: the story's "one
+person" at the size of a punctuation mark. Use it on a heading and
+nowhere else. Sections are **bands** ruled across the page (`.band`), not
+panels: one hairline that carries a ringed dot at the content's left edge,
+content between two faint verticals (`.frame`), and grids drawn as a
+`.ledger` (one-pixel gaps over a line-coloured ground, so cells share their
+edges; `.tile` is a cell, with a short rule of its domain's hue and
+nothing else). Members' six doors are ruled rows with a hue rule that
+grows down the active one. **There is no shadow anywhere on this page**:
+depth is a line and a change of surface. The only `box-shadow`s left are
+zero-blur rings (a hollow dot, the phone's bezel, an avatar's outline),
+which are drawn that way and are not shadows. Reveal a ledger cell's
+*contents*, not the cell, or the ground shows through grey while it waits.
+
+The header is an **island** (`nav-island.tsx`) with three shapes on one
+curve (`--ease-drawer`): wide at the top; a compact pill (logo mark, the
+section you are in, the way in) on the way down, open again on the way up
+or when pointed at; and an open menu that grows out of the bar over a dimmed,
+blurred page, each section a row with a drawing in the page's dots that
+changes as you move over it (`dot-art.tsx`). Shape is written to
+attributes, not state; only "menu open" and the hovered row are state. The
+page stops scrolling while it is open, through a `chapl:scroll-lock` event
+that `smooth-scroll.tsx` answers, because Lenis owns the wheel. A page with
+no sections gets the plain `.site-bar` instead. One trap: `.btn` sets its
+own `display`, and an unlayered rule beats Tailwind's `hidden` on the same
+node, so hide a button with a wrapper, not a class on it.
 
 Below the story, GSAP does the rest, each with a reason. The light
 sections carry `.quiet-dots`: a faint dot grid that breathes, and a

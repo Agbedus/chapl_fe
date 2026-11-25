@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Plus } from "lucide-react";
 
 import { gsap, useGSAP } from "@/components/landing/motion";
+import { Stopped } from "@/components/landing/stop";
 
 const QUESTIONS = [
   {
@@ -54,9 +55,9 @@ export function FAQ() {
         {
           autoAlpha: 1,
           y: 0,
-          duration: 0.8,
+          duration: 0.7,
           ease: "expo.out",
-          stagger: 0.06,
+          stagger: 0.05,
           scrollTrigger: { trigger: "[data-questions]", start: "top 82%" },
         },
       );
@@ -65,10 +66,11 @@ export function FAQ() {
   );
 
   return (
-    <section ref={root} id="questions" className="quiet-dots border-b border-line bg-mist">
-      <div className="mx-auto grid max-w-6xl gap-12 px-6 py-24 sm:py-32 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+    <section ref={root} id="questions" className="band quiet-dots">
+      <div className="frame grid gap-12 px-4 py-20 sm:px-10 sm:py-28 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
         <div className="lg:sticky lg:top-28 lg:self-start">
-          <h2 className="head max-w-[12ch] text-[clamp(2.2rem,4.6vw,3.6rem)] text-ink">Questions leaders ask.</h2>
+          <h2 className="head max-w-[12ch] text-[clamp(2.2rem,4.6vw,3.6rem)] text-ink"><Stopped>Questions leaders ask.</Stopped>
+          </h2>
           <p className="mt-5 max-w-sm text-[17px] leading-[1.6] text-ink-2">
             The ones that come up before a church signs up. Ask us anything else when you get started.
           </p>

@@ -21,9 +21,22 @@ export function SmoothScroll() {
     const raf = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(raf);
     gsap.ticker.lagSmoothing(0);
+    // The menu stops the page while it is open. Lenis owns the wheel, so
+    // locking is a word to it, not an `overflow` on the body.
+    const lock = (event: Event) => {
+      if ((event as CustomEvent<boolean>).detail) lenis.stop();
+      else lenis.start();
+    };
+    window.addEventListener("chapl:scroll-lock", lock);
+    // The Sunday hold pins the page at an exact point; Lenis is asked, so
+    // its own idea of where the page is stays in step.
+    const to = (event: Event) => lenis.scrollTo((event as CustomEvent<number>).detail, { immediate: true, force: true });
+    window.addEventListener("chapl:scroll-to", to);
     // Development only: a handle for driving the page from the console.
     if (process.env.NODE_ENV !== "production") (window as unknown as { __lenis?: Lenis }).__lenis = lenis;
     return () => {
+      window.removeEventListener("chapl:scroll-lock", lock);
+      window.removeEventListener("chapl:scroll-to", to);
       gsap.ticker.remove(raf);
       lenis.destroy();
     };

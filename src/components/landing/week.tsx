@@ -2,14 +2,14 @@
 
 import { useRef, useState } from "react";
 import {
-  Bell,
   Bookmark,
-  HandHeart,
-  Megaphone,
   Share2,
 } from "lucide-react";
 
 import { gsap, ScrollTrigger, useGSAP } from "@/components/landing/motion";
+import { DotArt } from "@/components/landing/dot-art";
+import { DotNumeral } from "@/components/landing/dot-numeral";
+import { Stopped } from "@/components/landing/stop";
 
 /** A roll of forty-eight, eight not ticked: what a Tuesday looks like. */
 const ROLL = 48;
@@ -91,10 +91,12 @@ function Register() {
           );
         })}
       </div>
-      <p className="mt-5 flex items-baseline gap-2.5">
-        <span className="figure tnum text-[34px] leading-none text-ink">{here}</span>
-        <span className="text-[13px] text-ink-3">
-          here, {absent.size} recorded absent. Tap a dot.
+      <p className="mt-5 flex items-end gap-3.5">
+        <DotNumeral value={String(here)} slots={2} label={`${here} here`} cell="4px" />
+        <span className="pb-px text-[13px] text-ink-3">
+          here,{" "}
+          <DotNumeral className="dm-inline" value={String(absent.size)} slots={1} label={`${absent.size}`} cell="2px" /> recorded
+          absent. Tap a dot.
         </span>
       </p>
     </div>
@@ -143,11 +145,14 @@ export function Week() {
   useGSAP(
     () => {
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      gsap.set("[data-tile]", { autoAlpha: 0, y: reduce ? 0 : 34 });
+      // What arrives is each cell's contents, not the cell: the ledger's
+      // ruled grid is there from the start, and the cells fill in.
+      const contents = (tiles: Element[]) => tiles.flatMap((tile) => Array.from(tile.children));
+      gsap.set(contents(gsap.utils.toArray("[data-tile]")), { autoAlpha: 0, y: reduce ? 0 : 24 });
       ScrollTrigger.batch("[data-tile]", {
         start: "top 88%",
         onEnter: (batch) =>
-          gsap.to(batch, { autoAlpha: 1, y: 0, duration: 0.9, ease: "expo.out", stagger: 0.08, overwrite: true }),
+          gsap.to(contents(batch), { autoAlpha: 1, y: 0, duration: 0.7, ease: "expo.out", stagger: 0.05, overwrite: true }),
       });
       if (!reduce) {
         // The months rise into their heights as the tile arrives.
@@ -199,14 +204,22 @@ export function Week() {
       hue: "var(--ruby)",
       title: "Prayer and care.",
       body: "Members ask for prayer or a call from the app. Leaders see it the same hour.",
-      visual: <HandHeart className="tile-icon beat" strokeWidth={1.7} />,
+      visual: (
+        <span className="tile-icon beat">
+          <DotArt art="heart" cell="4.5px" gap="2px" still />
+        </span>
+      ),
     },
     {
       id: "events",
       hue: "var(--gold)",
       title: "Events that remind people.",
       body: "Register, get a reminder the day before, and let a weekly service repeat itself.",
-      visual: <Bell className="tile-icon ring-bell" strokeWidth={1.7} />,
+      visual: (
+        <span className="tile-icon ring-bell">
+          <DotArt art="calendar" cell="4px" gap="2px" still />
+        </span>
+      ),
     },
     {
       id: "sermons",
@@ -222,7 +235,9 @@ export function Week() {
       body: "Posted once, on every phone in that branch the moment it goes out.",
       visual: (
         <span className="ripple" aria-hidden>
-          <Megaphone className="tile-icon" strokeWidth={1.7} />
+          <span className="tile-icon">
+            <DotArt art="broadcast" cell="4.5px" gap="2px" still />
+          </span>
         </span>
       ),
     },
@@ -245,14 +260,16 @@ export function Week() {
   ];
 
   return (
-    <section ref={root} id="week" className="quiet-dots border-y border-line bg-mist">
-      <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
-        <h2 className="head max-w-[16ch] text-[clamp(2.2rem,4.6vw,3.5rem)] text-ink">The rest of the week.</h2>
+    <section ref={root} id="week" className="band quiet-dots">
+      <div className="frame px-4 py-20 sm:px-10 sm:py-28">
+        <h2 className="head max-w-[16ch] text-[clamp(2.2rem,4.6vw,3.5rem)] text-ink">
+          <Stopped>The rest of the week.</Stopped>
+        </h2>
         <p className="mt-5 max-w-[34rem] text-[17px] leading-[1.6] text-ink-2">
           Everything a church office does between Sundays, beside the people it is for.
         </p>
 
-        <ul className="mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <ul className="ledger mt-14 md:grid-cols-2 lg:grid-cols-4">
           {tiles.map((tile) => (
             <li
               key={tile.id}

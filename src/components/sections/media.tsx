@@ -1,5 +1,7 @@
 import { Bookmark, Headphones, Play, Share2, Video } from "lucide-react";
 
+import { DotNumeral } from "@/components/landing/dot-numeral";
+import { Stopped } from "@/components/landing/stop";
 import { Waveform } from "@/components/landing/waveform";
 
 type Sermon = {
@@ -51,18 +53,18 @@ const bars = Array.from({ length: 68 }, (_, i) => {
 
 export function Media() {
   return (
-    <section id="media" className="on-dark bg-[#090b10]">
-      <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
+    <section id="media" className="band on-dark !bg-[#090b10]">
+      <div className="frame px-4 py-20 sm:px-10 sm:py-28">
         <p className="eyebrow text-ink-3">Media room</p>
         <h2 className="head mt-4 max-w-[16ch] text-[clamp(2.2rem,4.6vw,3.5rem)] text-ink">
-          Sunday keeps preaching all week.
+          <Stopped>Sunday keeps preaching all week.</Stopped>
         </h2>
         <p className="mt-5 max-w-[34rem] text-[17px] leading-[1.6] text-ink-2">
           Video and audio under the right series and branch. Members save what they mean to come
           back to, and a shared link opens for anyone, preview and all.
         </p>
 
-        <div className="mt-14 grid gap-px overflow-hidden rounded-2xl bg-line lg:grid-cols-[1.15fr_1fr]">
+        <div className="mt-14 grid gap-px overflow-hidden rounded-[20px] bg-line lg:grid-cols-[1.15fr_1fr]">
           {/* Featured */}
           <div className="min-w-0 bg-paper p-6 sm:p-9">
             <p className="eyebrow text-accent">Acts, slowly · Part 7</p>
@@ -132,9 +134,13 @@ export function Media() {
                       aria-label="Audio"
                     />
                   )}
-                  <span className="tnum w-11 text-right text-[12.5px] text-ink-3">
-                    {sermon.length}
-                  </span>
+                  <DotNumeral
+                    value={sermon.length}
+                    template="00:00"
+                    label={`Length ${sermon.length}`}
+                    cell="1.9px"
+                    className="text-ink-3"
+                  />
                 </div>
               </li>
             ))}

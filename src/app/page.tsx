@@ -6,6 +6,7 @@ import { Members } from "@/components/landing/members";
 import { QuietDots } from "@/components/landing/quiet-dots";
 import { SmoothScroll } from "@/components/landing/smooth-scroll";
 import { Story } from "@/components/landing/story";
+import { TrySunday } from "@/components/landing/try-sunday";
 import { Week } from "@/components/landing/week";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteNav } from "@/components/site-nav";
@@ -16,7 +17,8 @@ import { SiteNav } from "@/components/site-nav";
  * The story at the top is the argument: the congregation drawn one dot
  * per person, moved by the scroll through the church, its branches, its
  * cells, Sunday's room and one name (`components/landing/story.tsx`).
- * What follows is the week the product runs, the media room, the
+ * What follows is the week the product runs, a Sunday check-in to
+ * try, the media room, the
  * member's side, the questions leaders ask, the verse and the ask.
  */
 export default function Home() {
@@ -28,6 +30,7 @@ export default function Home() {
       <main className="flex-1">
         <Story />
         <Week />
+        <TrySunday />
         <Media />
         <Members />
         <FAQ />

@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 
+import { DotNumeral, paintNumeral } from "@/components/landing/dot-numeral";
 import { gsap, useGSAP } from "@/components/landing/motion";
 
 /**
@@ -23,7 +24,7 @@ export function Waveform({ bars, length }: { bars: number[]; length: string }) {
         const upto = Math.round(played.t * lit.length);
         lit.forEach((bar, i) => bar.toggleAttribute("data-on", i < upto));
         const at = Math.round(played.t * total);
-        if (clock.current) clock.current.textContent = `${Math.floor(at / 60)}:${String(at % 60).padStart(2, "0")}`;
+        if (clock.current) paintNumeral(clock.current, `${Math.floor(at / 60)}:${String(at % 60).padStart(2, "0")}`);
       };
       paint();
       if (reduce) return;
@@ -44,9 +45,9 @@ export function Waveform({ bars, length }: { bars: number[]; length: string }) {
           <span key={i} data-bar className="wave-bar w-full rounded-full" style={{ height: `${h}%` }} />
         ))}
       </div>
-      <div className="tnum mt-3 flex justify-between text-[12px] text-ink-3">
-        <span ref={clock}>0:00</span>
-        <span>{length}</span>
+      <div className="mt-3 flex items-end justify-between text-ink-3">
+        <DotNumeral ref={clock} value="0:00" template="00:00" label="Time played" cell="2.4px" className="text-ink-2" />
+        <DotNumeral value={length} template="00:00" label={`Length ${length}`} cell="2.4px" />
       </div>
     </div>
   );

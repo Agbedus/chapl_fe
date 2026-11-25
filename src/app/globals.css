@@ -537,6 +537,95 @@ body {
   background: color-mix(in oklab, var(--cobalt) 12%, transparent);
   box-shadow: 0 0 0 1.5px color-mix(in oklab, var(--cobalt) 55%, transparent);
 }
+/* A chapter's figures: three in a row, and the church's branches as a legend. */
+.story-figs {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  justify-content: start;
+  gap: 1.75rem;
+}
+
+/* Sunday on a wide screen: the words stop dead centre, level with the room
+   on the stage, and the page holds there until the room is full (the hold
+   in story.tsx). The rule under them fills with the room. */
+.story-copy-holds {
+  position: sticky;
+  top: 54dvh;
+  margin-top: 54dvh;
+}
+@media (min-width: 1024px) {
+  .story-copy-holds {
+    top: 50dvh;
+    margin-top: 50dvh;
+    translate: 0 -50%;
+  }
+}
+.sunday-bar {
+  margin-top: 1.4rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.sunday-bar i {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  transform-origin: 0 50%;
+  transform: scaleX(var(--k, 0));
+}
+
+/* The hero's two small lines: that it is live, and that every dot is somebody. */
+.hero-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.6rem;
+  padding: 0.3rem 0.7rem 0.3rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+.hero-hint-dot {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--emerald) 16%, transparent);
+}
+.hero-hint-dot::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--emerald);
+  animation: hint-pulse 2.4s ease-in-out infinite;
+}
+@keyframes hint-pulse {
+  50% { opacity: 0.35; }
+}
+.hero-meet {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2.75rem;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.hero-meet > span {
+  width: 2.5rem;
+  height: 1px;
+  background: var(--line-strong);
+}
+@media (hover: none), (pointer: coarse) {
+  .hero-meet { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-hint-dot::after { animation: none; }
+}
+
 .chip {
   display: inline-flex;
   align-items: center;
@@ -1781,12 +1870,12 @@ html.lenis body {
   will-change: transform, opacity;
 }
 
-.person-card {
+.person-card,
+.story-card {
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--paper);
   padding: 1rem 1.1rem;
-  box-shadow: var(--elevation);
 }
 .chip {
   display: inline-flex;
@@ -1807,7 +1896,11 @@ html.lenis body {
   }
 }
 
-/* The week's tiles. */
+/* The week's tiles: cells of a ruled grid (`.ledger`), not cards. The grid
+   draws the lines with a one-pixel gap over a line-coloured ground, so
+   every cell shares its edges with its neighbours and nothing doubles. A
+   short rule of the tile's own hue marks which domain it belongs to; that
+   is the only colour a cell is given. */
 .tile {
   --hue: var(--cobalt);
   position: relative;
@@ -1816,21 +1909,18 @@ html.lenis body {
   flex-direction: column;
   gap: 1.5rem;
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 16px;
   background: var(--paper);
-  padding: 1.5rem;
-  transition: transform 400ms var(--ease-out), box-shadow 400ms var(--ease-out), border-color 200ms ease;
+  padding: 1.75rem 1.5rem 1.5rem;
+  transition: background-color 200ms ease;
 }
 .tile::before {
-  /* A wash of the tile's own hue from the corner, barely there until
-     the pointer arrives. */
   content: "";
   position: absolute;
-  inset: 0;
-  background: radial-gradient(120% 80% at 0% 0%, color-mix(in oklab, var(--hue) 9%, transparent), transparent 60%);
-  opacity: 0.5;
-  transition: opacity 400ms ease;
+  top: 0;
+  left: 1.5rem;
+  width: 28px;
+  height: 2px;
+  background: var(--hue);
   pointer-events: none;
 }
 .tile > * {
@@ -1838,18 +1928,19 @@ html.lenis body {
 }
 @media (hover: hover) and (pointer: fine) {
   .tile:hover {
-    transform: translateY(-3px);
-    border-color: var(--line-strong);
-    box-shadow: var(--elevation-hover);
-  }
-  .tile:hover::before {
-    opacity: 1;
+    background: var(--mist);
   }
 }
 .tile-icon {
   width: 30px;
   height: 30px;
   color: var(--hue);
+}
+/* A tile's drawing in dots sizes itself. */
+span.tile-icon {
+  display: inline-grid;
+  width: auto;
+  height: auto;
 }
 .tile-action {
   display: inline-flex;
@@ -2005,12 +2096,11 @@ button.tile-action:active {
   background: var(--accent);
 }
 .play-button {
-  transition: transform 200ms var(--ease-out), box-shadow 300ms ease;
+  transition: transform 200ms var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
   .play-button:hover {
     transform: scale(1.06);
-    box-shadow: 0 0 0 8px color-mix(in oklab, var(--accent) 16%, transparent);
   }
 }
 .play-button:active {
@@ -2041,50 +2131,64 @@ button.tile-action:active {
 .door-list {
   display: grid;
   grid-auto-rows: 1fr;
-  gap: 0.75rem;
+  border-top: 1px solid var(--line);
 }
 .door-list > li {
   display: flex;
 }
 .door {
   --hue: var(--cobalt);
+  position: relative;
   display: flex;
   width: 100%;
   gap: 1.1rem;
   align-items: center;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 1.15rem 1.3rem;
-  background: var(--paper);
+  border-bottom: 1px solid var(--line-soft);
+  padding: 1.1rem 0.5rem 1.1rem 1rem;
+  background: transparent;
   cursor: pointer;
-  transition: border-color 220ms ease, transform 400ms var(--ease-out), box-shadow 400ms var(--ease-out),
-    background-color 220ms ease;
+  transition: background-color 220ms ease;
+}
+/* The row being shown on the phone carries a rule of its own hue down its
+   left edge, which grows from the middle rather than switching on. */
+.door::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--hue);
+  transform: scaleY(0);
+  transition: transform 360ms var(--ease-out);
+}
+.door[data-on]::before {
+  transform: scaleY(1);
+}
+.door[data-on] {
+  background: var(--mist);
 }
 .door-icon {
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   color: var(--hue);
   background: color-mix(in oklab, var(--hue) 12%, transparent);
-  transition: transform 400ms var(--ease-out), background-color 300ms ease, color 300ms ease;
-}
-.door[data-on] {
-  border-color: color-mix(in oklab, var(--hue) 45%, var(--line));
-  box-shadow: var(--elevation);
+  transition: color 300ms ease, background-color 300ms ease;
 }
 .door[data-on] .door-icon {
   color: var(--paper);
   background: var(--hue);
 }
 .door:active {
-  transform: scale(0.99);
+  transform: scale(0.995);
 }
 .door:focus-visible {
   outline: 2px solid var(--cobalt);
-  outline-offset: 3px;
+  outline-offset: -2px;
 }
 
 /* The member's phone: a calm frame, its pages crossfading in place. */
@@ -2096,10 +2200,8 @@ button.tile-action:active {
   border: 1px solid var(--line-strong);
   background: var(--paper);
   padding: 12px;
-  box-shadow:
-    0 1px 2px rgb(14 17 22 / 0.05),
-    0 30px 60px -30px rgb(14 17 22 / 0.28),
-    inset 0 0 0 5px var(--mist);
+  /* The bezel is a ring inside the frame, not a shadow under it. */
+  box-shadow: inset 0 0 0 5px var(--mist);
 }
 .platform {
   display: inline-flex;
@@ -2242,12 +2344,12 @@ button.tile-action:active {
   animation: settle 0.45s var(--ease-out) backwards;
 }
 
-/* Questions leaders ask. */
+/* Questions leaders ask: ruled rows, the open one marked by its plus. */
 .faq {
-  border-top: 1px solid var(--line-strong);
+  border-top: 1px solid var(--line);
 }
 .faq-item {
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--line-soft);
 }
 .faq-question {
   display: flex;
@@ -2257,7 +2359,7 @@ button.tile-action:active {
   gap: 1.5rem;
   padding: 1.35rem 0;
   text-align: left;
-  font-size: 17px;
+  font-size: 17.5px;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--ink);
@@ -2280,7 +2382,7 @@ button.tile-action:active {
   display: grid;
   grid-template-rows: 0fr;
   opacity: 0;
-  transition: grid-template-rows 420ms var(--ease-out), opacity 300ms ease;
+  transition: grid-template-rows 320ms var(--ease-out), opacity 240ms ease;
 }
 .faq-item[data-open] .faq-answer {
   grid-template-rows: 1fr;
@@ -3423,3 +3525,883 @@ a.notif-row:active {
 .dtable tbody tr {
   height: 2.5rem;
 }
+
+
+/* ===================================================================
+   The landing page, as an application
+   ===================================================================
+   The page's habits, in one place: a full stop that is a person,
+   sections that are panels set into the canvas, and a header that is a
+   bar floating over it rather than a strip across the top. */
+
+/* --- the full stop ---------------------------------------------------
+ * The dot with its ring: the product's mark, standing where a heading
+ * would end. Sized in `em` so it scales with the type it closes, and
+ * the ring is a pseudo-element so it can grow outside the line box
+ * without moving a word. */
+.stop {
+  position: relative;
+  display: inline-block;
+  width: 0.17em;
+  height: 0.17em;
+  /* The ring reaches 0.16em left of the dot; the margin clears the last
+     letter of the word by that much and a little air besides. */
+  margin-left: 0.22em;
+  margin-right: 0.08em;
+  border-radius: 999px;
+  background: var(--cobalt);
+  vertical-align: baseline;
+}
+.stop::after {
+  content: "";
+  position: absolute;
+  inset: -0.16em;
+  border-radius: 999px;
+  border: max(1.5px, 0.022em) solid color-mix(in oklab, var(--cobalt) 55%, transparent);
+}
+.stop-sm {
+  width: 5px;
+  height: 5px;
+  margin-left: 4px;
+}
+.stop-sm::after {
+  inset: -3px;
+  border-width: 1px;
+}
+/* The hero's, once, as the page loads: the same echo the story sends
+   out from the one person, at the size of a full stop. */
+@media (prefers-reduced-motion: no-preference) {
+  .display .stop::after {
+    animation: stop-echo 1.8s 1.1s var(--ease-out) 1 backwards;
+  }
+}
+@keyframes stop-echo {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* --- bands -----------------------------------------------------------
+ * Sections are bands ruled across the page, not panels floating on it. Each
+ * opens with one hairline that has a person on it (the ringed dot, at the
+ * left edge of the content), and the content sits between two faint
+ * verticals, so the page reads as a ledger being kept. Depth is a line and
+ * a change of surface; there is no shadow anywhere on this page. */
+.band {
+  position: relative;
+  border-top: 1px solid var(--line);
+  background: var(--paper);
+}
+.band::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: -8.5px;
+  /* Centred on the content's left edge: its 1rem inset on a phone, 2.5rem
+     from `sm` up. */
+  left: calc(max(0px, (100% - 72rem) / 2) + 1rem - 8.5px);
+  width: 17px;
+  height: 17px;
+  border: 1.5px solid color-mix(in oklab, var(--cobalt) 50%, transparent);
+  border-radius: 999px;
+  background: radial-gradient(circle, var(--cobalt) 0 3.5px, var(--paper) 4.2px);
+}
+@media (min-width: 640px) {
+  .band::before {
+    left: calc(max(0px, (100% - 72rem) / 2) + 2.5rem - 8.5px);
+  }
+}
+.frame {
+  margin-inline: auto;
+  max-width: 72rem;
+}
+@media (min-width: 1160px) {
+  .frame {
+    border-inline: 1px solid var(--line-soft);
+  }
+}
+.ledger {
+  display: grid;
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--line);
+}
+
+/* --- the floating bar ------------------------------------------------ */
+.site-bar {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--paper) 76%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+}
+.site-bar .btn:not(.btn-primary) {
+  border-color: transparent;
+}
+@media (hover: hover) and (pointer: fine) {
+  .site-bar .btn:not(.btn-primary):hover {
+    background: var(--mist);
+  }
+}
+
+/* The section tabs: a track, and one raised plate that slides to the
+   section being read. */
+.nav-track {
+  position: relative;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--mist);
+}
+.nav-thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  width: var(--w, 0);
+  transform: translateX(var(--x, 0));
+  border-radius: 9px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  opacity: 0;
+  transition: transform 300ms var(--ease-out), width 300ms var(--ease-out), opacity 200ms ease;
+}
+.nav-track[data-has] .nav-thumb {
+  opacity: 1;
+}
+.nav-track[data-snap] .nav-thumb {
+  transition: opacity 200ms ease;
+}
+.nav-link {
+  position: relative;
+  padding: 0.4rem 0.8rem;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--ink-3);
+  transition: color 160ms ease;
+}
+.nav-link[data-on] {
+  color: var(--ink);
+}
+@media (hover: hover) and (pointer: fine) {
+  .nav-link:hover {
+    color: var(--ink);
+  }
+}
+.nav-link:focus-visible {
+  outline-offset: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-thumb {
+    transition: opacity 200ms ease;
+  }
+}
+
+/* ===================================================================
+   Numbers made of people, and meeting one
+   =================================================================== */
+
+/* --- the dot numeral -------------------------------------------------
+ * A five-by-seven matrix a digit. The lit cells are the figure; the
+ * unlit ones stay as faint hollow rings, because a hollow dot already
+ * means somebody who was not there. `--dm` is one cell's diameter, and
+ * everything else is a multiple of it, so the figure scales as a unit. */
+.dm {
+  --dm: 5px;
+  display: inline-flex;
+  align-items: flex-end;
+  gap: calc(var(--dm) * 1.5);
+  color: var(--ink);
+  vertical-align: bottom;
+}
+.dm-g {
+  display: grid;
+  grid-template-columns: repeat(var(--w, 5), var(--dm));
+  grid-auto-rows: var(--dm);
+  gap: calc(var(--dm) * 0.3);
+}
+.dm-c {
+  width: var(--dm);
+  height: var(--dm);
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: inset 0 0 0 max(1px, calc(var(--dm) * 0.16)) color-mix(in oklab, currentColor 13%, transparent);
+  transition: background-color 90ms ease, box-shadow 90ms ease;
+}
+.dm-c[data-on] {
+  background: currentColor;
+  box-shadow: none;
+}
+
+/* --- the Sunday count under the door -------------------------------- */
+.hero-live {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: none;
+  align-items: flex-end;
+  gap: 0.85rem;
+  transform: translateX(-50%);
+  pointer-events: none;
+  transition: opacity 240ms ease;
+}
+@media (min-width: 900px) {
+  .hero-live {
+    display: flex;
+  }
+}
+.hero-live-label {
+  padding-bottom: 1px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+/* --- meeting a person ------------------------------------------------ */
+.meet {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+  transition: opacity 140ms ease;
+}
+.meet-card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  transform: translate(-50%, calc(-100% - 16px));
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--paper) 92%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
+}
+.meet-name {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.meet-where {
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+.meet-note {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--emerald);
+}
+.meet-note:empty {
+  display: none;
+}
+.meet-note[data-tone="out"] {
+  color: var(--ink-3);
+}
+/* The story's one person is the reader. */
+.meet[data-you] .meet-name {
+  color: var(--cobalt);
+}
+
+/* A figure set into a line of text: small, on the baseline, and sitting
+   in the sentence rather than breaking out of it. */
+.dm-inline {
+  --dm: 1.8px;
+  gap: calc(var(--dm) * 1.2);
+  margin-inline: 0.18em;
+  /* An inline-flex box of empty grids takes its baseline from the bottom of
+     the first row of dots, so it hangs seven rows below the text. Raise it
+     by exactly that and the bottom row sits on the line. */
+  vertical-align: calc(var(--dm) * 7.8);
+  color: inherit;
+}
+
+/* At the size of a line of text the unlit rings are noise: they fill the
+   gaps between lit dots and a figure reads as struck through. The matrix
+   is only worth showing where it is large enough to see. */
+.dm-inline .dm-c:not([data-on]) {
+  box-shadow: none;
+}
+
+/* ===================================================================
+   The island
+   ===================================================================
+   One bar, three shapes (wide, compact, open) on one curve: the iOS
+   drawer's, which starts fast, so the bar answers the instant you
+   reach for it and spends its time settling. */
+
+:root {
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.island-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: 4rem;
+  pointer-events: none;
+}
+.island {
+  position: relative;
+  z-index: 1;
+  width: min(calc(100% - 1.5rem), 69rem);
+  margin: 0.5rem auto 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--paper) 78%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+  pointer-events: auto;
+  transition: width 520ms var(--ease-drawer), border-radius 420ms var(--ease-drawer),
+    background-color 240ms ease;
+}
+.island-bar {
+  display: flex;
+  height: 3rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0 0.375rem 0 1rem;
+}
+.island-logo .font-display,
+.island-track,
+.island-where,
+.island-opt {
+  overflow: hidden;
+  white-space: nowrap;
+  transition: max-width 520ms var(--ease-drawer), opacity 260ms ease, margin 520ms var(--ease-drawer),
+    padding 520ms var(--ease-drawer);
+}
+.island-logo .font-display {
+  display: inline-block;
+  max-width: 5rem;
+}
+.island-track {
+  max-width: 40rem;
+}
+.island-opt {
+  max-width: 14rem;
+}
+/* The compact bar's own word for where you are. */
+.island-where {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  max-width: 0;
+  opacity: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.island-where .stop-sm {
+  flex-shrink: 0;
+  margin: 0 0.1rem 0 0.25rem;
+}
+.island-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/* Compact: down the page and not being touched. */
+.island-wrap[data-compact]:not([data-menu]) .island:not(:hover, :focus-within) {
+  width: min(calc(100% - 1.5rem), 21.5rem);
+}
+.island-wrap[data-compact]:not([data-menu]) .island:not(:hover, :focus-within) .island-track,
+.island-wrap[data-compact]:not([data-menu]) .island:not(:hover, :focus-within) .island-opt,
+.island-wrap[data-compact]:not([data-menu]) .island:not(:hover, :focus-within) .island-logo .font-display {
+  max-width: 0;
+  opacity: 0;
+  padding-inline: 0;
+  margin-inline: 0;
+}
+.island-wrap[data-compact]:not([data-menu]) .island:not(:hover, :focus-within) .island-where {
+  max-width: 10rem;
+  opacity: 1;
+}
+
+/* The menu button: two bars that become a cross. */
+.island-menu {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--ink);
+  transition: background-color 160ms ease, transform 160ms var(--ease-out);
+}
+.island-menu:active {
+  transform: scale(0.94);
+}
+@media (hover: hover) and (pointer: fine) {
+  .island-menu:hover {
+    background: var(--mist);
+  }
+}
+.island-burger {
+  position: relative;
+  display: block;
+  width: 16px;
+  height: 10px;
+}
+.island-burger i {
+  position: absolute;
+  left: 0;
+  width: 16px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: currentColor;
+  transition: transform 360ms var(--ease-drawer), top 360ms var(--ease-drawer);
+}
+.island-burger i:nth-child(1) {
+  top: 1px;
+}
+.island-burger i:nth-child(2) {
+  top: 7.5px;
+}
+.island-wrap[data-menu] .island-burger i:nth-child(1) {
+  top: 4.25px;
+  transform: rotate(45deg);
+}
+.island-wrap[data-menu] .island-burger i:nth-child(2) {
+  top: 4.25px;
+  transform: rotate(-45deg);
+}
+
+/* Open: the page dims, the bar becomes a sheet, the panel grows from it. */
+.island-scrim {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in oklab, var(--ink) 22%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 320ms ease;
+}
+.island-wrap[data-menu] .island-scrim {
+  opacity: 1;
+  pointer-events: auto;
+}
+.island-wrap[data-menu] .island {
+  border-radius: 22px;
+  background: var(--paper);
+}
+.island-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 520ms var(--ease-drawer);
+}
+.island-wrap[data-menu] .island-panel {
+  grid-template-rows: 1fr;
+}
+.island-panel-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+.island-panel-grid {
+  display: grid;
+  gap: 1rem;
+  padding: 0.5rem 1rem 1rem;
+  border-top: 1px solid var(--line-soft);
+}
+@media (min-width: 820px) {
+  .island-panel-grid {
+    grid-template-columns: 1.35fr 1fr;
+    gap: 2rem;
+    padding: 0.75rem 1.5rem 1.5rem;
+  }
+}
+.island-links {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* Rows arrive one after another going in, and leave all at once going out:
+   slow where the user is looking, fast where the system is responding. */
+.island-item {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+.island-wrap[data-menu] .island-item {
+  opacity: 1;
+  transform: none;
+  transition: opacity 320ms ease, transform 480ms var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 45ms + 120ms);
+}
+.island-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.1rem 1rem;
+  padding: 0.95rem 0.25rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+.island-links li:last-child .island-row {
+  border-bottom: 0;
+}
+.island-row-title {
+  grid-column: 1;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.6vw, 1.9rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--ink);
+  transition: transform 360ms var(--ease-out), color 200ms ease;
+}
+.island-row-blurb {
+  grid-column: 1;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.island-row-arrow {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  width: 20px;
+  height: 20px;
+  color: var(--ink-3);
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 200ms ease, transform 360ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .island-row:hover .island-row-title {
+    transform: translateX(6px);
+    color: var(--cobalt);
+  }
+  .island-row:hover .island-row-arrow {
+    opacity: 1;
+    transform: none;
+  }
+}
+.island-row:focus-visible {
+  outline-offset: -2px;
+}
+.island-row:focus-visible .island-row-arrow {
+  opacity: 1;
+  transform: none;
+}
+.island-side {
+  display: none;
+}
+@media (min-width: 820px) {
+  .island-side {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
+.island-art {
+  display: grid;
+  flex: 1;
+  min-height: 12rem;
+  place-items: center;
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
+  background: var(--mist);
+}
+.island-cta {
+  display: flex;
+  gap: 0.5rem;
+}
+.island-cta .btn {
+  flex: 1;
+  padding-block: 0.7rem;
+  font-size: 14px;
+}
+
+/* The menu's drawings: a dot a cell, arriving on a diagonal. */
+.da {
+  display: grid;
+  gap: 6px;
+}
+.da-d,
+.da-n {
+  width: var(--da);
+  height: var(--da);
+  border-radius: 999px;
+}
+.da-d {
+  background: currentColor;
+  animation: da-in 480ms var(--ease-out) backwards;
+}
+.da-o {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+.da-me {
+  background: var(--cobalt);
+  outline: 1.5px solid color-mix(in oklab, var(--cobalt) 55%, transparent);
+  outline-offset: 3px;
+}
+.da-still .da-d {
+  animation: none;
+}
+@keyframes da-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .island,
+  .island-panel,
+  .island-item,
+  .island-track,
+  .island-where,
+  .island-opt,
+  .island-logo .font-display,
+  .island-burger i {
+    transition-duration: 1ms;
+    transition-delay: 0ms;
+  }
+  .da-d {
+    animation: none;
+  }
+}
+
+/* Try Sunday: the screen at the front and the member's phone, side by side.
+   The screen stays dark in both themes, as a projector screen does. */
+.try-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+@media (min-width: 980px) {
+  .try-grid { grid-template-columns: 1.15fr 1fr; }
+}
+.try-screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 26rem;
+  overflow: hidden;
+  padding: clamp(1.5rem, 3.5vw, 2.75rem);
+  border: 1px solid #1c2029;
+  border-radius: 20px;
+  background: #050608;
+  color: #eef0f4;
+}
+.try-glow {
+  position: absolute;
+  inset: auto -20% -60% -20%;
+  height: 80%;
+  background: radial-gradient(closest-side, rgba(255, 194, 71, 0.12), transparent);
+  pointer-events: none;
+}
+.try-screen-title {
+  margin-top: 0.75rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+.try-code {
+  position: relative;
+  margin-top: auto;
+  padding-top: 2.5rem;
+  color: #ffc247;
+}
+.try-code .dm-c:not([data-on]) {
+  box-shadow: inset 0 0 0 1px rgba(255, 194, 71, 0.09);
+}
+.try-screen-foot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+.try-member {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  min-height: 26rem;
+  padding: clamp(1.25rem, 2.6vw, 2rem);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--paper);
+}
+.try-ask {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+.try-boxes {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+  max-width: 22rem;
+}
+.try-boxes input {
+  width: 100%;
+  aspect-ratio: 0.82;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink);
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 2.4vw, 1.75rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  caret-color: var(--cobalt);
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+.try-boxes input:focus {
+  outline: none;
+  border-color: var(--cobalt);
+  background: color-mix(in oklab, var(--cobalt) 6%, var(--paper));
+}
+.try-boxes.bad input {
+  border-color: var(--ruby);
+}
+/* Two names for one shake, so a second wrong code shakes again. */
+.try-boxes.bad[data-shake="0"] {
+  animation: try-shake 360ms var(--ease-out);
+}
+.try-boxes.bad[data-shake="1"] {
+  animation: try-shake-again 360ms var(--ease-out);
+}
+@keyframes try-shake-again {
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+@keyframes try-shake {
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+.try-boxes.good input {
+  border-color: color-mix(in oklab, var(--emerald) 60%, var(--line));
+  color: var(--emerald);
+}
+.try-msg {
+  min-height: 1.4em;
+  font-size: 13.5px;
+}
+.try-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+.try-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--emerald);
+  background: color-mix(in oklab, var(--emerald) 12%, transparent);
+}
+.try-room {
+  display: grid;
+  grid-template-columns: repeat(20, 1fr);
+  gap: 6px;
+  color: var(--gold);
+}
+.try-room i {
+  aspect-ratio: 1;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1.25px color-mix(in oklab, currentColor 55%, transparent);
+  transition: background-color 300ms ease, box-shadow 300ms ease;
+}
+.try-room i[data-on] {
+  background: currentColor;
+  box-shadow: none;
+}
+.try-room i[data-me] {
+  background: var(--cobalt);
+  box-shadow: none;
+  outline: 1.5px solid color-mix(in oklab, var(--cobalt) 55%, transparent);
+  outline-offset: 2px;
+  animation: try-me 700ms var(--ease-out);
+}
+@keyframes try-me {
+  0% { transform: scale(0.2); }
+  60% { transform: scale(1.5); }
+}
+.try-poll {
+  display: grid;
+  gap: 0.6rem;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 500ms ease, transform 600ms var(--ease-out);
+}
+.try-member[data-ask] .try-poll {
+  opacity: 1;
+  transform: none;
+}
+.try-opt {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  text-align: left;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+.try-opt[data-mine] {
+  border-color: color-mix(in oklab, var(--cobalt) 55%, var(--line));
+  background: color-mix(in oklab, var(--cobalt) 6%, transparent);
+}
+@media (hover: hover) and (pointer: fine) {
+  .try-opt:hover { border-color: var(--line-strong); }
+}
+.try-hands {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  min-height: 5px;
+  color: var(--cobalt);
+}
+.try-hands i {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.55;
+}
+.try-hands i.me {
+  opacity: 1;
+  outline: 1px solid currentColor;
+  outline-offset: 1.5px;
+  animation: try-me 600ms var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .try-boxes.bad,
+  .try-room i[data-me],
+  .try-hands i.me { animation: none; }
+  .try-poll { transition: none; transform: none; }
+}
+

@@ -54,6 +54,26 @@ function mulberry32(seed: number) {
   };
 }
 
+const FIRST = ["Ama", "Kofi", "Efua", "Yaw", "Akosua", "Kwame", "Abena", "Nii", "Esi", "Kojo", "Adwoa", "Selorm", "Mawuli", "Afia", "Kwesi", "Naana", "Akua", "Kwaku", "Yaa", "Kwabena", "Ekua", "Fiifi", "Dzifa", "Edem", "Aku", "Kobina", "Araba", "Kweku", "Elikem", "Nana", "Adjoa", "Kafui"];
+const LAST = ["Owusu", "Mensah", "Asante", "Boateng", "Agyei", "Darko", "Nyarko", "Tetteh", "Quaye", "Appiah", "Addo", "Ofori", "Amoah", "Sarpong", "Lamptey", "Acheampong", "Osei", "Badu", "Gyamfi", "Amponsah", "Fosu", "Danso", "Ansah", "Kuffour", "Antwi", "Frimpong"];
+
+/**
+ * A name for a dot, so that pointing at one is meeting somebody.
+ *
+ * Every dot is somebody, and nobody shares a name: 32 first names by 26
+ * surnames is 832 people, more than the church, stepped through by a
+ * stride coprime with 832 so neighbours in a cell are not all one family.
+ * Fixed by index, so the same dot is the same name on every visit. The
+ * story's one person is the reader, so pointing at them says "You"; the
+ * name the story's first card gives them is kept for them alone.
+ */
+export function nameOf(person: Person, you: number): string {
+  if (person.index === you) return "You";
+  const j = (person.index * 37 + 5) % 832;
+  const name = `${FIRST[j % 32]} ${LAST[Math.floor(j / 32)]}`;
+  return name === "Ama Owusu" ? "Ama Kwarteng" : name;
+}
+
 export function peopleOf(branches: Branch[]): Person[] {
   const random = mulberry32(0x646f7473);
   const people: Person[] = [];

@@ -3,11 +3,12 @@ import { ArrowRight } from "lucide-react";
 import { CrossRule } from "@/components/dot-cross";
 import { GatheringChurch } from "@/components/landing/gathering";
 import { Magnetic } from "@/components/landing/magnetic";
+import { Stopped } from "@/components/landing/stop";
 
 export function CTA() {
   return (
-    <section id="start" className="quiet-dots border-b border-line">
-      <div className="mx-auto max-w-6xl px-6 py-24 text-center sm:py-32">
+    <section id="start" className="band quiet-dots">
+      <div className="frame px-4 py-20 text-center sm:px-10 sm:py-28">
         <div className="mb-12">
           <CrossRule tone="var(--gold)" />
         </div>
@@ -16,7 +17,7 @@ export function CTA() {
         <GatheringChurch />
 
         <h2 className="head mx-auto mt-12 max-w-[17ch] text-[clamp(2.25rem,5vw,3.5rem)]">
-          Bring the whole church into one place.
+          <Stopped>Bring the whole church into one place.</Stopped>
         </h2>
         <p className="mx-auto mt-6 max-w-lg text-[17px] leading-[1.6] text-ink-2">
           Start with one branch. Bring in the rest when it is working the way you want.
