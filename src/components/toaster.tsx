@@ -81,7 +81,7 @@ export function Toaster() {
         <div
           key={t.id}
           className="toast-in pointer-events-auto flex max-w-sm items-center gap-2.5 rounded-xl border px-3.5 py-2.5
-                     text-[13px] font-medium shadow-lg backdrop-blur"
+                     text-[13px] font-medium backdrop-blur"
           style={{
             background: "color-mix(in oklab, var(--paper) 92%, transparent)",
             borderColor: "var(--line)",

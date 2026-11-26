@@ -37,15 +37,10 @@
   --accent: var(--cobalt);
   --accent-ink: #ffffff;
 
-  /* Elevation is light against light: a soft hairline plus a long, cool
-     falloff that never reads as a hard box. */
-  --elevation:
-    0 1px 2px rgb(14 17 22 / 0.04),
-    0 12px 32px -16px rgb(14 17 22 / 0.16);
-  --elevation-hover:
-    0 2px 4px rgb(14 17 22 / 0.05),
-    0 18px 44px -16px rgb(14 17 22 / 0.22);
-  --glow: 0 10px 28px -10px color-mix(in oklab, var(--accent) 45%, transparent);
+  /* There are no shadows in this product. Depth is a hairline and a change
+     of surface; these stay as names so nothing that reads them breaks. */
+  --elevation: none;
+  --elevation-hover: none;
 
   /*
    * Motion curves, named once.
@@ -94,15 +89,6 @@
   --accent: var(--cobalt);
   --accent-ink: #08090d;
 
-  /* On a near-black canvas the shadow has nothing to cast against — the
-     card is lit by its edge instead. */
-  --elevation:
-    0 1px 2px rgb(0 0 0 / 0.4),
-    0 18px 44px -16px rgb(0 0 0 / 0.65);
-  --elevation-hover:
-    0 2px 4px rgb(0 0 0 / 0.45),
-    0 24px 52px -16px rgb(0 0 0 / 0.7);
-  --glow: 0 10px 30px -10px color-mix(in oklab, var(--accent) 55%, transparent);
 }
 
 /*
@@ -132,12 +118,6 @@
   --accent: var(--cobalt);
   --accent-ink: #08090d;
 
-  --elevation:
-    0 1px 2px rgb(0 0 0 / 0.4),
-    0 18px 44px -16px rgb(0 0 0 / 0.65);
-  --elevation-hover:
-    0 2px 4px rgb(0 0 0 / 0.45),
-    0 24px 52px -16px rgb(0 0 0 / 0.7);
 
   color: var(--ink);
 }
@@ -795,9 +775,9 @@ body {
  */
 .ts-chart-tooltip {
   background: var(--paper) !important;
-  border: 1px solid var(--line) !important;
+  border: 1px solid var(--line-strong) !important;
   border-radius: 12px !important;
-  box-shadow: var(--elevation-hover) !important;
+  box-shadow: none !important;
   font-family: var(--font-sans);
   padding: 0.5rem 0.625rem !important;
 }
@@ -1063,13 +1043,10 @@ form.modal-panel {
 .dark .modal-scrim.modal-anchored {
   background: rgba(0, 0, 0, 0.5);
 }
+/* Placed under its button with no scrim to stand on, so its edge is the
+   stronger line. */
 .modal-anchored .modal-panel {
-  box-shadow:
-    0 1px 2px rgb(14 17 22 / 0.06),
-    0 24px 60px -16px rgb(14 17 22 / 0.35);
-}
-.dark .modal-anchored .modal-panel {
-  box-shadow: 0 24px 60px -12px rgb(0 0 0 / 0.7);
+  border-color: var(--line-strong);
 }
 @keyframes field-in {
   from { opacity: 0; transform: translateY(6px); }
@@ -1777,8 +1754,11 @@ html.lenis body {
   transform: translateX(3px);
 }
 
-/* Story copy on a phone sits over the drawing's lower edge: a wash of
-   the page colour keeps the words on paper rather than on dots. */
+/* Story copy on a phone sits under the drawing. The drawing is laid out
+   in the top half of the screen (`rectFor` in dot-stage.tsx), and where a
+   long chapter reaches up into it, the words stay on paper: the wash
+   fades in over a short distance and is solid behind every line of text,
+   so nothing is ever read through dots. */
 @media (max-width: 1023px) {
   .story-copy {
     position: relative;
@@ -1789,7 +1769,7 @@ html.lenis body {
     position: absolute;
     inset: -1rem -1.5rem -2.5rem;
     z-index: -1;
-    background: linear-gradient(to top, var(--paper) 62%, color-mix(in oklab, var(--paper) 0%, transparent));
+    background: linear-gradient(to bottom, color-mix(in oklab, var(--paper) 0%, transparent), var(--paper) 3rem);
   }
 }
 
@@ -1912,6 +1892,25 @@ html.lenis body {
   background: var(--paper);
   padding: 1.75rem 1.5rem 1.5rem;
   transition: background-color 200ms ease;
+}
+/* On a phone the tiles stack, so a cell is as tall as what is in it and
+   no taller; a small drawing sits beside its words rather than above an
+   empty stretch of tile. */
+@media (max-width: 767px) {
+  .tile {
+    min-height: 0;
+    gap: 1.25rem;
+    padding: 1.6rem 1.25rem 1.4rem;
+  }
+  .tile-small {
+    display: grid;
+    grid-template-columns: 3.25rem minmax(0, 1fr);
+    align-items: start;
+    column-gap: 1rem;
+  }
+  .tile-small > .mt-auto {
+    margin-top: 0;
+  }
 }
 .tile::before {
   content: "";
@@ -2120,6 +2119,11 @@ button.tile-action:active {
 }
 .dot-wave-col[data-on] i {
   background: var(--accent);
+}
+/* A phone has room for the same 56 columns only if they sit closer. */
+@media (max-width: 639px) {
+  .dot-wave { gap: 1.5px; height: 56px; }
+  .dot-wave-col { gap: 1.5px; }
 }
 .play-button {
   transition: transform 200ms var(--ease-out);
@@ -2558,7 +2562,6 @@ button.tile-action:active {
   letter-spacing: -0.005em;
   color: var(--paper);
   background: var(--ink);
-  box-shadow: 0 4px 14px -6px rgb(0 0 0 / 0.4);
   animation: tip-in 0.125s var(--ease-out);
 }
 
@@ -2614,21 +2617,13 @@ button.tile-action:active {
 .pop {
   position: fixed;
   z-index: 120;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: 12px;
   background: var(--paper);
-  box-shadow:
-    0 1px 2px rgb(14 17 22 / 0.05),
-    0 16px 40px -12px rgb(14 17 22 / 0.28);
   transform-origin: top center;
   animation: pop-in 0.15s var(--ease-out);
 }
 
-.dark .pop {
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.5),
-    0 20px 48px -12px rgb(0 0 0 / 0.7);
-}
 
 /* Flipped above the field, it has to grow downward from its own base. */
 .pop[data-up] {
@@ -3180,7 +3175,6 @@ a.notif-row:active {
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--ink);
-  box-shadow: var(--elevation);
 }
 .live-here {
   display: flex;
@@ -3264,7 +3258,7 @@ a.notif-row:active {
 .theatre-switch button[aria-pressed="true"] {
   background: var(--paper);
   color: var(--ink);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 .theatre-switch button:active {
   transform: scale(0.95);
@@ -3345,7 +3339,6 @@ a.notif-row:active {
 }
 .live-poll[data-open] {
   border-color: color-mix(in oklab, var(--ruby) 40%, var(--line));
-  box-shadow: var(--elevation);
 }
 .live-pill {
   display: inline-flex;
@@ -4224,12 +4217,14 @@ a.notif-row:active {
 }
 @media (min-width: 980px) {
   .try-grid { grid-template-columns: 1.15fr 1fr; }
+  .try-screen,
+  .try-member { min-height: 26rem; }
 }
 .try-screen {
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 26rem;
+  min-height: 17rem;
   overflow: hidden;
   padding: clamp(1.5rem, 3.5vw, 2.75rem);
   border: 1px solid #1c2029;
@@ -4282,7 +4277,6 @@ a.notif-row:active {
   display: flex;
   flex-direction: column;
   gap: 1.15rem;
-  min-height: 26rem;
   padding: clamp(1.25rem, 2.6vw, 2rem);
   border: 1px solid var(--line);
   border-radius: 20px;

@@ -296,7 +296,7 @@ export function Stat({
 /** A share, drawn as a rule. Used where a chart would be more than is needed. */
 export function Meter({ value, colour }: { value: number; colour: string }) {
   return (
-    <span className="block h-[5px] w-full overflow-hidden rounded-full bg-sunk shadow-[inset_0_1px_2px_rgb(0_0_0/0.04)]">
+    <span className="block h-[5px] w-full overflow-hidden rounded-full bg-sunk">
       <span
         className="block h-full rounded-full"
         style={{

@@ -91,7 +91,9 @@ export function Waveform({ title, length }: { title: string; length: string }) {
   };
 
   return (
-    <div ref={root} className="flex items-start gap-5">
+    // On a phone the waveform takes the full width under the button: beside
+    // it, fifty-six columns came to two pixels each.
+    <div ref={root} className="flex flex-wrap items-start gap-x-5 gap-y-4 sm:flex-nowrap">
       <button
         type="button"
         onClick={toggle}
@@ -105,7 +107,7 @@ export function Waveform({ title, length }: { title: string; length: string }) {
         )}
       </button>
 
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 basis-full sm:flex-1 sm:basis-auto">
         <div
           ref={wave}
           className="dot-wave"

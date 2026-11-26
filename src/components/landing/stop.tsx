@@ -14,14 +14,22 @@ export function Stop() {
   return <span className="stop" aria-hidden />;
 }
 
-/** A sentence whose closing full stop is drawn as `Stop`. */
+/**
+ * A sentence whose closing full stop is drawn as `Stop`. The last word and
+ * the stop are kept on one line: a ring wrapped onto a line of its own, on
+ * a phone, reads as a stray mark rather than an ending.
+ */
 export function Stopped({ children }: { children: string }) {
-  return children.endsWith(".") ? (
+  if (!children.endsWith(".")) return <>{children}</>;
+  const body = children.slice(0, -1);
+  const cut = body.lastIndexOf(" ") + 1;
+  return (
     <>
-      {children.slice(0, -1)}
-      <Stop />
+      {body.slice(0, cut)}
+      <span className="whitespace-nowrap">
+        {body.slice(cut)}
+        <Stop />
+      </span>
     </>
-  ) : (
-    <>{children}</>
   );
 }

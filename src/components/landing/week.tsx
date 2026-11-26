@@ -130,6 +130,8 @@ type Tile = {
   title: string;
   body: string;
   span?: string;
+  /** A small drawing: on a phone it sits beside the words, not above them. */
+  small?: boolean;
   visual?: React.ReactNode;
 };
 
@@ -201,6 +203,7 @@ export function Week() {
     },
     {
       id: "care",
+      small: true,
       hue: "var(--ruby)",
       title: "Prayer and care.",
       body: "Members ask for prayer or a call from the app. Leaders see it the same hour.",
@@ -212,6 +215,7 @@ export function Week() {
     },
     {
       id: "events",
+      small: true,
       hue: "var(--gold)",
       title: "Events that remind people.",
       body: "Register, get a reminder the day before, and let a weekly service repeat itself.",
@@ -230,6 +234,7 @@ export function Week() {
     },
     {
       id: "notices",
+      small: true,
       hue: "var(--cobalt)",
       title: "Notices, live.",
       body: "Posted once, on every phone in that branch the moment it goes out.",
@@ -274,7 +279,7 @@ export function Week() {
             <li
               key={tile.id}
               data-tile
-              className={`tile group ${tile.span ?? ""}`}
+              className={`tile group ${tile.small ? "tile-small" : ""} ${tile.span ?? ""}`}
               style={{ "--hue": tile.hue } as React.CSSProperties}
             >
               {tile.visual && <div className="tile-visual">{tile.visual}</div>}

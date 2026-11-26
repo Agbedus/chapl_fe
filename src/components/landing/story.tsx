@@ -317,7 +317,7 @@ export function Story() {
 
       {/* --- the hero ------------------------------------------------ */}
       <section id="top" data-hero className="relative z-10 flex min-h-[100dvh] items-start lg:items-center">
-        <div data-hero-copy className="story-gutter mx-auto w-full max-w-6xl px-6 pt-36 pb-16 sm:pt-40 lg:pt-0 lg:pb-0">
+        <div data-hero-copy className="story-gutter mx-auto w-full max-w-6xl px-6 pt-28 pb-16 sm:pt-40 lg:pt-0 lg:pb-0">
           <div className="max-w-[34rem]">
             <p className="hero-hint rise" style={{ animationDelay: "0ms" }}>
               <span className="hero-hint-dot" aria-hidden />
@@ -328,19 +328,19 @@ export function Story() {
               <br />
               Every branch,
               <br />
-              <span className="text-cobalt">
+              <span className="whitespace-nowrap text-cobalt">
                 every name
                 <Stop />
               </span>
             </h1>
             <p
-              className="rise mt-7 max-w-[27rem] text-[17px] leading-[1.6] text-ink-2"
+              className="rise mt-5 max-w-[27rem] text-[16px] leading-[1.6] text-ink-2 sm:mt-7 sm:text-[17px]"
               style={{ animationDelay: "140ms" }}
             >
               Set up your church once: branches, cells, Sundays, giving and care. Every member gets an app of their
               own.
             </p>
-            <div className="rise mt-9 flex flex-wrap items-center gap-3" style={{ animationDelay: "210ms" }}>
+            <div className="rise mt-7 flex flex-wrap items-center gap-3 sm:mt-9" style={{ animationDelay: "210ms" }}>
               <Magnetic>
                 <a href="/register" className="btn btn-primary btn-lg group">
                   Get started
@@ -379,18 +379,18 @@ export function Story() {
               >
                 {/* The chapter's number, in the page's own dots: the story is
                     a real sequence, so the numbers say something. */}
-                <p data-reveal className="mb-5 text-ink-3">
+                <p data-reveal className="mb-3 text-ink-3 lg:mb-5">
                   <DotNumeral value={`0${index + 1}`} cell="2.4px" label={`Chapter ${index + 1}`} />
                 </p>
-                <h2 data-reveal className="head text-[clamp(2.6rem,5.2vw,4.6rem)] text-ink">
+                <h2 data-reveal className="head text-[clamp(2.15rem,5.2vw,4.6rem)] text-ink">
                   <Stopped>{chapter.title}</Stopped>
                 </h2>
-                <p data-reveal className="mt-5 text-[17px] leading-[1.62] text-ink-2">
+                <p data-reveal className="mt-4 text-[16px] leading-[1.6] text-ink-2 lg:mt-5 lg:text-[17px] lg:leading-[1.62]">
                   {chapter.body}
                 </p>
 
                 {chapter.id === "one" && (
-                  <div data-reveal className="person-card mt-8">
+                  <div data-reveal className="person-card mt-6 lg:mt-8">
                     <div className="flex items-center gap-3">
                       <span className="person-avatar">AO</span>
                       <div className="min-w-0">
@@ -419,7 +419,7 @@ export function Story() {
                 )}
 
                 {chapter.id === "cell" && (
-                  <div data-reveal className="story-card story-figs mt-8">
+                  <div data-reveal className="story-card story-figs mt-6 lg:mt-8">
                     <Fig value={myCell.members} label="in the cell" />
                     <Fig value={myCell.present} label="here last Sunday" tone="var(--teal)" />
                     <Fig value={1} label="leader" />
@@ -427,7 +427,7 @@ export function Story() {
                 )}
 
                 {chapter.id === "branch" && (
-                  <div data-reveal className="story-card story-figs mt-8">
+                  <div data-reveal className="story-card story-figs mt-6 lg:mt-8">
                     <Fig value={myBranch.cells.length} label="cells" />
                     <Fig value={myBranch.members} label="on the roll" tone="var(--violet)" />
                     <Fig value={Math.round((myBranch.present / myBranch.members) * 100)} suffix="%" label="turnout" />
@@ -435,7 +435,7 @@ export function Story() {
                 )}
 
                 {chapter.id === "church" && (
-                  <div data-reveal className="story-card mt-8 grid gap-2.5">
+                  <div data-reveal className="story-card mt-6 grid gap-1.5 lg:mt-8 lg:gap-2.5">
                     {branches.map((branch, i) => (
                       <div key={branch.id} className="grid grid-cols-[10px_1fr_auto] items-center gap-3 text-[14px]">
                         <span className="dot" style={{ color: `var(--${HUES[i % 6]})` }} aria-hidden />

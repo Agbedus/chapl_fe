@@ -113,15 +113,27 @@ const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 /** Where the drawing sits for each scene: beside the copy on a wide
     screen, under it (hero) or above it (story) on a phone. */
-function rectFor(scene: number, w: number, h: number): Rect {
+/**
+ * Where a scene is drawn. On a wide screen, beside the words. On a phone,
+ * never under them: the door goes in whatever the hero's words leave below
+ * them (`heroFloor`, measured, so a longer headline or a short phone moves
+ * the door rather than the door moving under the text), keeping room for
+ * the count beneath it; every chapter is drawn in the top half, clear of
+ * the island above and the chapter's words below.
+ */
+function rectFor(scene: number, w: number, h: number, heroFloor = 0): Rect {
   if (w >= 900) {
     return scene === 0
       ? { x: w * 0.5, y: h * 0.09, w: w * 0.44, h: h * 0.76 }
       : { x: w * 0.43, y: h * 0.1, w: w * 0.5, h: h * 0.8 };
   }
-  return scene === 0
-    ? { x: w * 0.06, y: h * 0.53, w: w * 0.88, h: h * 0.4 }
-    : { x: w * 0.05, y: h * 0.07, w: w * 0.9, h: h * 0.44 };
+  if (scene === 0) {
+    const below = 76;
+    const least = h * 0.26;
+    const top = Math.min(Math.max(h * 0.5, heroFloor + 20), h - below - least);
+    return { x: w * 0.06, y: top, w: w * 0.88, h: h - below - top };
+  }
+  return { x: w * 0.05, y: h * 0.1, w: w * 0.9, h: h * 0.39 };
 }
 
 /**
@@ -256,6 +268,17 @@ export default function DotStage() {
     const liveEl = live.current;
     const naveEl = nave.current;
     const liveNumeralEl = liveNumeral.current;
+    // The hero's words, measured without the transforms of their entrance.
+    const heroCopy = document.querySelector<HTMLElement>("[data-hero-copy] > div");
+    const floorOf = () => {
+      let node: HTMLElement | null = heroCopy;
+      let top = 0;
+      while (node) {
+        top += node.offsetTop;
+        node = node.offsetParent as HTMLElement | null;
+      }
+      return heroCopy ? top + heroCopy.offsetHeight : 0;
+    };
     const layout = () => {
       width = el.clientWidth || window.innerWidth;
       height = el.clientHeight || window.innerHeight;
@@ -269,11 +292,12 @@ export default function DotStage() {
       camera.updateProjectionMatrix();
       // A dot about half its spacing, as the product's own fields draw
       // them: dense enough to read as one thing, open enough to count.
-      const hero = rectFor(0, width, height);
+      const floor = width < 900 ? floorOf() : 0;
+      const hero = rectFor(0, width, height, floor);
       const pitch = Math.sqrt((hero.w * hero.h * 0.36) / n);
       uniforms.uBase.value = Math.min(7.5, Math.max(4.2, pitch * 0.5));
       scenes = [
-        doorScene(people, rectFor(0, width, height), you),
+        doorScene(people, hero, you),
         oneScene(people, rectFor(1, width, height), you),
         cellScene(people, rectFor(2, width, height), you),
         branchScene(people, branches, rectFor(3, width, height), you),
@@ -640,6 +664,8 @@ export default function DotStage() {
 
     const resize = new ResizeObserver(() => layout());
     resize.observe(el);
+    // The words settle once their fonts arrive; the door follows them.
+    if (heroCopy) resize.observe(heroCopy);
     const seen = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
       dirty = true;

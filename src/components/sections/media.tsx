@@ -86,14 +86,14 @@ export function Media() {
             {sermons.slice(1).map((sermon) => (
               <li
                 key={sermon.title}
-                className="group flex min-w-0 items-center gap-4 bg-paper px-6 py-5 transition-colors hover:bg-mist sm:px-7"
+                className="group flex min-w-0 items-center gap-4 bg-paper px-5 py-5 transition-colors hover:bg-mist sm:px-7"
               >
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sunk text-ink-2 transition-colors group-hover:bg-accent group-hover:text-accent-ink">
                   <Play className="h-3.5 w-3.5 translate-x-px fill-current" />
                 </span>
 
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[14.5px] font-medium tracking-tight text-ink">
+                  <p className="line-clamp-2 text-[14.5px] font-medium leading-snug tracking-tight text-ink sm:truncate">
                     {sermon.title}
                   </p>
                   <p className="mt-1 truncate text-[12.5px] text-ink-3">
@@ -102,6 +102,8 @@ export function Media() {
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2.5">
+                  {/* The formats, beside the length; on a phone the title needs the room. */}
+                  <span className="hidden items-center gap-2.5 sm:flex">
                   {sermon.formats.includes("video") && (
                     <Video
                       className="h-4 w-4 text-violet"
@@ -116,6 +118,7 @@ export function Media() {
                       aria-label="Audio"
                     />
                   )}
+                  </span>
                   <DotNumeral
                     value={sermon.length}
                     template="00:00"
