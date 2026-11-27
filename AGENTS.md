@@ -728,7 +728,13 @@ live on the account (`/sermons/saved`), so the phone and the web agree.
 `ShareButton` uses the system share sheet where there is one, else
 copies the link. **Your church** (`/app/about`, `GET
 /churches/{id}/about`) is for every member: where each branch meets,
-when, and directions — their own branch first.
+when, and directions — their own branch first. It opens on the church's
+mark (logo or monogram), a line of who it is, its own words, and its size
+in dot figures, with the office's phone, email, site and address as one
+row of links. Branches with coordinates are placed as dots on a dotted
+field (not a tile map), the reader's own ringed, beside one ruled list;
+each branch's `service_times` is parsed into a seven-day strip with its
+meeting days lit, falling back to the typed text when it cannot be read.
 
 ## The notifications inbox
 
