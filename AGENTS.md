@@ -542,6 +542,7 @@ Firefox amount to a text box wanting a format nobody guesses right.
 | `TimeField` | `type="time"` | 96 quarter hours, opened onto the current value. A church meets on the quarter and types the same six service times forever. |
 | `DateTimeField` | `type="datetime-local"` | Event start and end. Two controls, one shadow input, writing the `YYYY-MM-DDTHH:MM` the API already wanted. |
 | `ComboField` | `<select>` past ~12 options | Cells (81) and notice/event audiences (88). A select that long is a scroll, not a choice. Search, arrow keys, Enter. |
+| `SelectField` / `Listbox` | every other `<select>` | The product's own dropdown, so no grey OS menu lands on a page with its own type and palette. `Select` renders it (and a "None" first when not required); `size="sm"` for a filter, `submitOnChange` for a GET filter form, `form=` for a table row's out-of-form input, and the controlled `Listbox` with `variant="ghost"` for the date picker's month and year. A real listbox: arrows, Home/End, type-ahead, Enter/Space, Escape/Tab. `grep '<select'` should find only comments. |
 
 Three rules hold across all of them:
 
@@ -571,6 +572,10 @@ state. The obvious version measures into `useState` and costs a render on
 open and another on every scroll frame — the React Compiler rejects it
 outright as a cascading render. Position is not data the tree needs; it
 is four numbers the browser needs.
+
+`Popover` keeps a stack of the ones open, and only the top one answers
+Escape and an outside press, so a dropdown inside the date picker closes
+itself and leaves the calendar open.
 
 Escape closes **one** thing. The popover's handler calls
 `stopPropagation`, so pressing it with a picker open closes the picker

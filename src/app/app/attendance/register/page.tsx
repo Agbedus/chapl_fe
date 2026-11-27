@@ -4,7 +4,7 @@ import { ArrowLeft, CalendarDays } from "lucide-react";
 import { Page, PageHead } from "@/components/panels";
 import { Register, type RegisterPerson } from "@/components/register";
 import { Notice } from "@/components/ui/form";
-import { DateField } from "@/components/ui/pickers";
+import { DateField, SelectField } from "@/components/ui/pickers";
 import { api } from "@/lib/api";
 import { requireMe } from "@/lib/session";
 import type { Branch, Cell, Membership, Paged, Person } from "@/lib/types";
@@ -152,32 +152,31 @@ export default async function RegisterPage({
         */}
         <form className="ml-auto flex flex-wrap items-center gap-2">
           <input type="hidden" name="date" value={today} />
-          <select
+          {/* The product's dropdowns, and each sends the form the moment a
+              choice is made: a "Show" button after a filter was a second
+              press for nothing. */}
+          <SelectField
+            size="sm"
+            submitOnChange
+            label="Narrow to a branch"
             name="branch"
             defaultValue={params.branch ?? ""}
-            aria-label="Narrow to a branch"
-            className="rounded-lg border border-line bg-paper px-2.5 py-1.5 text-[12px] text-ink"
-          >
-            <option value="">The whole church</option>
-            {(branches.ok ? branches.data.items : []).map((b) => (
-              <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
-          </select>
-          <select
+            options={[
+              { value: "", label: "The whole church" },
+              ...(branches.ok ? branches.data.items : []).map((b) => ({ value: b.id, label: b.name })),
+            ]}
+          />
+          <SelectField
+            size="sm"
+            submitOnChange
+            label="Narrow to a cell"
             name="cell"
             defaultValue={params.cell ?? ""}
-            aria-label="Narrow to a cell"
-            className="rounded-lg border border-line bg-paper px-2.5 py-1.5 text-[12px] text-ink"
-          >
-            <option value="">Every cell</option>
-            {(cells.ok ? cells.data.items : []).map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-          {/* A `<select>` in a GET form navigates nowhere on its own,
-              and auto-submitting on change would need this page to be a
-              client component for the sake of two dropdowns. */}
-          <button type="submit" className="btn btn-quiet btn-sm">Show</button>
+            options={[
+              { value: "", label: "Every cell" },
+              ...(cells.ok ? cells.data.items : []).map((c) => ({ value: c.id, label: c.name })),
+            ]}
+          />
         </form>
 
         <form className="flex items-center gap-2">

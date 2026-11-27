@@ -6,6 +6,7 @@ import { useActionState, useState, type ReactNode } from "react";
 
 import type { FormState } from "@/app/actions/auth";
 import { useResultToast } from "@/components/toaster";
+import { SelectField } from "@/components/ui/pickers";
 
 /**
  * A real table: one column per field, one header per column.
@@ -212,20 +213,14 @@ function EditRow({
           <td key={column.key} className="px-2.5 py-1.5">
             {field ? (
               field.options ? (
-                <select
+                <SelectField
+                  size="sm"
                   form={formId}
+                  label={column.label}
                   name={field.name}
                   defaultValue={field.value}
-                  className="w-full rounded-md border border-line-strong bg-paper px-2 py-1
-                             text-[12px] text-ink focus:border-transparent focus:outline-none
-                             focus:ring-2 focus:ring-[var(--accent)]"
-                >
-                  {field.options.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  options={field.options}
+                />
               ) : (
                 <input
                   form={formId}

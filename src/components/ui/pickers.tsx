@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Calendar as CalendarIcon, Check, ChevronLeft, ChevronRight, Clock, Search, X,
+  Calendar as CalendarIcon, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, Search, X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
@@ -115,13 +115,17 @@ function Value({
   name,
   value,
   required,
+  form,
 }: {
   name: string;
   value: string;
   required?: boolean;
+  /** The id of a form this input belongs to when it sits outside it (a table row). */
+  form?: string;
 }) {
   return (
     <input
+      form={form}
       name={name}
       value={value}
       required={required}
@@ -263,29 +267,22 @@ function DateShell({
               <ChevronLeft className="h-4 w-4" aria-hidden />
             </StepButton>
 
-            <select
-              aria-label="Month"
-              value={cursor.m}
-              onChange={(e) => setCursor((c) => ({ ...c, m: Number(e.target.value) }))}
-              className="min-w-0 flex-1 rounded-lg bg-transparent px-1.5 py-1 text-[12.5px]
-                         font-semibold outline-none hover:bg-sunk focus:bg-sunk"
-            >
-              {MONTHS.map((m, i) => (
-                <option key={m} value={i}>{m}</option>
-              ))}
-            </select>
-
-            <select
-              aria-label="Year"
-              value={cursor.y}
-              onChange={(e) => setCursor((c) => ({ ...c, y: Number(e.target.value) }))}
-              className="tnum rounded-lg bg-transparent px-1.5 py-1 text-[12.5px] font-semibold
-                         outline-none hover:bg-sunk focus:bg-sunk"
-            >
-              {years.map((y) => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
+            <span className="min-w-0 flex-1">
+              <Listbox
+                variant="ghost"
+                label="Month"
+                value={String(cursor.m)}
+                onChange={(v) => setCursor((c) => ({ ...c, m: Number(v) }))}
+                options={MONTHS.map((m, i) => ({ value: String(i), label: m }))}
+              />
+            </span>
+            <Listbox
+              variant="ghost"
+              label="Year"
+              value={String(cursor.y)}
+              onChange={(v) => setCursor((c) => ({ ...c, y: Number(v) }))}
+              options={years.map((y) => ({ value: String(y), label: String(y) }))}
+            />
 
             <StepButton
               onClick={() =>
@@ -761,3 +758,268 @@ export function DateTimeField({
   );
 }
 
+
+
+/* ------------------------------------------------------------------ */
+/* choose one                                                          */
+/* ------------------------------------------------------------------ */
+
+export type Choice = { value: string; label: string; hint?: string };
+
+/**
+ * One choice from a short list: the product's own dropdown.
+ *
+ * Every native `<select>` in the app was this, drawn by the browser: a
+ * grey OS menu over a page that has a type scale, a palette and no
+ * shadows, different on every machine. `Listbox` is the controlled core
+ * (a trigger and a list in the portalled `Popover`), in three looks:
+ *
+ * - `field`: a form field, the height and corner of every other input.
+ * - `sm`: a filter in a toolbar or a table row.
+ * - `ghost`: bare text that opens a list, for a control set inside
+ *   another (the month and year in the date picker's header).
+ *
+ * The list is a real `listbox`: the trigger opens it with a click, Enter,
+ * Space or an arrow; inside, arrows move, Home and End jump, typing a
+ * letter goes to the next option starting with it, Enter or Space
+ * chooses, Escape and Tab close and hand focus back. The chosen option
+ * carries a check; the one under the cursor or the keyboard is shaded,
+ * and they are the same highlight on purpose. A long list opens scrolled
+ * to its choice.
+ */
+export function Listbox({
+  label,
+  value,
+  onChange,
+  options,
+  placeholder,
+  icon,
+  error,
+  variant = "field",
+  id,
+  className = "",
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: Choice[];
+  placeholder?: string;
+  icon?: ReactNode;
+  error?: string;
+  variant?: "field" | "sm" | "ghost";
+  id?: string;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [cursor, setCursor] = useState(0);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const list = useRef<HTMLDivElement>(null);
+  const typed = useRef({ text: "", at: 0 });
+  const chosen = options.find((o) => o.value === value);
+  const listId = `${id ?? label.replace(/\W+/g, "-").toLowerCase()}-list`;
+
+  const show = () => {
+    setCursor(Math.max(0, options.findIndex((o) => o.value === value)));
+    setOpen(true);
+  };
+  const close = (focusTrigger = true) => {
+    setOpen(false);
+    if (focusTrigger) trigger.current?.focus();
+  };
+  const pick = (v: string) => {
+    if (v !== value) onChange(v);
+    close();
+  };
+
+  // Opened: keyboard into the list, and the choice scrolled into view.
+  useEffect(() => {
+    if (!open) return;
+    const node = list.current;
+    node?.focus({ preventScroll: true });
+    node?.querySelector<HTMLElement>(`[data-index="${cursor}"]`)?.scrollIntoView({ block: "center" });
+    // Only on opening; moving the cursor scrolls itself below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const move = (next: number) => {
+    const n = Math.max(0, Math.min(options.length - 1, next));
+    setCursor(n);
+    list.current?.querySelector<HTMLElement>(`[data-index="${n}"]`)?.scrollIntoView({ block: "nearest" });
+  };
+
+  const onListKey = (event: React.KeyboardEvent) => {
+    const k = event.key;
+    if (k === "ArrowDown") { event.preventDefault(); move(cursor + 1); }
+    else if (k === "ArrowUp") { event.preventDefault(); move(cursor - 1); }
+    else if (k === "Home") { event.preventDefault(); move(0); }
+    else if (k === "End") { event.preventDefault(); move(options.length - 1); }
+    else if (k === "PageDown") { event.preventDefault(); move(cursor + 8); }
+    else if (k === "PageUp") { event.preventDefault(); move(cursor - 8); }
+    else if (k === "Enter" || k === " ") {
+      event.preventDefault();
+      const hit = options[cursor];
+      if (hit) pick(hit.value);
+    } else if (k === "Tab") {
+      close(false);
+    } else if (k.length === 1 && /\S/.test(k)) {
+      // Type-ahead: letters typed within half a second build a prefix.
+      const now = event.timeStamp;
+      const t = typed.current;
+      t.text = now - t.at < 500 ? t.text + k.toLowerCase() : k.toLowerCase();
+      t.at = now;
+      const from = t.text.length === 1 ? cursor + 1 : cursor;
+      const order = [...options.slice(from), ...options.slice(0, from)];
+      const hit = order.find((o) => o.label.toLowerCase().startsWith(t.text));
+      if (hit) move(options.indexOf(hit));
+    }
+  };
+
+  const onTriggerKey = (event: React.KeyboardEvent) => {
+    if (["ArrowDown", "ArrowUp", "Enter", " "].includes(event.key)) {
+      event.preventDefault();
+      show();
+    }
+  };
+
+  const text = chosen?.label ?? "";
+  return (
+    <>
+      <button
+        ref={trigger}
+        id={id}
+        type="button"
+        onClick={() => (open ? close() : show())}
+        onKeyDown={onTriggerKey}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={open ? listId : undefined}
+        aria-label={`${label}${text ? `: ${text}` : ""}`}
+        data-variant={variant}
+        data-open={open ? "" : undefined}
+        data-error={error ? "" : undefined}
+        data-icon={icon ? "" : undefined}
+        className={`lb-trigger ${className}`}
+      >
+        {icon && <span className="lb-icon" aria-hidden>{icon}</span>}
+        <span className={`lb-text ${text ? "" : "lb-placeholder"}`}>
+          {text || cleanPrompt(placeholder ?? label)}
+        </span>
+        <ChevronDown className="lb-chevron" aria-hidden />
+      </button>
+
+      <Popover
+        open={open}
+        onClose={() => setOpen(false)}
+        anchor={trigger}
+        className={`lb-pop lb-pop-${variant}`}
+      >
+        <div
+          ref={list}
+          id={listId}
+          role="listbox"
+          tabIndex={-1}
+          aria-label={label}
+          aria-activedescendant={`${listId}-${cursor}`}
+          onKeyDown={onListKey}
+          className="lb-list"
+        >
+          {options.map((o, i) => {
+            const on = o.value === value;
+            return (
+              <div
+                key={o.value}
+                id={`${listId}-${i}`}
+                role="option"
+                aria-selected={on}
+                data-index={i}
+                data-active={i === cursor ? "" : undefined}
+                onPointerEnter={() => setCursor(i)}
+                onClick={() => pick(o.value)}
+                className="lb-option"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="lb-option-label">{o.label}</span>
+                  {o.hint && <span className="lb-option-hint">{o.hint}</span>}
+                </span>
+                {on && <Check className="lb-check" strokeWidth={2.5} aria-hidden />}
+              </div>
+            );
+          })}
+        </div>
+      </Popover>
+    </>
+  );
+}
+
+/**
+ * `Listbox` as a form field: its own state and a shadow input, so it posts
+ * like the `<select>` it replaced, and `required` still means something.
+ *
+ * `submitOnChange` sends the form it sits in as soon as a choice is made:
+ * for a GET filter (a branch, a cell), where a separate "Show" button was
+ * a second press for nothing. It waits for the shadow input to hold the
+ * new value first, or the form would post the old one. `onValueChange` is
+ * for a client caller that wants to know.
+ */
+export function SelectField({
+  label,
+  name,
+  options,
+  defaultValue = "",
+  required,
+  error,
+  hint,
+  placeholder,
+  icon,
+  size = "field",
+  form,
+  submitOnChange,
+  onValueChange,
+}: {
+  label: string;
+  name: string;
+  options: Choice[];
+  defaultValue?: string;
+  required?: boolean;
+  error?: string;
+  hint?: string;
+  placeholder?: string;
+  icon?: ReactNode;
+  size?: "field" | "sm";
+  form?: string;
+  submitOnChange?: boolean;
+  onValueChange?: (value: string) => void;
+}) {
+  const [value, setValue] = useState(defaultValue);
+  const holder = useRef<HTMLDivElement>(null);
+  const pending = useRef(false);
+
+  useEffect(() => {
+    if (!pending.current) return;
+    pending.current = false;
+    const input = holder.current?.querySelector<HTMLInputElement>("input.picker-value");
+    input?.form?.requestSubmit();
+  }, [value]);
+
+  return (
+    <div ref={holder} className={size === "sm" ? "relative inline-block" : "relative"}>
+      <Value name={name} value={value} required={required} form={form} />
+      <Listbox
+        id={name}
+        label={label}
+        value={value}
+        onChange={(v) => {
+          setValue(v);
+          onValueChange?.(v);
+          if (submitOnChange) pending.current = true;
+        }}
+        options={options}
+        placeholder={placeholder}
+        icon={icon}
+        error={error}
+        variant={size}
+      />
+      {size === "field" && <Message error={error} hint={hint} />}
+    </div>
+  );
+}

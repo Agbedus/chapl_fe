@@ -3,6 +3,9 @@
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
+/** Popovers open now, oldest first. Only the last one answers Escape and outside presses. */
+const OPEN: symbol[] = [];
+
 /**
  * The shell every picker on this page opens into.
  *
@@ -28,6 +31,7 @@ export function Popover({
   children,
   width,
   side = "bottom",
+  className,
 }: {
   open: boolean;
   onClose: () => void;
@@ -38,6 +42,7 @@ export function Popover({
   width?: number;
   /** "right" opens beside the anchor — for a trigger in a narrow rail. */
   side?: "bottom" | "right";
+  className?: string;
 }) {
   const panel = useRef<HTMLDivElement>(null);
 
@@ -115,9 +120,14 @@ export function Popover({
 
   useEffect(() => {
     if (!open) return;
+    const self = Symbol("popover");
+    OPEN.push(self);
+    // Only the popover on top answers: a dropdown opened inside a date
+    // picker closes itself on Escape or an outside press, not both.
+    const onTop = () => OPEN[OPEN.length - 1] === self;
 
     const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
+      if (event.key !== "Escape" || !onTop()) return;
       // Stop the modal behind from closing as well. One Escape should
       // undo one thing, and the thing on top is the picker.
       event.stopPropagation();
@@ -126,6 +136,7 @@ export function Popover({
     };
 
     const onDown = (event: PointerEvent) => {
+      if (!onTop()) return;
       const target = event.target as Node;
       if (panel.current?.contains(target) || anchor.current?.contains(target)) return;
       onClose();
@@ -134,6 +145,7 @@ export function Popover({
     document.addEventListener("keydown", onKey, true);
     document.addEventListener("pointerdown", onDown);
     return () => {
+      OPEN.splice(OPEN.indexOf(self), 1);
       document.removeEventListener("keydown", onKey, true);
       document.removeEventListener("pointerdown", onDown);
     };
@@ -148,7 +160,7 @@ export function Popover({
       ref={panel}
       role="dialog"
       aria-labelledby={labelledBy}
-      className="pop"
+      className={className ? `pop ${className}` : "pop"}
       style={{ left: 0, top: 0, visibility: "hidden" }}
       /*
        * A portal escapes the DOM, not React.

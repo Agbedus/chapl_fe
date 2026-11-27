@@ -4,7 +4,7 @@ import { useFormStatus } from "react-dom";
 import { AlertCircle, Check, CheckCircle2, Loader2 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 
-import { ComboField } from "@/components/ui/pickers";
+import { ComboField, SelectField } from "@/components/ui/pickers";
 
 /**
  * The text input's look, in one place.
@@ -257,37 +257,18 @@ export function Select({
                   required={required} error={error} hint={hint} placeholder={placeholder} icon={icon} />
     );
   }
+  /*
+   * The product's own dropdown, not the browser's. A field that may be
+   * left empty gets a "None" at the top, which is what the native
+   * select's blank first option was for.
+   */
+  const choices =
+    required || options.some((o) => o.value === "")
+      ? options
+      : [{ value: "", label: "None" }, ...options];
   return (
-    <div className={icon ? "has-icon relative" : "relative"}>
-      {icon && <span className="field-icon" aria-hidden>{icon}</span>}
-      <select
-        id={name}
-        name={name}
-        aria-label={label}
-        required={required}
-        defaultValue={defaultValue ?? ""}
-        aria-invalid={error ? true : undefined}
-        className="w-full appearance-none rounded-xl border bg-paper px-3.5 py-2.5
-                   text-[14.5px] text-ink transition-colors hover:border-line-strong
-                   focus:border-transparent focus:outline-none focus:ring-2
-                   focus:ring-[var(--accent)]"
-        style={{ borderColor: error ? "var(--ruby)" : "var(--line)" }}
-      >
-        {/* The first option carries the label, so a select says what it
-            is without a heading above it. */}
-        <option value="">{cleanPrompt(placeholder ?? label)}</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      {error ? (
-        <p className="mt-1.5 text-[12px]" style={{ color: "var(--ruby)" }}>{error}</p>
-      ) : hint ? (
-        <p className="mt-1.5 text-[12px] text-ink-3">{hint}</p>
-      ) : null}
-    </div>
+    <SelectField label={label} name={name} options={choices} defaultValue={defaultValue ?? ""}
+                 required={required} error={error} hint={hint} placeholder={placeholder} icon={icon} />
   );
 }
 
