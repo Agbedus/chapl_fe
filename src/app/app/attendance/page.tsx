@@ -293,7 +293,7 @@ export default async function AttendancePage({
                 <li key={cell.id}>
                   <Link
                     href={`/app/cells?branch=${cell.branch_id}`}
-                    className="flex items-baseline justify-between gap-3 rounded-lg px-1.5 py-[7px]
+                    className="flex items-baseline justify-between gap-3 px-1.5 py-[7px]
                                transition-colors duration-150 hover:bg-mist"
                   >
                     <span className="flex min-w-0 items-baseline gap-2">

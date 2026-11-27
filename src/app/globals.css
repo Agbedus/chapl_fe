@@ -676,6 +676,17 @@ body {
   border-top: 1px solid var(--line);
 }
 
+/* A ruled list is square, row and row link alike. A rounded row bends
+   the hairline it carries at both ends, and a rounded hover sits between
+   two straight rules as a pill nobody asked for. */
+.rows > *,
+.rows > * > a,
+.rows > * > button,
+.divide-y > *,
+.care-rows > li {
+  border-radius: 0;
+}
+
 /*
  * The number inside a ring.
  *
@@ -5021,7 +5032,6 @@ a.mini-row:hover {
   margin-inline: -0.5rem;
   width: calc(100% + 1rem);
   padding: 0.5rem;
-  border-radius: 12px;
   text-align: left;
   transition: background-color 0.15s ease, scale 0.12s var(--ease-out);
 }
