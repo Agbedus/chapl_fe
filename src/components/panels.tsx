@@ -409,11 +409,12 @@ export function Key({
       className={`mt-2.5 gap-x-3 gap-y-1 ${wide ? "grid grid-cols-2" : "flex flex-col"}`}
     >
       {items.map((item) => (
-        <li key={item.label} className="flex items-baseline gap-1.5 text-[10.5px]">
+        // The figure follows its label at a word's distance rather than
+        // sitting at the far edge of the column: near is what says the two
+        // belong together, and a gap across the column says they do not.
+        <li key={item.label} className="flex min-w-0 items-baseline gap-1.5 text-[10.5px]">
           <span className="dot shrink-0" style={{ color: item.colour }} aria-hidden />
-          <span className="min-w-0 flex-1 truncate capitalize text-ink-3">
-            {item.label}
-          </span>
+          <span className="min-w-0 truncate capitalize text-ink-3">{item.label}</span>
           <span className="tnum shrink-0 font-semibold text-ink-2">{item.value}</span>
         </li>
       ))}
