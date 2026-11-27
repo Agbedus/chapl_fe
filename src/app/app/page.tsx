@@ -661,11 +661,11 @@ function View({
                 <DonutChart
                   data={data.giving_types.map((g) => ({ label: g.label, value: g.total }))}
                   colors={GIVING_TONES}
-                  height={168}
+                  height={204}
                   ariaLabel="Giving split by type"
                 />
               }
-              height={168}
+              height={204}
               items={data.giving_types.slice(0, 6).map((g, i) => ({
                 label: g.label,
                 colour: GIVING_TONES[i % GIVING_TONES.length],
