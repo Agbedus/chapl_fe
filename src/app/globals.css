@@ -6465,3 +6465,176 @@ a.church-link:active {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* --- run of service ---------------------------------------------------- */
+.deck-list {
+  display: grid;
+  counter-reset: none;
+}
+.deck-list > li + li {
+  border-top: 1px solid var(--line-soft);
+}
+.deck-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  transition: opacity 0.2s ease;
+}
+.deck-row[data-off] {
+  opacity: 0.45;
+}
+.deck-n {
+  width: 1.25rem;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.deck-icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border-radius: 10px;
+  color: var(--tone, var(--ink-2));
+  background: color-mix(in oklab, var(--tone, var(--ink-2)) 11%, transparent);
+}
+.deck-icon[data-kind="welcome"] { --tone: var(--violet); }
+.deck-icon[data-kind="countdown"] { --tone: var(--gold); }
+.deck-icon[data-kind="code"] { --tone: var(--gold); }
+.deck-icon[data-kind="room"] { --tone: var(--gold); }
+.deck-icon[data-kind="message"] { --tone: var(--violet); }
+.deck-icon[data-kind="notice"] { --tone: var(--cobalt); }
+.deck-icon[data-kind="events"] { --tone: var(--gold); }
+.deck-icon[data-kind="question"] { --tone: var(--ruby); }
+.deck-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.deck-summary {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+.deck-play {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink-2);
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, opacity 0.15s ease, scale 0.12s var(--ease-out);
+}
+.deck-play:hover:not(:disabled) {
+  color: var(--accent-ink);
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.deck-play:active:not(:disabled) {
+  scale: 0.94;
+}
+.deck-play:disabled {
+  opacity: 0.35;
+}
+@media (hover: hover) and (pointer: fine) {
+  .deck-row .deck-play {
+    opacity: 0;
+  }
+  .deck-row:hover .deck-play,
+  .deck-row:focus-within .deck-play {
+    opacity: 1;
+  }
+}
+/* A switch, drawn from the system's parts: a track and its dot. */
+.deck-switch {
+  position: relative;
+  width: 2.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  border-radius: 99px;
+  background: var(--line-strong);
+  transition: background-color 0.2s ease;
+}
+.deck-switch > span {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(1.25rem - 4px);
+  height: calc(1.25rem - 4px);
+  border-radius: 99px;
+  background: var(--paper);
+  transition: translate 0.22s var(--ease-out);
+}
+.deck-switch[aria-checked="true"] {
+  background: var(--emerald);
+}
+.deck-switch[aria-checked="true"] > span {
+  translate: 1rem 0;
+}
+.deck-switch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* --- new slides -------------------------------------------------------- */
+.ps-countdown .dm {
+  --dm: clamp(10px, 2.4vw, 40px);
+  color: var(--gold);
+}
+.ps-body {
+  max-width: 48ch;
+  font-size: clamp(18px, 2.1vw, 38px);
+  line-height: 1.45;
+  color: var(--ink-2);
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+}
+.ps-events {
+  display: grid;
+}
+.ps-events > li {
+  display: grid;
+  grid-template-columns: minmax(0, 15em) minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 2vw;
+  padding: 2vh 0;
+  border-top: 1px solid var(--line);
+  font-size: clamp(16px, 1.8vw, 32px);
+}
+.ps-event-when {
+  color: var(--gold);
+  font-weight: 600;
+}
+.ps-event-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.ps-event-where {
+  grid-column: 2;
+  font-size: 0.75em;
+  color: var(--ink-3);
+}
+@media (prefers-reduced-motion: reduce) {
+  .deck-switch,
+  .deck-switch > span,
+  .deck-play {
+    transition: none;
+  }
+}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { DonutChart, TrendChart } from "@/components/charts";
+import { ColumnsChart, DonutChart } from "@/components/charts";
 import { Empty, Page, PageHead, Panel, RingPanel, Stat } from "@/components/panels";
 import { recordGift } from "@/app/actions/manage";
 import { canWrite } from "@/lib/access";
@@ -230,11 +230,15 @@ export default async function GivingPage({
           }
         >
           {months.length > 0 ? (
-            <TrendChart
+            // The dashboard's giving chart: each month a column, the
+            // dashed average, this month pale because it is not over.
+            <ColumnsChart
               data={months.map((m, i) => ({ label: monthLabels[i], value: m.total }))}
               color="var(--emerald)"
               height={186}
-              ariaLabel="Total giving per month"
+              average
+              partialLast
+              ariaLabel="Total giving per month, with the monthly average"
             />
           ) : (
             <Empty>No gifts in the window.</Empty>

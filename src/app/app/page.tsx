@@ -506,7 +506,7 @@ function View({
                 delta={turnoutDelta != null ? <Delta value={turnoutDelta} label="pts" /> : undefined}
                 note={`${latest.present.toLocaleString()} of ${latest.marked.toLocaleString()} · ${shortDate(latest.date)}`}
               />
-              <div className="chart-draw chart-quiet mt-3">
+              <div className="mt-3">
                 <TrendChart
                   data={turnoutLine}
                   color="var(--gold)"
@@ -641,7 +641,7 @@ function View({
                 givingThisMonth != null ? ` · ${money(givingThisMonth, currency)} so far this month` : ""
               }`}
             />
-            <div className="chart-rise chart-quiet mt-3">
+            <div className="mt-3">
               <ColumnsChart
                 data={givingLine}
                 color="var(--emerald)"
@@ -692,7 +692,7 @@ function View({
                 value={joinedWindow.toLocaleString()}
                 note={`joined in ${joinedLine.length} months`}
               />
-              <div className="chart-rise chart-quiet mt-3">
+              <div className="mt-3">
                 <ColumnsChart
                   data={joinedLine}
                   color="var(--cobalt)"

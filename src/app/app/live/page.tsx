@@ -1,17 +1,15 @@
 import { askRoom, checkIn, openCheckIn } from "@/app/actions/manage";
 import { AskQuestionEditor, CheckInBox, CheckInOpenEditor } from "@/components/editors";
-import { MonitorPlay } from "lucide-react";
-
 import { LiveBoard } from "@/components/live-board";
 import { SundayPanel } from "@/components/live-service";
-import { Presenter } from "@/components/presenter";
+import { PresentButton, ServiceDeck, type DeckEvent, type DeckNotice } from "@/components/service-deck";
 import { LiveRefresh } from "@/components/live-refresh";
 import { Empty, Page, Panel } from "@/components/panels";
 import { canRead, canWrite } from "@/lib/access";
 import { api } from "@/lib/api";
 import type { Schemas } from "@/lib/generated/api";
 import { canAdminChurch, currentChurchId, requireMe } from "@/lib/session";
-import type { Branch, Paged } from "@/lib/types";
+import type { Branch, Church, Notice, Paged } from "@/lib/types";
 
 export const metadata = { title: "Live service — Chapl" };
 
@@ -70,6 +68,37 @@ export default async function LiveServicePage() {
   ).filter((b): b is { id: string; data: Live } => b !== null);
   const first = boards[0]?.data;
 
+  // What the deck can put on the screen besides the service itself: the
+  // church's name, its notices (pinned first, at most four), and the next
+  // two weeks of published events.
+  const now = new Date();
+  const fortnight = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+  const [churchInfo, noticeList, coming] = opener
+    ? await Promise.all([
+        churchId ? api<Church>(`/churches/${churchId}`) : Promise.resolve(null),
+        api<Paged<Notice>>("/communication/notices/?limit=20&sort=created_at&order=desc"),
+        api<Schemas["EventOccurrenceList"]>(
+          `/events/occurrences?start=${now.toISOString().slice(0, 19)}&end=${fortnight.toISOString().slice(0, 19)}`,
+        ),
+      ])
+    : [null, null, null];
+  const deckNotices: DeckNotice[] = (noticeList?.ok ? noticeList.data.items : [])
+    .filter((n) => n.is_active !== false && (!n.expires_at || new Date(n.expires_at) > now))
+    .sort((a, b) => Number(b.is_pinned) - Number(a.is_pinned))
+    .slice(0, 4)
+    .map((n) => ({ id: n.id, title: n.title, content: n.content, pinned: Boolean(n.is_pinned) }));
+  const deckEvents: DeckEvent[] = (coming?.ok ? coming.data.items : [])
+    .filter((e) => e.is_published !== false)
+    .slice(0, 5)
+    .map((e, i) => ({
+      id: `${e.event_id}-${i}`,
+      title: e.title,
+      startsAt: e.starts_at,
+      allDay: Boolean(e.is_all_day),
+      location: e.location ?? null,
+    }));
+  const churchName = churchInfo?.ok ? churchInfo.data.name : (first?.branch_name ?? "Our church");
+
   return (
     <Page>
       {/* ---------------- the control room ---------------- */}
@@ -107,19 +136,7 @@ export default async function LiveServicePage() {
 
         {opener && (
           <div className="live-room-actions">
-            {boards.length === 0 && (
-              <button type="button" className="btn btn-sm live-present" disabled title="Open a service to present it">
-                <MonitorPlay className="h-3.5 w-3.5" aria-hidden />
-                Present
-              </button>
-            )}
-            {boards.map((b) => (
-              <Presenter
-                key={b.id}
-                live={b.data}
-                label={boards.length > 1 ? `Present ${b.data.branch_name ?? "whole church"}` : "Present"}
-              />
-            ))}
+            <PresentButton />
             {live.length > 0 && (
               <AskQuestionEditor
                 action={askRoom}
@@ -139,6 +156,11 @@ export default async function LiveServicePage() {
           </div>
         )}
       </header>
+
+      {/* What goes on the screen at the front, in order, and the way to show it. */}
+      {opener && (
+        <ServiceDeck church={churchName} live={first ?? null} notices={deckNotices} events={deckEvents} />
+      )}
 
       {/* The member's half. Leaders can check in too — they were there. */}
       {/* A leader with a service on air has the board below; telling them

@@ -309,6 +309,14 @@ form its question has:
 | Care | stages on a rail, in order | it is a pipeline, so where work piles up is the point |
 | Ages | histogram with values printed, gender as a thin split bar | ordered bins, few enough to label |
 
+**The same rules hold on every screen.** The chart wrappers carry the
+dashboard's behaviour themselves (`.chart-quiet` with draw-in or rise),
+so a chart anywhere gets it without asking. Attendance, giving and the
+church page follow the dashboard's choices too: branch turnout as
+bullets against the service's figure, cell health and gender as split
+bars, ages as a histogram, care as stages, giving by month as columns
+with an average. A ring's hole holds its figure alone, never a caption.
+
 The bars, bullets, stages and histogram are server-rendered HTML in
 `panels.tsx` (`Pulse`, `Headline`, `Delta`, `Bullets`, `SegmentBar`,
 `Stages`, `Histogram`); lines, columns and the donut are TanStack in
@@ -726,16 +734,27 @@ or not, the service, who is here, the code, and the controls — **Present**,
 Ask question, Open check-in. The page reads each open service's live
 data once and gives it to both the board and the presenter.
 
-**Present** (`components/presenter.tsx`) turns the page into slides in
-the same browser, full screen, for the screen at the front: the code in
-the dot matrix (the dot font has the whole alphabet now for this), the
-room filling (seats sized to the room so a small one still fills the
-wall), today's message, and each question with answers arriving as bars,
-open one first. The page's live refresh re-renders it with new figures
-while the slide index, as state, stays put. Arrows, Space, Page Up/Down,
-Home/End and 1–9 move; B blanks; F toggles full screen; Escape ends. The
-controls fade when the mouse is still, and it holds a screen wake lock.
-New things the room needs on its screen are new kinds of slide here.
+**The run of service** (`components/service-deck.tsx`) is what goes on
+the screen at the front, in order, under the control room: a welcome, a
+countdown to the start, the check-in code, the room filling, today's
+message, the notices (pinned first, four at most), the next fortnight's
+events, and each question asked. Each row switches on or off and can be
+presented from; the start time is a dropdown. Those settings are kept on
+the device (`localStorage`, read with `useSyncExternalStore` as the raw
+string so the snapshot is stable). With nothing on air the deck still has
+its welcome, countdown, notices and events, so **Present** (in the
+header, which dispatches `chapl:present`) always works.
+
+Presenting is full screen in the same browser, slides sized to the
+screen: the code in the dot matrix (the dot font has the whole alphabet
+for this), seats sized to the room, the countdown painted onto a
+`DotNumeral` from a timer (minutes and seconds, or hours and minutes past
+an hour, the caption saying which). The page's live refresh re-renders it
+with new figures while the slide index, as state, stays put. Arrows,
+Space, Page Up/Down, Home/End and 1–9 move; B blanks; F toggles full
+screen; Escape ends. Controls fade when the mouse is still; a wake lock
+keeps the screen on. **Something new for the screen is a new kind of
+slide**: an entry in `slides` and a component at the bottom of the file.
 
 **Live without a second socket.** The bell's connection announces every
 message as a `chapl:live` window event; `LiveRefresh` listens for a

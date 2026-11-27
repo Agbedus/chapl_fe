@@ -17,6 +17,12 @@ import { PALETTE, turnoutColour } from "@/lib/palette";
 /**
  * Wrappers over TanStack Charts.
  *
+ * The dashboard's look is built in here, so every screen gets it: lines
+ * and sparklines draw in from the left, columns and stacks rise from the
+ * floor (`.chart-draw`, `.chart-rise`), and ticks, tick labels and grid
+ * stay out of the way until the chart is pointed at (`.chart-quiet`).
+ * Horizontal bars keep their axis, because the category names are on it.
+ *
  * Three deliberate choices:
  *
  * - Colours are CSS custom properties, not literals, so a chart follows the
@@ -105,7 +111,7 @@ export function TrendChart({
           scale: scaleLinear,
           nice: true,
           grid,
-          axis: label ? { label } : undefined,
+          axis: { ...(label ? { label } : {}), ticks: { count: 3, format: compact } },
         },
         focus: "nearest-x",
         tooltip,
@@ -113,7 +119,11 @@ export function TrendChart({
     [data, color, label, grid, target, area],
   );
 
-  return <Chart definition={definition} ariaLabel={ariaLabel} height={height} />;
+  return (
+    <div className="chart-quiet chart-draw">
+      <Chart definition={definition} ariaLabel={ariaLabel} height={height} />
+    </div>
+  );
 }
 
 /**
@@ -174,7 +184,11 @@ export function ColumnsChart({
     });
   }, [data, color, average, partialLast]);
 
-  return <Chart definition={definition} ariaLabel={ariaLabel} height={height} />;
+  return (
+    <div className="chart-quiet chart-rise">
+      <Chart definition={definition} ariaLabel={ariaLabel} height={height} />
+    </div>
+  );
 }
 
 /**
@@ -217,7 +231,11 @@ export function Sparkline({
     [data, color, area],
   );
 
-  return <Chart definition={definition} ariaLabel={ariaLabel} height={height} />;
+  return (
+    <div className="chart-draw">
+      <Chart definition={definition} ariaLabel={ariaLabel} height={height} />
+    </div>
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -284,7 +302,11 @@ export function BarsChart({
     [data, color, colorByLabel, max],
   );
 
-  return <Chart definition={definition} ariaLabel={ariaLabel} height={height} />;
+  return (
+    <div className="chart-draw">
+      <Chart definition={definition} ariaLabel={ariaLabel} height={height} />
+    </div>
+  );
 }
 
 /**
@@ -297,7 +319,7 @@ export function StackedChart({
   domain,
   ariaLabel,
   height = 210,
-  grid = false,
+  grid = true,
 }: {
   data: Stacked[];
   colors?: string[];
@@ -315,16 +337,16 @@ export function StackedChart({
             y: "value",
             z: "series",
             color: "series",
-            radius: 4,
-            // Columns nearly touching. A wide gutter between four weeks
-            // makes them read as four separate charts rather than one
-            // series, and the whole point is the shape across them.
-            maxThickness: 72,
+            radius: 3,
+            // The dashboard's column: the same corner and gutter, so a
+            // stack on the attendance page and a month of giving on the
+            // dashboard read as one family.
+            maxThickness: 40,
             layout: stack(),
           }),
         ],
-        x: { scale: () => scaleBand<string>().padding(0.1) },
-        y: { scale: scaleLinear, nice: true, grid },
+        x: { scale: () => scaleBand<string>().padding(0.3) },
+        y: { scale: scaleLinear, nice: true, grid, axis: { ticks: { count: 3, format: compact } } },
         color: { scale: () => scaleOrdinal<string, string>(domain, colors) },
         focus: "group-x",
         tooltip,
@@ -332,7 +354,11 @@ export function StackedChart({
     [data, colors, domain, grid],
   );
 
-  return <Chart definition={definition} ariaLabel={ariaLabel} height={height} />;
+  return (
+    <div className="chart-quiet chart-rise">
+      <Chart definition={definition} ariaLabel={ariaLabel} height={height} />
+    </div>
+  );
 }
 
 /* ------------------------------------------------------------------ */

@@ -241,8 +241,8 @@ export function Stat({
         {label}
       </p>
 
-      <p className="mt-2 flex items-baseline gap-1">
-        <span className="figure text-[24px]">{value}</span>
+      <p className="mt-2 flex items-end gap-1">
+        <DotFigure value={value} cell="2.6px" label={`${label} ${value}${unit ?? ""}`} />
         {unit && <span className="text-[12px] text-ink-3">{unit}</span>}
       </p>
 
@@ -374,9 +374,11 @@ export function Ring({
     <div className="dial" style={{ height }}>
       {chart}
       <span className="dial-centre">
-        {/* In dots, like every headline figure: a figure is 8.8 dots tall. */}
-        <DotFigure value={value} cell={`${Math.round((size / 9) * 10) / 10}px`} />
-        {label && <span className="dial-caption">{label}</span>}
+        {/* The figure alone, in dots. A caption ("in window", "members")
+            and a currency in the hole read as clutter round a ring whose
+            key below already names every part; the figure is what the
+            middle is for. `label` still names it to a screen reader. */}
+        <DotFigure value={figure} label={label ? `${value} ${label}` : value} cell={`${Math.round((size / 9) * 10) / 10}px`} />
       </span>
     </div>
   );

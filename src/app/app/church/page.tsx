@@ -4,7 +4,8 @@ import { AtSign, CalendarDays, Check, Globe, MapPin, Phone, ShieldCheck, Wallet 
 import { updateChurch } from "@/app/actions/church";
 import { DonutChart, StackedChart, TrendChart } from "@/components/charts";
 import { ChurchEditor } from "@/components/editors";
-import { Empty, Page, PageHead, Panel, RingPanel, StatCard } from "@/components/panels";
+import { DotFigure } from "@/components/dot-figure";
+import { Empty, Histogram, Page, PageHead, Panel, RingPanel, SegmentBar, Stages, StatCard } from "@/components/panels";
 import { Notice } from "@/components/ui/form";
 import { decideChurch, handOverChurch, resubmitChurch } from "@/app/actions/church";
 import { ChurchReview, type TrailEntry } from "@/components/church-review";
@@ -16,9 +17,6 @@ import { CHURCH_STATUS_LABEL, CHURCH_STATUS_TONE } from "@/lib/types";
 
 export const metadata = { title: "Church — Chapl" };
 
-const AGE_TONES = [
-  "var(--teal)", "var(--cobalt)", "var(--violet)", "var(--gold)", "var(--ruby)",
-];
 const GIVING_TONES = [
   "var(--emerald)", "var(--teal)", "var(--cobalt)",
   "var(--violet)", "var(--gold)", "var(--ruby)",
@@ -240,7 +238,7 @@ export default async function ChurchPage({
       value: (data?.cells ?? []).filter((c) => c.band === band).length,
     }))
     .filter((b) => b.value > 0);
-  const BAND_TONES = ["var(--emerald)", "var(--cobalt)", "var(--ruby)"];
+  const BAND_TONES = ["var(--emerald)", "var(--gold)", "var(--ruby)"];
 
   const perBranch = church.branch_count
     ? Math.round(church.member_count / church.branch_count)
@@ -623,6 +621,7 @@ export default async function ChurchPage({
                   data={cumulative}
                   color="var(--cobalt)"
                   height={186}
+                  area={false}
                   ariaLabel="Total membership at the end of each month"
                 />
               ) : (
@@ -687,22 +686,11 @@ export default async function ChurchPage({
                 proportion of the church's cell life is in each state. */}
             <Panel title="Cell health" accent="var(--emerald)">
               {health.length > 0 ? (
-                <RingPanel
-                  columns={1}
-                  value={String(church.cell_count)}
-                  label="cells"
-                  chart={
-                    <DonutChart
-                      data={health}
-                      colors={BAND_TONES}
-                      height={158}
-                      ariaLabel="Cells by health band"
-                    />
-                  }
+                <SegmentBar
                   items={health.map((b) => ({
                     label: b.label,
+                    value: b.value,
                     colour: BAND_TONES[bands.indexOf(b.label as (typeof bands)[number])],
-                    value: String(b.value),
                   }))}
                 />
               ) : (
@@ -714,24 +702,9 @@ export default async function ChurchPage({
           <section className="grid flex-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             <Panel fill title="Age" accent="var(--violet)">
               {ages.length > 0 ? (
-                <RingPanel
-                  fill
-                  value={ages.reduce((s, a) => s + a.value, 0).toLocaleString()}
-                  label="on the roll"
-                  chart={
-                    <DonutChart
-                      data={ages}
-                      colors={AGE_TONES}
-                      height={158}
-                      ariaLabel="The congregation by age band"
-                    />
-                  }
-                  items={ages.map((a, i) => ({
-                    label: a.label,
-                    colour: AGE_TONES[i % AGE_TONES.length],
-                    value: String(a.value),
-                  }))}
-                />
+                // Ordered bins: a histogram with the counts printed, as on
+                // the dashboard. A ring lost the order, which is the point.
+                <Histogram items={ages} colour="var(--violet)" height={150} />
               ) : (
                 <Empty>No dates of birth recorded.</Empty>
               )}
@@ -739,24 +712,25 @@ export default async function ChurchPage({
 
             <Panel fill title="Women and men" accent="var(--cobalt)">
               {genders.length > 0 ? (
-                <RingPanel
-                  fill
-                  value={`${Math.round((women / genderTotal) * 100)}%`}
-                  label="women"
-                  chart={
-                    <DonutChart
-                      data={genders}
-                      colors={["var(--cobalt)", "var(--ruby)", "var(--sunk)"]}
-                      height={158}
-                      ariaLabel="The congregation by gender"
-                    />
-                  }
-                  items={genders.map((g, i) => ({
-                    label: g.label,
-                    colour: ["var(--cobalt)", "var(--ruby)", "var(--sunk)"][i] ?? "var(--sunk)",
-                    value: String(g.value),
-                  }))}
-                />
+                <div className="flex flex-col gap-3">
+                  <p className="flex items-end gap-2">
+                    <DotFigure value={`${Math.round((women / genderTotal) * 100)}%`} cell="3px" label="women" />
+                    <span className="text-[12px] text-ink-3">women</span>
+                  </p>
+                  <SegmentBar
+                    items={genders.map((g) => ({
+                      label: g.label,
+                      value: g.value,
+                      // Women carry the hue, because the figure above is theirs.
+                      colour:
+                        g.label === "female"
+                          ? "var(--violet)"
+                          : g.label === "male"
+                            ? "color-mix(in oklab, var(--violet) 40%, var(--sunk))"
+                            : "var(--sunk)",
+                    }))}
+                  />
+                </div>
               ) : (
                 <Empty>No genders recorded.</Empty>
               )}
@@ -794,27 +768,13 @@ export default async function ChurchPage({
             ) : (
               <Panel fill title="Care" accent="var(--ruby)">
                 {(data?.care ?? []).some((c) => c.value > 0) ? (
-                  <RingPanel
-                    fill
-                    value={String(
-                      (data?.care ?? []).reduce((s, c) => s + c.value, 0),
-                    )}
-                    label="check-ups"
-                    chart={
-                      <DonutChart
-                        data={(data?.care ?? []).filter((c) => c.value > 0)}
-                        colors={["var(--ruby)", "var(--gold)", "var(--cobalt)", "var(--emerald)"]}
-                        height={158}
-                        ariaLabel="Check-ups by status"
-                      />
-                    }
-                    items={(data?.care ?? [])
-                      .filter((c) => c.value > 0)
-                      .map((c, i) => ({
-                        label: c.label,
-                        colour: ["var(--ruby)", "var(--gold)", "var(--cobalt)", "var(--emerald)"][i] ?? "var(--sunk)",
-                        value: String(c.value),
-                      }))}
+                  // A pipeline in order, the dashboard's stages.
+                  <Stages
+                    items={(data?.care ?? []).map((c, i) => ({
+                      label: c.label,
+                      value: c.value,
+                      colour: ["var(--ruby)", "var(--gold)", "var(--cobalt)", "var(--emerald)"][i] ?? "var(--ink-3)",
+                    }))}
                   />
                 ) : (
                   <Empty>No check-ups recorded.</Empty>

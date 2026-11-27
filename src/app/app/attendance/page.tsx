@@ -3,10 +3,10 @@ import Link from "next/link";
 import { ClipboardCheck } from "lucide-react";
 
 import { Absentees } from "@/components/absentees";
-import { BarsChart, DonutChart, StackedChart } from "@/components/charts";
+import { StackedChart } from "@/components/charts";
 import { CongregationField } from "@/components/congregation";
 import {
-  Empty, Page, PageHead, Panel, RingPanel, StatCard,
+  Bullets, Empty, Page, PageHead, Panel, SegmentBar, StatCard,
 } from "@/components/panels";
 import { ServiceStepper } from "@/components/service-stepper";
 import { api } from "@/lib/api";
@@ -17,7 +17,8 @@ import type { Dashboard, ServiceDetail } from "@/lib/types";
 export const metadata = { title: "Attendance — Chapl" };
 
 const BANDS = ["thriving", "steady", "at risk"] as const;
-const BAND_TONES = ["var(--emerald)", "var(--cobalt)", "var(--ruby)"];
+// The dashboard's bands, in the dashboard's colours: steady is gold there.
+const BAND_TONES = ["var(--emerald)", "var(--gold)", "var(--ruby)"];
 
 function shortDate(value: string): string {
   return new Date(value).toLocaleDateString(undefined, {
@@ -94,10 +95,6 @@ export default async function AttendancePage({
   const ranked = [...service.branches]
     .filter((b) => b.members > 0)
     .sort((a, b) => a.turnout - b.turnout);
-  const branchBars = ranked.map((b) => ({ label: b.name, value: b.turnout }));
-  const branchTones = Object.fromEntries(
-    ranked.map((b) => [b.name, turnoutColour(b.turnout)]),
-  );
 
   // A cell nobody marked has no turnout to judge, so it is counted in the
   // caption rather than drawn at zero — which would read as "nobody came".
@@ -236,13 +233,20 @@ export default async function AttendancePage({
           title="Which sites were thin"
           accent="var(--violet)"
         >
-          {branchBars.length > 0 ? (
-            <BarsChart
-              data={branchBars}
-              colorByLabel={branchTones}
-              max={100}
-              height={Math.max(140, branchBars.length * 26 + 24)}
-              ariaLabel="Turnout at each branch for this service"
+          {ranked.length > 0 ? (
+            // The dashboard's bullets: each site out of 100, the tick the
+            // whole service, so "thin" is read against this Sunday.
+            <Bullets
+              mark={service.pct}
+              markLabel={`This service, ${service.pct}%`}
+              items={ranked.map((b) => ({
+                id: b.id,
+                label: b.name,
+                value: b.turnout,
+                note: `${b.present} of ${b.members}`,
+                colour: turnoutColour(b.turnout),
+                href: `/app/cells?branch=${b.id}`,
+              }))}
             />
           ) : (
             <Empty>No branch was marked at this service.</Empty>
@@ -257,24 +261,13 @@ export default async function AttendancePage({
           accent="var(--teal)"
         >
           {health.length > 0 ? (
-            <RingPanel
-              fill
-              columns={1}
-              value={String(markedCells.length)}
-              label="cells marked"
-              height={150}
-              chart={
-                <DonutChart
-                  data={health}
-                  colors={BAND_TONES}
-                  height={150}
-                  ariaLabel="Cells by health band at this service"
-                />
-              }
+            // One whole in three bands: a split bar, as on the dashboard,
+            // not a ring that is mostly one colour.
+            <SegmentBar
               items={health.map((b) => ({
                 label: b.label,
+                value: b.value,
                 colour: BAND_TONES[BANDS.indexOf(b.label)],
-                value: String(b.value),
               }))}
             />
           ) : (
