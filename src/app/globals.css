@@ -5225,17 +5225,6 @@ a.mini-row:hover {
   padding: 0.875rem 1rem;
   transition: background-color 0.15s ease;
 }
-/* Urgency is a rule down the left edge: read before a word is. */
-.care-row::before {
-  content: "";
-  position: absolute;
-  top: 0.875rem;
-  bottom: 0.875rem;
-  left: 0;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: var(--tone);
-}
 .care-row:hover {
   background: color-mix(in oklab, var(--paper) 50%, var(--mist));
 }

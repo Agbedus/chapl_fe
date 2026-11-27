@@ -316,7 +316,7 @@ function CareRow({
         : `Closed${r.closed_at ? ` ${when(r.closed_at)}` : ""}`;
 
   return (
-    <li className="care-row" data-status={r.status} style={{ "--tone": live ? urgency.tone : "transparent" } as React.CSSProperties}>
+    <li className="care-row" data-status={r.status}>
       {showWho && <Avatar name={name} src={r.member_avatar_url} size={32} />}
 
       <div className="care-main">
