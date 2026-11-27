@@ -22,6 +22,11 @@ export const PANEL_WIDTH = 640;
  * panel is full width from the top. Position is written to the node, not
  * held in state — it is geometry the browser needs, not data the tree does.
  *
+ * `fit` names an ancestor of the button (a CSS selector) whose edges the
+ * panel takes instead: a row inside a card opens a list exactly as wide
+ * as that card, so it reads as the card dropping open rather than a
+ * second, wider thing laid over it.
+ *
  * Returns `close`, which animates out and then calls `onClosed`. Escape
  * calls it too.
  */
@@ -31,24 +36,26 @@ export function useAnchoredPanel({
   panel,
   scrim,
   onClosed,
+  fit,
 }: {
   open: boolean;
   trigger: RefObject<HTMLElement | null>;
   panel: RefObject<HTMLElement | null>;
   scrim: RefObject<HTMLElement | null>;
   onClosed: () => void;
+  fit?: string;
 }) {
   const closing = useRef(false);
 
   useLayoutEffect(() => {
     const node = panel.current;
     if (!open || !node) return;
-    place(node, trigger.current);
+    place(node, trigger.current, fit);
     reveal(node, false);
-    const onResize = () => place(node, trigger.current);
+    const onResize = () => place(node, trigger.current, fit);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [open, panel, trigger]);
+  }, [open, panel, trigger, fit]);
 
   function close() {
     const node = panel.current;
@@ -74,7 +81,7 @@ export function useAnchoredPanel({
   return { close };
 }
 
-function place(panel: HTMLElement, trigger: HTMLElement | null) {
+function place(panel: HTMLElement, trigger: HTMLElement | null, fit?: string) {
   const button = trigger?.getBoundingClientRect();
   const vw = window.innerWidth;
   const vh = window.innerHeight;
@@ -90,12 +97,16 @@ function place(panel: HTMLElement, trigger: HTMLElement | null) {
     panel.dataset.from = "top";
     return;
   }
-  const width = Math.min(PANEL_WIDTH, vw - edge * 2);
-  // Right-aligned to the button, but never off the left of the screen.
-  const right = Math.min(Math.max(edge, vw - button.right), vw - width - edge);
+  const frame = fit ? trigger?.closest(fit)?.getBoundingClientRect() : undefined;
+  const width = frame ? frame.width : Math.min(PANEL_WIDTH, vw - edge * 2);
+  // Right-aligned to the button (or to the card it sits in), but never off
+  // the left of the screen.
+  const right = Math.min(Math.max(edge, vw - (frame ?? button).right), vw - width - edge);
   const below = vh - button.bottom - gap - edge;
   const above = button.top - gap - edge;
   const up = below < 360 && above > below;
+  if (frame) panel.dataset.fit = "";
+  else delete panel.dataset.fit;
   Object.assign(panel.style, {
     width: `${width}px`,
     maxWidth: "none",
@@ -115,11 +126,15 @@ function reveal(panel: HTMLElement, reverse: boolean) {
       duration: 140, easing: "ease-out", fill: "both",
     });
   }
-  panel.style.transformOrigin = up ? "bottom right" : "top right";
+  // As wide as its card, it opens straight down (or up) across that width;
+  // otherwise it unfolds from the button's corner.
+  const fitted = panel.dataset.fit != null;
+  panel.style.transformOrigin = `${up ? "bottom" : "top"} ${fitted ? "center" : "right"}`;
   // Folded into the button's corner: most of the width and nearly all of
   // the height clipped away, a touch smaller, faded.
+  const side = fitted ? "0" : "70%";
   const shut = {
-    clipPath: up ? "inset(92% 0 0 70% round 20px)" : "inset(0 0 92% 70% round 20px)",
+    clipPath: up ? `inset(92% 0 0 ${side} round 20px)` : `inset(0 0 92% ${side} round 20px)`,
     transform: "scale(0.96)",
     opacity: 0,
   };

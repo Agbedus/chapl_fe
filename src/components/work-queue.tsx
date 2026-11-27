@@ -173,7 +173,15 @@ function QueueModal({
   const panel = useRef<HTMLDivElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   // Mounted only while open, so `open` is always true here.
-  const { close: onClose } = useAnchoredPanel({ open: true, trigger, panel, scrim, onClosed: closed });
+  const { close: onClose } = useAnchoredPanel({
+    open: true,
+    trigger,
+    panel,
+    scrim,
+    onClosed: closed,
+    // The list drops open from the "Needs you" card at the card's own width.
+    fit: ".sheet",
+  });
   const Icon = ICONS[item.kind];
   const total = item.total ?? item.count;
   const capped = total > item.rows.length;
