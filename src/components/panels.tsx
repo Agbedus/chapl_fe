@@ -2,7 +2,7 @@ import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 
-import { CountUp } from "@/components/count-up";
+import { DotFigure } from "@/components/dot-figure";
 import { Info } from "@/components/info";
 
 /**
@@ -366,12 +366,8 @@ export function Ring({
     <div className="dial" style={{ height }}>
       {chart}
       <span className="dial-centre">
-        <span
-          className="figure leading-none"
-          style={{ fontSize: size, letterSpacing: "-0.03em" }}
-        >
-          {value}
-        </span>
+        {/* In dots, like every headline figure: a figure is 8.8 dots tall. */}
+        <DotFigure value={value} cell={`${Math.round((size / 9) * 10) / 10}px`} />
         <span className="dial-caption">{label}</span>
       </span>
     </div>
@@ -508,9 +504,7 @@ export function StatCard({
       </p>
 
       <p className="mt-2 flex items-baseline gap-1.5">
-        <span className="figure text-[24px]">
-          <CountUp value={value} />
-        </span>
+        <DotFigure value={value} cell="2.6px" label={`${label} ${value}${unit ?? ""}`} />
         {unit && <span className="text-[12px] text-ink-3">{unit}</span>}
         {delta != null && (
           <span className="ml-auto">
@@ -744,8 +738,8 @@ export function PulseItem({
         <span className="dot" style={{ color: colour }} aria-hidden />
         {label}
       </span>
-      <span className="pulse-value figure">
-        <CountUp value={value} />
+      <span className="pulse-value">
+        <DotFigure value={value} cell="3.4px" label={`${label} ${value}${unit ?? ""}`} />
         {unit && <span className="pulse-unit">{unit}</span>}
       </span>
       {(delta || note) && (
@@ -779,8 +773,8 @@ export function Headline({
 }) {
   return (
     <div className="headline">
-      <span className="figure headline-value">
-        <CountUp value={value} />
+      <span className="headline-value">
+        <DotFigure value={value} cell="3px" label={`${value}${unit ?? ""}`} />
         {unit && <span className="pulse-unit">{unit}</span>}
       </span>
       {delta}

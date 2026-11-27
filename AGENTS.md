@@ -316,10 +316,23 @@ The bars, bullets, stages and histogram are server-rendered HTML in
 floor, once, on CSS; TanStack charts are revealed with a clip
 (`.chart-draw` left to right, `.chart-rise` bottom up), because its own
 motion renderer skips server-rendered SVG. Pointing at a part dims the
-rest. `CountUp` renders the final value on the server and only animates
-after mount, with a timer that lands it if a background tab throttles
-the frames. A change is always `Delta`: signed, with an arrow, so it
-reads without its colour.
+rest. A change is always `Delta`: signed, with an arrow, so it reads
+without its colour.
+
+**Headline figures are in the landing page's dots** (`DotFigure`,
+`components/dot-figure.tsx`): the pulse, panel headlines, every
+`StatCard` in the product, and the hole of a ring. The part the dot font
+can draw (digits, `, . : %`, a trailing K or M) is a `DotNumeral`; a
+currency before it is small text. It renders the finished figure on the
+server and counts up once after mount through `paintNumeral`, with a
+timer that lands it if a background tab throttles the frames.
+
+**Dashboard charts carry no axes until asked.** `.chart-quiet` hides
+ticks, tick labels and the grid on a fine pointer until the chart is
+hovered or focused; the target and average rules stay, and the tooltip
+gives exact values. The ages histogram prints its counts the same way.
+The library focuses its SVG on click, so `.ts-chart` has no focus
+outline anywhere; keyboard focus shows inside the chart instead.
 
 **The map** is `geoShape` over a `geoMercator` fitted to the pins — no tile
 server, no third-party script. Branches carry `latitude`/`longitude` on the
