@@ -534,7 +534,6 @@ export default async function PersonPage({
                       }))}
                       colors={GIVING_TONES}
                       height={140}
-                      thickness={0.28}
                       ariaLabel="Their giving split by type"
                     />
                   }

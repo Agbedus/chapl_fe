@@ -548,7 +548,6 @@ export default async function AccountPage() {
                       data={giving.types.map((t) => ({ label: t.label, value: t.total }))}
                       colors={GIVING_TONES}
                       height={140}
-                      thickness={0.28}
                       ariaLabel="Your giving split by type"
                     />
                   }

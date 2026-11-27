@@ -268,7 +268,6 @@ export default async function AttendancePage({
                   data={health}
                   colors={BAND_TONES}
                   height={150}
-                  thickness={0.28}
                   ariaLabel="Cells by health band at this service"
                 />
               }

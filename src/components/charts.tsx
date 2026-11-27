@@ -350,7 +350,7 @@ export function DonutChart({
   colors = PALETTE,
   ariaLabel,
   height = 200,
-  thickness = 0.3,
+  thickness = 0.34,
 }: {
   data: Point[];
   colors?: string[];
@@ -359,10 +359,22 @@ export function DonutChart({
   thickness?: number;
 }) {
   const definition = useMemo(() => {
-    // No gap between slices. The slit was showing the panel behind it,
-    // which in dark mode reads as a hard rule around every wedge — the
-    // colour change is already the boundary, and it needs no help.
-    const slices = pie(data, { value: (d: Point) => d.value });
+    /*
+     * A split ring: each slice its own rounded band with a clear gap
+     * either side, rather than wedges butted together and outlined.
+     *
+     * The gap is cut by `pie` (`gapAngle`), not by a stroke in the panel's
+     * colour — a stroke read as a hard rule round every wedge in dark
+     * mode. The corner radius is half the band, so each end is a full
+     * round cap; d3 shrinks it on a slice too short to hold one, so a
+     * sliver stays a dot instead of turning inside out. One slice is the
+     * whole ring and gets no gap.
+     */
+    const parts = data.filter((d) => d.value > 0).length;
+    const slices = pie(data, {
+      value: (d: Point) => d.value,
+      gapAngle: parts > 1 ? 0.07 : 0,
+    });
     return defineChart({
       marks: [
         polar({
@@ -372,11 +384,8 @@ export function DonutChart({
               fill: (d) => colors[d.index % colors.length],
               innerRadius: ({ radius }) => radius * (1 - thickness),
               outerRadius: ({ radius }) => radius,
-              cornerRadius: 3,
-              // A hairline of the panel behind each slice, so wedges read
-              // as distinct in both themes without relying on shade.
-              stroke: "var(--paper)",
-              strokeWidth: 1.5,
+              cornerRadius: ({ radius }) => (radius * thickness) / 2,
+              strokeWidth: 0,
             }),
           ],
           inset: 4,

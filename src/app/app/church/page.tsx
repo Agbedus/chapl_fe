@@ -696,7 +696,6 @@ export default async function ChurchPage({
                       data={health}
                       colors={BAND_TONES}
                       height={158}
-                      thickness={0.28}
                       ariaLabel="Cells by health band"
                     />
                   }
@@ -724,7 +723,6 @@ export default async function ChurchPage({
                       data={ages}
                       colors={AGE_TONES}
                       height={158}
-                      thickness={0.28}
                       ariaLabel="The congregation by age band"
                     />
                   }
@@ -750,7 +748,6 @@ export default async function ChurchPage({
                       data={genders}
                       colors={["var(--cobalt)", "var(--ruby)", "var(--sunk)"]}
                       height={158}
-                      thickness={0.28}
                       ariaLabel="The congregation by gender"
                     />
                   }
@@ -784,7 +781,6 @@ export default async function ChurchPage({
                       }))}
                       colors={GIVING_TONES}
                       height={158}
-                      thickness={0.28}
                       ariaLabel="Giving split by type"
                     />
                   }
@@ -809,7 +805,6 @@ export default async function ChurchPage({
                         data={(data?.care ?? []).filter((c) => c.value > 0)}
                         colors={["var(--ruby)", "var(--gold)", "var(--cobalt)", "var(--emerald)"]}
                         height={158}
-                        thickness={0.28}
                         ariaLabel="Check-ups by status"
                       />
                     }

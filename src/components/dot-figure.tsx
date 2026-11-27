@@ -37,7 +37,15 @@ export function DotFigure({
 
   useEffect(() => {
     const node = ref.current;
-    if (!node || !figure || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Nobody watches a count in a background tab, and there the browser
+    // throttles both the frames and the timer that would land it.
+    if (
+      !node ||
+      !figure ||
+      document.visibilityState === "hidden" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    )
+      return;
     const number = figure.match(/^[\d,]+(?:\.(\d+))?/);
     if (!number) return;
     const target = Number(number[0].replace(/,/g, ""));

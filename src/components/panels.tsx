@@ -339,7 +339,8 @@ export function Ring({
 }: {
   chart: ReactNode;
   value: string;
-  label: string;
+  /** A caption under the figure. Leave it out and the hole holds the figure alone. */
+  label?: string;
   height?: number;
 }) {
   /*
@@ -356,11 +357,18 @@ export function Ring({
    * step down — "GHS 12.4k" cannot be set at the size "47" can, and a
    * figure that overflows its own ring is worse than a smaller one.
    */
-  const room = Math.min(30, Math.round(height * 0.2));
-  const size =
-    value.length > 7 ? Math.round(room * 0.74)
-    : value.length > 5 ? Math.round(room * 0.86)
-    : room;
+  /*
+   * The dot size that fills the hole without touching the ring. The
+   * figure is 8.8 dots tall; across, a digit is 6.2 dots, punctuation
+   * 1.3, with 1.5 between each. The hole is about half the ring's height
+   * once the band (a third of the radius) is taken out.
+   */
+  const figure = value.match(/\d[\d,]*(?:\.\d+)?[%KM]?/)?.[0] ?? value;
+  const glyphs = Array.from(figure);
+  const across =
+    glyphs.reduce((sum, ch) => sum + (/[.,:]/.test(ch) ? 1.3 : 6.2), 0) + (glyphs.length - 1) * 1.5;
+  const cell = Math.min(height * 0.22 / 8.8, (height * 0.46) / across);
+  const size = Math.round(cell * 9);
 
   return (
     <div className="dial" style={{ height }}>
@@ -368,7 +376,7 @@ export function Ring({
       <span className="dial-centre">
         {/* In dots, like every headline figure: a figure is 8.8 dots tall. */}
         <DotFigure value={value} cell={`${Math.round((size / 9) * 10) / 10}px`} />
-        <span className="dial-caption">{label}</span>
+        {label && <span className="dial-caption">{label}</span>}
       </span>
     </div>
   );
@@ -428,7 +436,7 @@ export function RingPanel({
 }: {
   chart: ReactNode;
   value: string;
-  label: string;
+  label?: string;
   items: { label: string; colour: string; value: string; note?: string }[];
   height?: number;
   columns?: 1 | 2;

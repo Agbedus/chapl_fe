@@ -384,7 +384,12 @@ there as HTML. Only data that is genuinely *one whole in a handful of
 parts* goes in a ring, and on the dashboard that is giving by type and
 nothing else: three bands or two genders are a `SegmentBar`, which says
 the same in a third of the height, and a pipeline is `Stages`. More
-slices than about six and it is a bar chart wearing a circle.
+slices than about six and it is a bar chart wearing a circle. Every
+`DonutChart` is a **split ring**: slices cut apart by `pie`'s
+`gapAngle` (not a stroke, which read as a hard rule in dark mode), a
+band a third of the radius thick, and a corner radius of half the band
+so each slice is a rounded bar. The giving ring's hole holds the figure
+alone, in dots; the currency and the amounts are in the key.
 
 **Colour is for the six domains and for status.** A `.dot` beside a label
 carries the hue; the number beside it stays ink. A wall of coloured

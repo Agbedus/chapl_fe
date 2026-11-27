@@ -654,15 +654,14 @@ function View({
           </Panel>
 
           <Panel className="c-4" title="By type" accent="var(--emerald)">
+            {/* The figure alone: the currency and every amount are in the key below. */}
             <RingPanel
-              value={money(givingWindow, currency)}
-              label="in window"
+              value={money(givingWindow, currency).replace(/^\D+/, "")}
               chart={
                 <DonutChart
                   data={data.giving_types.map((g) => ({ label: g.label, value: g.total }))}
                   colors={GIVING_TONES}
                   height={168}
-                  thickness={0.22}
                   ariaLabel="Giving split by type"
                 />
               }
@@ -821,7 +820,6 @@ function PlatformSection({
                 data={shown.map((s) => ({ label: s.label, value: s.value }))}
                 colors={shown.map((s) => s.colour)}
                 height={158}
-                thickness={0.28}
                 ariaLabel="Churches by verification status"
               />
             }
