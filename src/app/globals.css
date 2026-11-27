@@ -6097,3 +6097,371 @@ a.church-link:active {
     animation: none;
   }
 }
+
+/* ===================================================================
+   Live service: the control room and the presenter
+   =================================================================== */
+.live-room {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem 2rem;
+  overflow: hidden;
+  padding: 1.5rem 1.5rem 1.375rem;
+  border-radius: 18px;
+  background: #0a0c10;
+  color: var(--ink);
+}
+/* The stage's own light: a faint dot grid, brighter toward the top. */
+.live-room::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1.5px);
+  background-size: 16px 16px;
+  mask-image: linear-gradient(to bottom, #000, transparent 85%);
+  pointer-events: none;
+}
+.live-room > * {
+  position: relative;
+}
+.live-room-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.live-room[data-on-air] .live-room-kicker {
+  color: var(--ruby);
+}
+.live-room-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  background: var(--ink-3);
+}
+.live-room[data-on-air] .live-room-dot {
+  background: var(--ruby);
+  animation: on-air 1.6s ease-in-out infinite;
+}
+@keyframes on-air {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--ruby) 55%, transparent); }
+  60% { box-shadow: 0 0 0 7px color-mix(in oklab, var(--ruby) 0%, transparent); }
+}
+.live-room-title {
+  margin-top: 0.5rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--ink);
+}
+.live-room-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0;
+  margin-top: 0.625rem;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.live-room-meta > span + span::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  margin: 0 0.625rem;
+  border-radius: 99px;
+  background: var(--ink-3);
+  vertical-align: middle;
+}
+.live-room-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+/* The buttons on the stage are the stage's: quiet ones are glass, the
+   way in is the accent. */
+.live-room .btn-quiet {
+  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+}
+.live-room .btn-quiet:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.live-present {
+  background: var(--ink);
+  color: #0a0c10;
+  font-weight: 600;
+}
+.live-present:hover {
+  opacity: 0.92;
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-room[data-on-air] .live-room-dot { animation: none; }
+}
+
+/* --- the presenter ------------------------------------------------- */
+.presenter {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 6vh 7vw 9vh;
+  background: #07080b;
+  color: var(--ink);
+  cursor: default;
+}
+.presenter::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1.2px, transparent 1.7px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse at 50% 40%, #000, transparent 75%);
+  pointer-events: none;
+}
+.presenter[data-idle] {
+  cursor: none;
+}
+.presenter[data-blank] .presenter-slide,
+.presenter[data-blank] .presenter-brand {
+  opacity: 0;
+}
+.presenter-slide {
+  position: relative;
+  width: 100%;
+  max-width: 1400px;
+  transition: opacity 0.3s ease;
+  animation: slide-in 0.5s var(--ease-out);
+}
+@keyframes slide-in {
+  from { opacity: 0; translate: 0 1.5vh; }
+}
+.presenter-brand {
+  position: absolute;
+  left: 3vw;
+  top: 3vh;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: clamp(12px, 1vw, 16px);
+  color: var(--ink-3);
+  transition: opacity 0.3s ease;
+}
+.presenter-live {
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 99px;
+  background: var(--ruby);
+  animation: on-air 1.6s ease-in-out infinite;
+}
+.presenter-controls {
+  position: absolute;
+  bottom: 3vh;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  background: rgba(14, 17, 23, 0.85);
+  backdrop-filter: blur(8px);
+  translate: -50% 0;
+  transition: opacity 0.3s ease, translate 0.3s var(--ease-out);
+}
+.presenter[data-idle] .presenter-controls,
+.presenter[data-idle] .presenter-hint {
+  opacity: 0;
+  translate: -50% 8px;
+  pointer-events: none;
+}
+.presenter-controls > button {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 10px;
+  color: var(--ink-2);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.presenter-controls > button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink);
+}
+.presenter-controls > button:disabled {
+  opacity: 0.35;
+}
+.presenter-dots {
+  display: flex;
+  gap: 0.375rem;
+  padding: 0 0.5rem;
+}
+.presenter-dots > button {
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  background: var(--line-strong);
+  transition: background-color 0.15s ease, width 0.2s var(--ease-out);
+}
+.presenter-dots > button[aria-current] {
+  width: 22px;
+  background: var(--ink);
+}
+.presenter-sep {
+  width: 1px;
+  height: 1.25rem;
+  margin: 0 0.25rem;
+  background: var(--line-strong);
+}
+.presenter-hint {
+  position: absolute;
+  bottom: calc(3vh + 3.4rem);
+  left: 50%;
+  font-size: 12px;
+  color: var(--ink-3);
+  translate: -50% 0;
+  transition: opacity 0.3s ease, translate 0.3s var(--ease-out);
+}
+
+/* slides: sized to the screen, not the page */
+.ps {
+  display: flex;
+  flex-direction: column;
+  gap: 3vh;
+}
+.ps-center {
+  align-items: center;
+  text-align: center;
+}
+.ps-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  font-size: clamp(14px, 1.4vw, 24px);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.ps-title {
+  max-width: 22ch;
+  font-family: var(--font-display);
+  font-size: clamp(40px, 6.5vw, 120px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+}
+.ps-lede {
+  font-size: clamp(16px, 1.9vw, 32px);
+  color: var(--ink-2);
+}
+.ps-foot {
+  font-size: clamp(14px, 1.3vw, 22px);
+  color: var(--ink-3);
+}
+.ps-foot .dm-inline {
+  --dm: clamp(2px, 0.22vw, 3.5px);
+  color: var(--ink);
+}
+.ps-code .dm {
+  --dm: clamp(8px, 1.5vw, 26px);
+  color: var(--gold);
+}
+.ps-room-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1.5vw;
+}
+.ps-big {
+  --dm: clamp(6px, 1.25vw, 20px);
+  color: var(--ink);
+}
+.ps-room {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(3px, calc(var(--seat, 0.9vw) * 0.4), 12px);
+  max-height: 46vh;
+  overflow: hidden;
+}
+.ps-room > span {
+  width: clamp(7px, var(--seat, 0.9vw), 30px);
+  height: clamp(7px, var(--seat, 0.9vw), 30px);
+  border-radius: 99px;
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--gold) 35%, transparent);
+  transition: background-color 0.4s ease, box-shadow 0.4s ease;
+}
+.ps-room > span[data-on] {
+  background: var(--gold);
+  box-shadow: none;
+}
+.ps-question {
+  max-width: 28ch;
+  font-family: var(--font-display);
+  font-size: clamp(30px, 4.4vw, 80px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+}
+.ps-options {
+  display: grid;
+  gap: 1.4vh;
+}
+.ps-options > li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2vw;
+  overflow: hidden;
+  padding: 1.6vh 1.6vw;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: clamp(16px, 1.9vw, 34px);
+}
+.ps-option-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: color-mix(in oklab, var(--cobalt) 30%, transparent);
+  transition: width 0.6s var(--ease-out);
+}
+.ps-options > li[data-lead] .ps-option-bar {
+  background: color-mix(in oklab, var(--cobalt) 55%, transparent);
+}
+.ps-option-label,
+.ps-option-figure {
+  position: relative;
+}
+.ps-option-figure {
+  font-weight: 600;
+}
+.ps-option-figure > span {
+  margin-left: 0.6em;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+@media (prefers-reduced-motion: reduce) {
+  .presenter-slide,
+  .presenter-live,
+  .ps-option-bar,
+  .ps-room > span {
+    animation: none;
+    transition: none;
+  }
+}
+.live-present:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

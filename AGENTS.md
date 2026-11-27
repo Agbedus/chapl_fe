@@ -687,14 +687,14 @@ for the service, and the question on the screen.
 dashboard: check in, the room as dots filling as people arrive, today's
 message, and the question with its answers as dots — one per person, so
 it reads like a show of hands. It replaced the old check-in prompt. The
-leader's half is `LeaderLive` under each open session on `/app/check-in`:
+leader's half is the board for each open session on `/app/live`:
 the same room, the answers coming in, **Ask the room** and **Close
 answers**. Who answered what is never sent anywhere; the room sees
 counts.
 
 **The live board is designed apart from the rest of the app.**
 `components/live-board.tsx` is used for the member's dashboard panel and
-for each open service on `/app/check-in`, because a live thing is
+for each open service on `/app/live`, because a live thing is
 watched, not worked through. The first line is the service and its code
 (a leader sees the code as six large boxes and Close check-in; a member
 sees where to type it, or that they are in). Then the room: the headline
@@ -718,6 +718,24 @@ leader's Close answers on it, and Ask the room beneath. A member taps
 their answer on the open question only (`PromptAnswers`) and reads the
 rest as results. `LiveService.prompts` and `.cells` (API 1.9) feed it;
 `prompt` stays the newest, for screens that show one at a time.
+
+**`/app/live` is Live service, not "Check in"** — it is the room's
+control surface, and the name said one of the things it does. The old
+route redirects. It opens on a dark control room (`.live-room`): on air
+or not, the service, who is here, the code, and the controls — **Present**,
+Ask question, Open check-in. The page reads each open service's live
+data once and gives it to both the board and the presenter.
+
+**Present** (`components/presenter.tsx`) turns the page into slides in
+the same browser, full screen, for the screen at the front: the code in
+the dot matrix (the dot font has the whole alphabet now for this), the
+room filling (seats sized to the room so a small one still fills the
+wall), today's message, and each question with answers arriving as bars,
+open one first. The page's live refresh re-renders it with new figures
+while the slide index, as state, stays put. Arrows, Space, Page Up/Down,
+Home/End and 1–9 move; B blanks; F toggles full screen; Escape ends. The
+controls fade when the mouse is still, and it holds a screen wake lock.
+New things the room needs on its screen are new kinds of slide here.
 
 **Live without a second socket.** The bell's connection announces every
 message as a `chapl:live` window event; `LiveRefresh` listens for a

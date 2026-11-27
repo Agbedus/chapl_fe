@@ -30,7 +30,7 @@ import {
   History,
   ArrowLeftRight,
   Bell,
-  CalendarCheck,
+  Radio,
   HeartHandshake,
   House as HomeIcon,
  MapPin,
@@ -83,7 +83,7 @@ export const SECTIONS: { heading: string; items: Item[] }[] = [
       { href: "/app/notices", label: "Notices", icon: Megaphone, tone: "var(--cobalt)", needs: "notice" },
       // Open to everyone: a member checks in and asks for prayer here;
       // a leader opens the service and answers the requests.
-      { href: "/app/check-in", label: "Check in", icon: CalendarCheck, tone: "var(--gold)" },
+      { href: "/app/live", label: "Live service", icon: Radio, tone: "var(--ruby)" },
       { href: "/app/care", label: "Care", icon: HeartHandshake, tone: "var(--ruby)" },
     ],
   },

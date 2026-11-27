@@ -374,7 +374,7 @@ export function LiveBoard({
         {compact && (
           <div className="mt-4 text-right">
             <Link
-              href="/app/check-in"
+              href="/app/live"
               className="text-[12.5px] font-medium text-ink-2 hover:text-ink hover:underline"
             >
               {prompts.length > 1 || (live.cells?.length ?? 0) > 12

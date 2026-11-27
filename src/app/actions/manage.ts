@@ -944,14 +944,14 @@ export async function openCheckIn(_prev: FormState, data: FormData): Promise<For
     },
   });
   if (!result.ok) return fail(result.error);
-  revalidatePath("/app/check-in");
+  revalidatePath("/app/live");
   return { message: `Check-in is open. The code is ${result.data.code}.` };
 }
 
 export async function closeCheckIn(_prev: FormState, data: FormData): Promise<FormState> {
   const result = await api(`/attendance/check-in/sessions/${str(data, "id")}/close`, { method: "POST" });
   if (!result.ok) return fail(result.error);
-  revalidatePath("/app/check-in");
+  revalidatePath("/app/live");
   return { message: "Check-in closed." };
 }
 
@@ -963,7 +963,7 @@ export async function checkIn(_prev: FormState, data: FormData): Promise<FormSta
     body: { code },
   });
   if (!result.ok) return { error: result.error.detail, fieldErrors: { code: result.error.detail } };
-  revalidatePath("/app/check-in");
+  revalidatePath("/app/live");
   revalidatePath("/app");
   return {
     message: result.data.status === "already" ? "You were already checked in." : "You are checked in. Welcome!",
@@ -990,14 +990,14 @@ export async function askRoom(_prev: FormState, data: FormData): Promise<FormSta
     body: { question, options },
   });
   if (!result.ok) return fail(result.error);
-  revalidatePath("/app/check-in");
+  revalidatePath("/app/live");
   return { message: "It is on everyone's phone." };
 }
 
 export async function closePrompt(_prev: FormState, data: FormData): Promise<FormState> {
   const result = await api(`/attendance/live/prompts/${str(data, "id")}/close`, { method: "POST" });
   if (!result.ok) return fail(result.error);
-  revalidatePath("/app/check-in");
+  revalidatePath("/app/live");
   return { message: "Answers closed. The room still sees how it answered." };
 }
 
@@ -1008,7 +1008,7 @@ export async function answerPrompt(_prev: FormState, data: FormData): Promise<Fo
   });
   if (!result.ok) return fail(result.error);
   revalidatePath("/app");
-  revalidatePath("/app/check-in");
+  revalidatePath("/app/live");
   return { message: "Answered." };
 }
 

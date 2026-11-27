@@ -53,10 +53,3 @@ export async function SundayPanel() {
   if (!live) return <LiveRefresh prefix="service." fallback={300} />;
   return <LiveBoard live={live} leader={false} compact />;
 }
-
-/** One open service as the person running it sees it: the live board. */
-export async function LeaderLive({ sessionId, canRun }: { sessionId: string; canRun: boolean }) {
-  const result = await api<Live>(`/attendance/check-in/sessions/${sessionId}/live`);
-  if (!result.ok) return null;
-  return <LiveBoard live={result.data} leader canRun={canRun} sessionId={sessionId} />;
-}
