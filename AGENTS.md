@@ -284,11 +284,42 @@ leader gets their tenant, platform staff with no church selected get
 thing — telemetry, integrity probes, table shortcuts — and none of it
 belongs here.
 
-The chart types are deliberately varied because the questions are:
-stacked columns for attendance volume with a turnout line under the same
-axis, radial bars for turnout by branch, a projected map for where the
-branches are, area for growth and giving, a donut for what giving was
-given for, a waffle for age, horizontal bars for the pastoral queue.
+The dashboard reads top to bottom in the order a leader's Monday goes:
+the **pulse** (people, turnout, cells at risk, giving: one ruled strip,
+two by two on a phone, each figure counting up once and each cell the
+way into its page), then **Needs you** beside **Turnout**, then the
+congregation, then branch by branch and cell by cell, then giving, then
+who the church is (new people, care, ages). No page kicker, no line of
+prose under a panel title: a panel's explanation is an `Info` "i" beside
+it (`Panel`'s `lede`), and its way out is one arrow in the corner
+(`href`). Each panel opens on its figure (`Headline`) and the chart under
+it is the why.
+
+The chart types are varied because the questions are, and each is the
+form its question has:
+
+| panel | form | why |
+| --- | --- | --- |
+| Turnout | line against a dashed 70% rule, no fill | a share that moves a few points; the fill would pin the axis to zero |
+| Branches | bullet bars out of 100, one shared tick at the church-wide figure | "behind the rest of us" reads off the tick |
+| Cells | one segmented bar, then the weakest four | three bands of one whole; then where to start |
+| Giving | monthly columns, dashed average, this month pale | each month is a total; the current one is not over |
+| By type | donut with the total in the hole | the one real "whole in parts" |
+| New people | columns of joins per month | the cumulative roll only ever rises |
+| Care | stages on a rail, in order | it is a pipeline, so where work piles up is the point |
+| Ages | histogram with values printed, gender as a thin split bar | ordered bins, few enough to label |
+
+The bars, bullets, stages and histogram are server-rendered HTML in
+`panels.tsx` (`Pulse`, `Headline`, `Delta`, `Bullets`, `SegmentBar`,
+`Stages`, `Histogram`); lines, columns and the donut are TanStack in
+`charts.tsx`. Every bar grows from its start and every column from its
+floor, once, on CSS; TanStack charts are revealed with a clip
+(`.chart-draw` left to right, `.chart-rise` bottom up), because its own
+motion renderer skips server-rendered SVG. Pointing at a part dims the
+rest. `CountUp` renders the final value on the server and only animates
+after mount, with a timer that lands it if a background tab throttles
+the frames. A change is always `Delta`: signed, with an arrow, so it
+reads without its colour.
 
 **The map** is `geoShape` over a `geoMercator` fitted to the pins — no tile
 server, no third-party script. Branches carry `latitude`/`longitude` on the
@@ -336,11 +367,11 @@ whether giving is holding up before they want row 47.
 
 **Rings carry composition, and their middles are not empty.** A donut
 with a hollow centre spent its middle on nothing — `Ring` puts the total
-there as HTML, because that is the figure people came for and the slices
-are the answer to "made up of what". Only data that is genuinely *one
-whole in a handful of parts* goes in a ring: giving by type, cell health
-bands, the care queue, age, gender, and turnout as a two-slice gauge.
-More slices than about six and it is a bar chart wearing a circle.
+there as HTML. Only data that is genuinely *one whole in a handful of
+parts* goes in a ring, and on the dashboard that is giving by type and
+nothing else: three bands or two genders are a `SegmentBar`, which says
+the same in a third of the height, and a pipeline is `Stages`. More
+slices than about six and it is a bar chart wearing a circle.
 
 **Colour is for the six domains and for status.** A `.dot` beside a label
 carries the hue; the number beside it stays ink. A wall of coloured
@@ -356,8 +387,8 @@ child arrives together. A cascade that runs for a second is a page you
 wait for. `prefers-reduced-motion` turns it off.
 
 `components/panels.tsx` holds the furniture every page is built from:
-`Page`, `PageHead`, `Panel`, `Stat`, `Detail`, `Empty`, `Meter`,
-`Legend`, `Action`. A page that reaches past these for its own layout is
+`Page`, `PageHead`, `Panel`, `Stat`, `StatCard`, `Detail`, `Empty`,
+`Meter`, `Action`, and the instruments above. A page that reaches past these for its own layout is
 a page that will drift.
 
 **Two endpoints exist because this front end needed them** and the API

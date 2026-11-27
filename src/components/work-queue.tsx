@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Cake, Check, HeartPulse, Mail, X } from "lucide-react";
+import { ArrowUpRight, Cake, Check, ChevronRight, HeartPulse, Mail, X } from "lucide-react";
 import Link from "next/link";
 
 import { useAnchoredPanel } from "@/components/ui/anchored";
@@ -94,11 +94,11 @@ export function WorkQueue({
 
   if (items.length === 0) {
     return (
-      <div className="rounded-xl bg-mist px-5 py-9 text-center">
-        <p className="text-[13px] font-medium">Nothing is waiting</p>
-        <p className="mt-1 text-[12px] text-ink-3">
-          Every cell turned up and every call has been made.
-        </p>
+      <div className="queue-clear">
+        <span className="queue-clear-mark" aria-hidden>
+          <Check className="h-4 w-4" strokeWidth={2.4} />
+        </span>
+        <p className="text-[13px] font-medium">Nothing is waiting on you</p>
       </div>
     );
   }
@@ -116,9 +116,7 @@ export function WorkQueue({
                 trigger.current = event.currentTarget;
                 setOpen(item);
               }}
-              className="group -mx-1 flex w-full items-center gap-3 rounded-xl px-1.5 py-2 text-left
-                         transition-[background-color,transform] duration-150
-                         hover:bg-mist active:scale-[0.995]"
+              className="queue-row group"
             >
               <span
                 className="grid h-9 w-9 shrink-0 place-items-center rounded-xl"
@@ -133,7 +131,7 @@ export function WorkQueue({
 
               <span className="min-w-0 flex-1">
                 <span className="flex items-baseline gap-1.5">
-                  <span className="figure text-[16px]" style={{ color: item.tone }}>
+                  <span className="figure text-[17px] text-ink">
                     {item.total ?? item.count}
                   </span>
                   <span className="truncate text-[12.5px] font-medium">{item.label}</span>
@@ -143,14 +141,7 @@ export function WorkQueue({
                 </span>
               </span>
 
-              <span
-                aria-hidden
-                className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-line
-                           text-ink-3 transition-colors duration-150
-                           group-hover:border-line-strong group-hover:bg-paper group-hover:text-ink"
-              >
-                <ArrowUpRight className="h-3 w-3" />
-              </span>
+              <ChevronRight className="queue-go h-4 w-4 shrink-0" aria-hidden />
             </button>
           );
         })}

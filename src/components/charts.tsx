@@ -1,11 +1,10 @@
 "use client";
 
-import { areaY, barX, barY, defineChart, dot, lineY, stack } from "@tanstack/charts";
+import { areaY, barX, barY, defineChart, dot, lineY, ruleY, stack } from "@tanstack/charts";
 import { geoShape } from "@tanstack/charts/geo";
-import { pie, polar, radialArc, radialBarAngle, radialBarRadius } from "@tanstack/charts/polar";
+import { pie, polar, radialArc } from "@tanstack/charts/polar";
 import { Chart } from "@tanstack/charts/react";
 import { tooltip } from "@tanstack/charts/tooltip";
-import { waffleY } from "@tanstack/charts/waffle";
 import { scaleBand } from "@tanstack/charts/scales/band";
 import { scaleLinear } from "@tanstack/charts/scales/linear";
 import { scaleOrdinal } from "@tanstack/charts/scales/ordinal";
@@ -36,13 +35,29 @@ import { PALETTE, turnoutColour } from "@/lib/palette";
  */
 
 export type Point = { label: string; value: number };
+
+/** 40000 → "40k". Written out rather than `Intl` so the server and the browser agree. */
+function compact(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${+(value / 1_000_000).toFixed(1)}m`;
+  if (abs >= 1_000) return `${+(value / 1_000).toFixed(1)}k`;
+  return String(+value.toFixed(1));
+}
 export type Stacked = { label: string; value: number; series: string };
 
 /* ------------------------------------------------------------------ */
 /* time                                                                */
 /* ------------------------------------------------------------------ */
 
-/** A measure over time — attendance, giving, growth. */
+/**
+ * A measure over time — attendance, giving, growth.
+ *
+ * `target` draws one dashed rule across the plot: the line the measure is
+ * meant to clear. Turnout's is 70%, the same threshold that turns a
+ * figure emerald everywhere else, so "are we there" is read off the
+ * picture instead of remembered. The rule takes part in the domain, so a
+ * church running at 55% still sees how far off it is.
+ */
 export function TrendChart({
   data,
   color = "var(--cobalt)",
@@ -50,6 +65,8 @@ export function TrendChart({
   label,
   height = 190,
   grid = false,
+  target,
+  area = true,
 }: {
   data: Point[];
   color?: string;
@@ -58,21 +75,21 @@ export function TrendChart({
   height?: number;
   /** Off unless the reader has to compare against an absolute value. */
   grid?: boolean;
+  target?: number;
+  /**
+   * The fill under the line. It pins the axis to zero, which is right
+   * for a count and flattens a share that moves between 58 and 66.
+   */
+  area?: boolean;
 }) {
   const definition = useMemo(
     () =>
       defineChart({
         marks: [
-          // A long, faint underline of the same hue — the modern halo that
-          // makes a measure read as luminous rather than printed.
-          lineY(data, {
-            x: "label",
-            y: "value",
-            stroke: `color-mix(in oklab, ${color} 30%, transparent)`,
-            strokeWidth: 6,
-            strokeLinecap: "round",
-          }),
-          areaY(data, { x: "label", y: "value", fill: color, fillOpacity: 0.12 }),
+          ...(target != null
+            ? [ruleY([target], { stroke: "var(--ink-3)", strokeOpacity: 0.55, strokeDasharray: "3 4" })]
+            : []),
+          ...(area ? [areaY(data, { x: "label", y: "value", fill: color, fillOpacity: 0.09 })] : []),
           lineY(data, { x: "label", y: "value", stroke: color, strokeWidth: 2 }),
           dot(data, {
             x: "label",
@@ -80,7 +97,7 @@ export function TrendChart({
             fill: "var(--paper)",
             stroke: color,
             strokeWidth: 1.5,
-            r: 3,
+            r: 2.75,
           }),
         ],
         x: { scale: () => scalePoint<string>().padding(0.5) },
@@ -93,8 +110,69 @@ export function TrendChart({
         focus: "nearest-x",
         tooltip,
       }),
-    [data, color, label, grid],
+    [data, color, label, grid, target, area],
   );
+
+  return <Chart definition={definition} ariaLabel={ariaLabel} height={height} />;
+}
+
+/**
+ * Periods as columns: giving by month, people joined by month.
+ *
+ * Columns rather than a line because each month is a total of its own,
+ * not a reading on a continuous measure. `average` lays a dashed rule at
+ * the mean, which is the comparison every month is silently being held
+ * to. `partialLast` greys the final column: the current month is not
+ * over, and drawing it at full strength reads as a collapse.
+ */
+export function ColumnsChart({
+  data,
+  color = "var(--cobalt)",
+  ariaLabel,
+  height = 160,
+  average = false,
+  partialLast = false,
+}: {
+  data: Point[];
+  color?: string;
+  ariaLabel: string;
+  height?: number;
+  average?: boolean;
+  partialLast?: boolean;
+}) {
+  const definition = useMemo(() => {
+    const last = data.at(-1)?.label;
+    const settled = partialLast ? data.slice(0, -1) : data;
+    const mean = settled.length
+      ? settled.reduce((sum, d) => sum + d.value, 0) / settled.length
+      : 0;
+    return defineChart({
+      marks: [
+        barY(data, {
+          x: "label",
+          y: "value",
+          fill: (d: Point) =>
+            partialLast && d.label === last
+              ? `color-mix(in oklab, ${color} 35%, var(--sunk))`
+              : color,
+          radius: 3,
+          maxThickness: 26,
+        }),
+        ...(average && mean > 0
+          ? [ruleY([mean], { stroke: "var(--ink-2)", strokeOpacity: 0.6, strokeDasharray: "3 4" })]
+          : []),
+      ],
+      x: { scale: () => scaleBand<string>().padding(0.3) },
+      y: {
+        scale: scaleLinear,
+        nice: true,
+        grid: true,
+        axis: { ticks: { count: 3, format: compact } },
+      },
+      focus: "nearest-x",
+      tooltip,
+    });
+  }, [data, color, average, partialLast]);
 
   return <Chart definition={definition} ariaLabel={ariaLabel} height={height} />;
 }
@@ -262,57 +340,6 @@ export function StackedChart({
 /* ------------------------------------------------------------------ */
 
 /**
- * One ratio against its whole, drawn as an almost-closed ring.
- *
- * A gauge rather than a bar because turnout is a share of 100, not a
- * quantity — the empty arc is as much of the answer as the filled one.
- * The remainder is drawn in `--sunk` rather than left blank so the ring
- * reads as a full circle with a part of it filled, which is what a
- * percentage looks like.
- */
-export function GaugeChart({
-  value,
-  colour,
-  ariaLabel,
-  height = 150,
-  thickness = 0.2,
-}: {
-  value: number;
-  colour: string;
-  ariaLabel: string;
-  height?: number;
-  thickness?: number;
-}) {
-  const definition = useMemo(() => {
-    const clamped = Math.max(0, Math.min(100, value));
-    const rows = [
-      { label: "reached", value: clamped, fill: colour },
-      { label: "remaining", value: 100 - clamped, fill: "var(--sunk)" },
-    ];
-    const slices = pie(rows, { value: (d: (typeof rows)[number]) => d.value });
-    return defineChart({
-      marks: [
-        polar({
-          marks: [
-            radialArc(slices, {
-              key: (d) => d.label,
-              fill: (d) => d.fill,
-              innerRadius: ({ radius }) => radius * (1 - thickness),
-              outerRadius: ({ radius }) => radius,
-              cornerRadius: 5,
-              strokeWidth: 0,
-            }),
-          ],
-          inset: 2,
-        }),
-      ],
-    });
-  }, [value, colour, thickness]);
-
-  return <Chart definition={definition} ariaLabel={ariaLabel} height={height} />;
-}
-
-/**
  * A donut, for a split of a whole — giving by type, care, cell health.
  *
  * Hollow rather than solid on purpose: the hole is where the total goes,
@@ -369,205 +396,6 @@ export function DonutChart({
       },
     });
   }, [data, colors, thickness]);
-
-  return <Chart definition={definition} ariaLabel={ariaLabel} height={height} />;
-}
-
-/**
- * A radial bar per category, all starting at the centre.
- *
- * Used for turnout by branch: every arc is a percentage of the same 100, so
- * length is directly comparable and the ring makes six sites legible where
- * six columns would read as a bar chart nobody scans.
- */
-export function RadialChart({
-  data,
-  colors = PALETTE,
-  max = 100,
-  ariaLabel,
-  height = 230,
-}: {
-  data: Point[];
-  colors?: string[];
-  max?: number;
-  ariaLabel: string;
-  height?: number;
-}) {
-  const definition = useMemo(() => {
-    // Colour is resolved into the rows rather than read off a mark index,
-    // so the arc for a branch keeps its hue when the list reorders.
-    const rows = data.map((d, i) => ({ ...d, fill: colors[i % colors.length] }));
-    return defineChart({
-        marks: [
-          polar({
-            marks: [
-              radialBarRadius(rows, {
-                angle: "label",
-                radius: "value",
-                fill: (d) => d.fill,
-                cornerRadius: 2,
-              }),
-            ],
-            angle: { scale: () => scaleBand<string>().padding(0.3) },
-            radius: {
-              scale: () => scaleLinear().domain([0, max]),
-              range: [({ radius }) => radius * 0.22, ({ radius }) => radius],
-            },
-            inset: 6,
-          }),
-        ],
-        tooltip: {
-          use: tooltip,
-          items: [
-            { field: "label", label: "" },
-            { id: "value", label: "Turnout", text: (point) => `${point.datum.value}%` },
-          ],
-        },
-    });
-  }, [data, colors, max]);
-
-  return <Chart definition={definition} ariaLabel={ariaLabel} height={height} />;
-}
-
-/**
- * A hundred squares, allocated by share.
- *
- * This is the dot from the marketing page, promoted to a chart: one unit is
- * one percent of the congregation. It is the only composition chart here
- * that says "out of a hundred people" without making anyone do arithmetic.
- */
-export function WaffleChart({
-  data,
-  colors = PALETTE,
-  ariaLabel,
-  height = 180,
-}: {
-  data: Point[];
-  colors?: string[];
-  ariaLabel: string;
-  height?: number;
-}) {
-  const total = useMemo(
-    () => data.reduce((sum, d) => sum + d.value, 0) || 1,
-    [data],
-  );
-
-  const definition = useMemo(() => {
-    const shares = data.map((d) => ({ ...d, share: d.value / total }));
-    return defineChart({
-      marks: [
-        waffleY(shares, {
-          y: "share",
-          color: "label",
-          unit: 0.01,
-          round: true,
-          gap: 2,
-          radius: 2,
-        }),
-      ],
-      color: {
-        scale: () =>
-          scaleOrdinal<string, string>(
-            data.map((d) => d.label),
-            colors,
-          ),
-      },
-      tooltip: {
-        use: tooltip,
-        items: [
-          { field: "label", label: "" },
-          {
-            id: "share",
-            label: "",
-            text: (point) =>
-              `${point.datum.value.toLocaleString()} · ${Math.round(point.datum.share * 100)}%`,
-          },
-        ],
-      },
-    });
-  }, [data, colors, total]);
-
-  return <Chart definition={definition} ariaLabel={ariaLabel} height={height} />;
-}
-
-/**
- * Concentric arcs — one ring per category, all measured against the same
- * 100 per cent.
- *
- * This is the shape branch turnout actually has. Slices of a pie would be
- * wrong: the branches do not add up to a whole, they are six independent
- * fractions. Stacked one inside another they share a start angle and a
- * scale, so the eye compares arc lengths directly and the ranking is
- * legible without reading a single number.
- *
- * `radialBarAngle` puts the categories on a radius band and the value on
- * the angle, which is the transpose of a normal bar chart and the reason
- * the rings nest.
- */
-export function MultiRingChart({
-  data,
-  colors = PALETTE,
-  max = 100,
-  ariaLabel,
-  height = 220,
-}: {
-  data: Point[];
-  colors?: string[];
-  max?: number;
-  ariaLabel: string;
-  height?: number;
-}) {
-  const definition = useMemo(() => {
-    // Colour is resolved into the rows rather than read off a mark index,
-    // so a branch keeps its hue when the ranking reorders.
-    const rows = data.map((d, i) => ({ ...d, fill: colors[i % colors.length] }));
-    return defineChart({
-      marks: [
-        polar({
-          marks: [
-            // The track each arc runs in, so an empty ring still reads as
-            // a ring rather than as missing data.
-            radialBarAngle(
-              rows.map((r) => ({ ...r, value: max })),
-              {
-                radius: "label",
-                angle: "value",
-                fill: "var(--sunk)",
-                cornerRadius: 6,
-                strokeWidth: 0,
-              },
-            ),
-            radialBarAngle(rows, {
-              radius: "label",
-              angle: "value",
-              fill: (d) => d.fill,
-              cornerRadius: 6,
-              strokeWidth: 0,
-            }),
-          ],
-          radius: {
-            scale: () => scaleBand<string>().padding(0.42),
-            // Push every band into the outer half. The default range
-            // starts at the centre, which ran the innermost ring straight
-            // through the label sitting there.
-            range: [({ radius }) => radius * 0.46, ({ radius }) => radius],
-          },
-          angle: { scale: () => scaleLinear().domain([0, max]) },
-          // A full revolution. The partial sweep bunched every arc into
-          // one quadrant and put the shortest ones where they could not
-          // be compared.
-          inset: 2,
-        }),
-      ],
-      tooltip: {
-        use: tooltip,
-        items: [
-          { field: "label", label: "" },
-          { id: "value", label: "Turnout", text: (point) => `${point.datum.value}%` },
-        ],
-      },
-    });
-  }, [data, colors, max]);
 
   return <Chart definition={definition} ariaLabel={ariaLabel} height={height} />;
 }

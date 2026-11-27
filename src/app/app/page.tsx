@@ -2,11 +2,13 @@ import Link from "next/link";
 import { SundayPanel } from "@/components/live-service";
 import { CalendarCheck, History, ShieldCheck, UserPlus } from "lucide-react";
 
-import {
-  DonutChart, GaugeChart, MultiRingChart, Sparkline, TrendChart,
-} from "@/components/charts";
+import { ColumnsChart, DonutChart, Sparkline, TrendChart } from "@/components/charts";
+import { Info } from "@/components/info";
 import { CongregationField } from "@/components/congregation";
-import { Calm, Empty, Key, Page, PageHead, Panel, Ring, RingPanel, StatCard } from "@/components/panels";
+import {
+  Bullets, Delta, Empty, Headline, Histogram, Key, Meter, Page, PageHead, Panel, Pulse, PulseItem,
+  RingPanel, SegmentBar, Stages,
+} from "@/components/panels";
 import { StaffQueue } from "@/components/staff-queue";
 import { SetupChecklist } from "@/components/setup-checklist";
 import { api } from "@/lib/api";
@@ -49,17 +51,6 @@ const CARE_TONE: Record<string, string> = {
 const GIVING_TONES = [
   "var(--emerald)", "var(--teal)", "var(--cobalt)",
   "var(--violet)", "var(--gold)", "var(--ruby)",
-];
-
-/* One hue per branch. Colouring these by turnout would give three of them
-   the same colour, which is the one thing a key must never do. */
-const BRANCH_TONES = [
-  "var(--cobalt)", "var(--violet)", "var(--teal)",
-  "var(--emerald)", "var(--gold)", "var(--ruby)",
-];
-
-const AGE_TONES = [
-  "var(--teal)", "var(--cobalt)", "var(--violet)", "var(--gold)", "var(--ruby)",
 ];
 
 function shortDate(value: string): string {
@@ -200,8 +191,6 @@ function View({
    * presence check.
    */
   const showGiving = data.giving_total != null && data.giving_types.length > 0;
-  // Four rings share the twelve columns three each; without giving, three share them four each.
-  const ringSpan = showGiving ? "xl:col-span-3" : "xl:col-span-4";
   const givingWindow = data.giving_months.reduce((sum, m) => sum + m.total, 0);
   const givingThisMonth = data.giving_months.at(-1)?.total ?? null;
 
@@ -348,80 +337,152 @@ function View({
     },
   ].filter(Boolean) as QueueItem[];
 
+  /* Care, in the order the work moves through it. */
+  const CARE_ORDER = ["not reached", "follow up needed", "reached", "resolved"];
+  const careStages = [
+    ...CARE_ORDER.map((label) => ({
+      label,
+      value: data.care.find((c) => c.label === label)?.value ?? 0,
+      colour: CARE_TONE[label],
+    })),
+    ...data.care
+      .filter((c) => !CARE_ORDER.includes(c.label) && c.value > 0)
+      .map((c) => ({ label: c.label, value: c.value, colour: "var(--ink-3)" })),
+  ];
+
+  // Across every church the API sends no follow-up total; the stages
+  // still say how many are waiting, and the two must not disagree.
+  const waiting = Math.max(followUps, careStages[0].value + careStages[1].value);
+
+  const joinedLine = data.growth.map((g) => ({ label: g.label, value: g.joined }));
+  const joinedWindow = data.growth.reduce((sum, g) => sum + g.joined, 0);
+
+  // The cells to start with: the weakest four that have anyone on the roll.
+  const weakest = data.cells
+    .filter((c) => c.members > 0)
+    .sort((a, b) => a.turnout - b.turnout)
+    .slice(0, 4);
+
+  const allAges = data.demographics.ages;
+
   return (
     <Page>
-      {/* ---------------- header + the actions of the week ---------------- */}
       <PageHead
-        eyebrow="Overview"
         title={platform ? "Every church" : (data.church.name ?? "Your church")}
-        lede={
-          latest
-            ? `Last service ${shortDate(latest.date)} · ${latest.present.toLocaleString()} of ${latest.marked.toLocaleString()} marked`
-            : `Good to see you, ${firstName}.`
-        }
         action={
           <div className="flex flex-wrap items-center gap-2">
-          {platform && data.health && (
-            <span
-              className="chip"
-              style={{
-                background: `color-mix(in oklab, ${TONE[data.health]} 12%, transparent)`,
-                color: TONE[data.health],
-              }}
-            >
-              <span className="dot" style={{ color: TONE[data.health] }} aria-hidden />
-              {data.health === "ok" ? "All systems operational" : "Needs attention"}
-            </span>
-          )}
-          {platform && (
-            <>
-              <Link href="/app/audit" className="btn btn-quiet btn-sm">
-                <History className="h-3.5 w-3.5" aria-hidden /> Activity
-              </Link>
-              <Link href="/app/platform" className="btn btn-primary btn-sm">
-                <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
-                {(data.staff?.church_status.pending ?? 0) > 0
-                  ? `Review ${data.staff?.church_status.pending} church${data.staff?.church_status.pending === 1 ? "" : "es"}`
-                  : "Verification"}
-              </Link>
-            </>
-          )}
-          {!platform && (
-            <>
-              <Link href="/app/attendance" className="btn btn-quiet btn-sm">
-                <CalendarCheck className="h-3.5 w-3.5" aria-hidden /> Attendance
-              </Link>
-              <Link href="/app/invitations" className="btn btn-primary btn-sm">
-                <UserPlus className="h-3.5 w-3.5" aria-hidden /> Invite
-              </Link>
-            </>
-          )}
+            {platform && data.health && (
+              <span
+                className="chip"
+                style={{
+                  background: `color-mix(in oklab, ${TONE[data.health]} 12%, transparent)`,
+                  color: TONE[data.health],
+                }}
+              >
+                <span className="dot" style={{ color: TONE[data.health] }} aria-hidden />
+                {data.health === "ok" ? "All systems operational" : "Needs attention"}
+              </span>
+            )}
+            {platform ? (
+              <>
+                <Link href="/app/audit" className="btn btn-quiet btn-sm">
+                  <History className="h-3.5 w-3.5" aria-hidden /> Activity
+                </Link>
+                <Link href="/app/platform" className="btn btn-primary btn-sm">
+                  <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
+                  {(data.staff?.church_status.pending ?? 0) > 0
+                    ? `Review ${data.staff?.church_status.pending} church${data.staff?.church_status.pending === 1 ? "" : "es"}`
+                    : "Verification"}
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/app/attendance" className="btn btn-quiet btn-sm">
+                  <CalendarCheck className="h-3.5 w-3.5" aria-hidden /> Attendance
+                </Link>
+                <Link href="/app/invitations" className="btn btn-primary btn-sm">
+                  <UserPlus className="h-3.5 w-3.5" aria-hidden /> Invite
+                </Link>
+              </>
+            )}
           </div>
         }
       />
 
       <SundayPanel />
 
-      {!platform && (
-        <SetupChecklist data={data} invitations={invitations} hasTeam={hasTeam} />
-      )}
+      {!platform && <SetupChecklist data={data} invitations={invitations} hasTeam={hasTeam} />}
 
-      {/* ---------------- what needs doing ----------------
-          First, and widest. This is the only actionable thing on the page
-          and it was sitting under ten charts. It names the people and the
-          cells rather than counting them: a signpost to a list you then
-          have to search is not the work, it is a second search. */}
-      <section className="grid gap-2 lg:grid-cols-12">
-        <Panel
-          span="lg:col-span-6"
-          title="Needs you"
-          lede={
-            platform
-              ? "Waiting on the platform, worst first"
-              : tasks.length > 0 ? "In the order it will hurt" : undefined
+      {/* ---------------- the four numbers checked first ---------------- */}
+      <Pulse>
+        <PulseItem
+          href="/app/people"
+          label="People"
+          colour="var(--cobalt)"
+          value={people?.toLocaleString() ?? "—"}
+          delta={joined != null && joined > 0 ? <Delta value={joined} label="this month" /> : undefined}
+          spark={
+            growthLine.length > 1 ? (
+              <Sparkline data={growthLine} color="var(--cobalt)" height={30} area={false} ariaLabel="Membership over twelve months" />
+            ) : undefined
           }
-          accent="var(--ruby)"
-        >
+        />
+        <PulseItem
+          href="/app/attendance"
+          label="Turnout"
+          colour="var(--gold)"
+          value={latest ? String(latest.pct) : "—"}
+          unit={latest ? "%" : undefined}
+          delta={turnoutDelta != null ? <Delta value={turnoutDelta} label="pts" /> : undefined}
+          spark={
+            turnoutLine.length > 1 ? (
+              <Sparkline data={turnoutLine} color="var(--gold)" height={30} area={false} ariaLabel="Turnout at each of the last services" />
+            ) : undefined
+          }
+        />
+        <PulseItem
+          href="/app/cells"
+          label="Cells at risk"
+          colour="var(--teal)"
+          value={String(atRisk)}
+          note={`of ${data.cells.length} cells`}
+          spark={
+            data.cells.length > 0 ? (
+              <SegmentBar
+                thin
+                showKey={false}
+                items={bands.map((b) => ({ label: b.label, value: b.value, colour: BAND_TONE[b.label] }))}
+              />
+            ) : undefined
+          }
+        />
+        {showGiving ? (
+          <PulseItem
+            href="/app/giving"
+            label="Giving"
+            colour="var(--emerald)"
+            value={money(givingWindow, currency)}
+            note={givingThisMonth != null ? `${money(givingThisMonth, currency)} this month` : undefined}
+            spark={
+              givingLine.length > 1 ? (
+                <Sparkline data={givingLine} color="var(--emerald)" height={30} ariaLabel="Giving by month" />
+              ) : undefined
+            }
+          />
+        ) : (
+          <PulseItem
+            href="/app/care"
+            label="Need a call"
+            colour="var(--ruby)"
+            value={String(followUps)}
+            note={`${careTotal} check-ups`}
+          />
+        )}
+      </Pulse>
+
+      {/* ---------------- what needs doing, and how Sunday went ---------------- */}
+      <section className="dash-row">
+        <Panel className="c-5" title="Needs you" accent="var(--ruby)">
           {platform ? (
             <StaffQueue items={data.staff?.attention ?? []} />
           ) : (
@@ -429,59 +490,33 @@ function View({
           )}
         </Panel>
 
-        {/*
-          Turnout, not head count.
-
-          Stacked columns of present-against-absent were four near-identical
-          blocks: the head count barely moves week to week, so the volume
-          encoding spent a whole panel proving nothing. The share does move,
-          and a line over a tight domain is the only way three points of
-          movement are visible at all.
-        */}
         <Panel
-          span="lg:col-span-6"
+          className="c-7"
           title="Turnout"
-          lede={`Share of those marked · last ${data.trend.length} services`}
           accent="var(--gold)"
-          aside={
-            latest && (
-              <span className="flex items-baseline gap-1.5">
-                <span className="figure text-[19px]" style={{ color: turnoutColour(latest.pct) }}>
-                  {latest.pct}%
-                </span>
-                {turnoutDelta != null && (
-                  <span
-                    className="tnum text-[11px] font-semibold"
-                    style={{ color: turnoutDelta >= 0 ? "var(--emerald)" : "var(--ruby)" }}
-                  >
-                    {turnoutDelta > 0 ? "+" : ""}
-                    {turnoutDelta}
-                  </span>
-                )}
-              </span>
-            )
-          }
+          lede={`The share of those marked who were present, at each of the last ${data.trend.length} services. The dashed line is 70%, where a figure turns green.`}
+          href="/app/attendance"
+          hrefLabel="Open attendance"
         >
-          {data.trend.length > 0 ? (
+          {latest ? (
             <>
-              <TrendChart
-                data={data.trend.map((p) => ({ label: shortDate(p.date), value: p.pct }))}
-                color="var(--gold)"
-                height={118}
-                ariaLabel="Turnout percentage at each of the last services"
+              <Headline
+                value={String(latest.pct)}
+                unit="%"
+                delta={turnoutDelta != null ? <Delta value={turnoutDelta} label="pts" /> : undefined}
+                note={`${latest.present.toLocaleString()} of ${latest.marked.toLocaleString()} · ${shortDate(latest.date)}`}
               />
-              <ul className="mt-2 flex justify-between border-t border-line pt-2">
-                {data.trend.map((p) => (
-                  <li key={p.date} className="text-center">
-                    <span className="tnum block text-[12.5px] font-semibold">
-                      {p.present.toLocaleString()}
-                    </span>
-                    <span className="tnum block text-[10.5px] text-ink-3">
-                      {shortDate(p.date)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <div className="chart-draw mt-3">
+                <TrendChart
+                  data={turnoutLine}
+                  color="var(--gold)"
+                  height={150}
+                  target={70}
+                  area={false}
+                  grid
+                  ariaLabel="Turnout percentage at each of the last services, against a 70% line"
+                />
+              </div>
             </>
           ) : (
             <Empty
@@ -493,164 +528,132 @@ function View({
         </Panel>
       </section>
 
-      {/* ---------------- platform only: the platform itself ----------------
-          The leader's page spends this slot on the congregation, which is a
-          single church drawn at one to one. Staff have no single church, so
-          the slot answers their question instead: how many churches are in
-          which state, how fast they are arriving, and what just happened. */}
-      {platform && data.staff && (
-        <PlatformSection staff={data.staff} activity={activity} />
-      )}
+      {platform && data.staff && <PlatformSection staff={data.staff} activity={activity} />}
 
-      {/* ---------------- the church, at one to one ----------------
-          Its own ground: full-bleed on mist, no card. It is the page's
-          subject rather than the first of eleven panels, and the change
-          of surface is what says so. */}
-      {!platform && (
+      {/* ---------------- the church, at one to one ---------------- */}
+      {!platform && data.cells.length > 0 && (
         <section className="field-band">
-          <div className="mb-5 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
-            <div>
-              <h2 className="head text-[19px] tracking-[-0.025em]">The congregation</h2>
-              <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ink-3">
-                <span className="flex items-center gap-1.5">
-                  <span className="dot" style={{ color: "var(--ink-2)" }} aria-hidden />
-                  in a seat
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="dot-hollow" style={{ color: "var(--ink-2)" }} aria-hidden />
-                  not there
-                </span>
-                <span>· one dot is one person · hover a cell, click to open it</span>
-              </p>
-            </div>
-
-            <dl className="flex flex-wrap items-end gap-x-7 gap-y-2">
-              {[
-                { k: "people", v: people?.toLocaleString() ?? "—", tone: "var(--ink)" },
-                {
-                  k: "present",
-                  v: latest?.present.toLocaleString() ?? "—",
-                  tone: latest ? turnoutColour(latest.pct) : "var(--ink)",
-                },
-                { k: "branches", v: String(ranked.length), tone: "var(--ink)" },
-                { k: "cells", v: String(data.cells.length), tone: "var(--ink)" },
-              ].map((f) => (
-                <div key={f.k}>
-                  <dd className="figure text-[26px]" style={{ color: f.tone }}>
-                    {f.v}
-                  </dd>
-                  <dt className="mt-0.5 text-[10.5px] uppercase tracking-[0.12em] text-ink-3">
-                    {f.k}
-                  </dt>
-                </div>
-              ))}
-            </dl>
+          <div className="panel-head">
+            <h2 className="panel-title">
+              Congregation
+              <Info text="One dot is one person, packed into their cell and branch. Filled were in a seat at the last service. Point at a cell to name it; click to open it." />
+            </h2>
+            <span className="flex items-center gap-3 text-[11.5px] text-ink-3">
+              <span className="flex items-center gap-1.5">
+                <span className="dot" style={{ color: "var(--ink-2)" }} aria-hidden />
+                present
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="dot-hollow" style={{ color: "var(--ink-2)" }} aria-hidden />
+                absent
+              </span>
+            </span>
           </div>
-
           <CongregationField branches={data.branches} cells={data.cells} />
         </section>
       )}
 
-      {/* ---------------- the numbers, with their shape ----------------
-          A figure answers "how many"; the line under it answers "and
-          which way", which is the question a bare number always provokes
-          and never settles. Each card is a link, so the number and the
-          way into it are the same target. */}
-      <section className="stat-row">
-        <StatCard
-          href="/app/people"
-          label="People"
-          value={people?.toLocaleString() ?? "—"}
-          colour="var(--cobalt)"
-          delta={joined}
-          deltaLabel=" joined"
-          footnote="cumulative, 12 months"
-          spark={
-            growthLine.length > 1 ? (
-              <Sparkline
-                data={growthLine}
-                color="var(--cobalt)"
-                ariaLabel="Membership over twelve months"
-              />
-            ) : undefined
-          }
-        />
-        <StatCard
-          href="/app/attendance"
-          label="Turnout"
-          value={latest ? String(latest.pct) : "—"}
-          unit="%"
-          colour="var(--gold)"
-          delta={turnoutDelta}
-          deltaLabel=" pts"
-          footnote={
-            latest
-              ? `${latest.present.toLocaleString()} of ${latest.marked.toLocaleString()} marked`
-              : undefined
-          }
-          spark={
-            turnoutLine.length > 1 ? (
-              <Sparkline
-                data={turnoutLine}
-                color="var(--gold)"
-                ariaLabel="Turnout at each of the last services"
-              />
-            ) : undefined
-          }
-        />
-        <StatCard
+      {/* ---------------- branch by branch, cell by cell ---------------- */}
+      <section className="dash-row">
+        <Panel
+          className="c-7"
+          title="Branches"
+          accent="var(--violet)"
+          lede="Each branch's turnout at the last service it marked, out of 100. The black tick is the church as a whole, so a bar short of it is a branch behind the rest."
+          href="/app/branches"
+          hrefLabel="Open branches"
+        >
+          {ranked.length > 0 ? (
+            <Bullets
+              mark={latest?.pct}
+              markLabel={latest ? `Church-wide, ${latest.pct}%` : undefined}
+              items={ranked.slice(0, 8).map((b) => ({
+                id: b.id,
+                label: b.name,
+                value: b.turnout,
+                note: `${b.members.toLocaleString()} people · ${b.cells} cells`,
+                colour: turnoutColour(b.turnout),
+                href: `/app/cells?branch=${b.id}`,
+              }))}
+            />
+          ) : (
+            <Empty action={canWrite(me, "branch") ? { href: "/app/branches", label: "Add a branch" } : undefined}>
+              No branches with anyone on the roll.
+            </Empty>
+          )}
+        </Panel>
+
+        <Panel
+          className="c-5"
+          title="Cells"
+          accent="var(--teal)"
+          lede="Thriving is 70% or more at the last service the cell was marked; at risk is under half. The weakest four are listed to start with."
           href="/app/cells"
-          label="Cells at risk"
-          value={String(atRisk)}
-          colour="var(--teal)"
-          goodWhenDown
-          footnote={`${bands[0].value} thriving · ${bands[1].value} steady · ${data.cells.length} cells`}
-        />
-        {showGiving ? (
-          <StatCard
-            href="/app/giving"
-            label="Giving"
-            value={money(givingWindow, currency)}
-            colour="var(--emerald)"
-            footnote={
-              givingThisMonth != null
-                ? `${money(givingThisMonth, currency)} so far this month`
-                : `over ${data.giving_months.length} months`
-            }
-            spark={
-              givingLine.length > 1 ? (
-                <Sparkline
-                  data={givingLine}
-                  color="var(--emerald)"
-                  ariaLabel="Giving by month"
-                />
-              ) : undefined
-            }
-          />
-        ) : (
-          <StatCard
-            href="/app/people"
-            label="Care queue"
-            value={String(followUps)}
-            colour="var(--ruby)"
-            goodWhenDown
-            footnote={`${careTotal} check-ups recorded`}
-          />
-        )}
+          hrefLabel="Open cells"
+        >
+          {data.cells.length > 0 ? (
+            <>
+              <SegmentBar
+                items={bands.map((b) => ({ label: b.label, value: b.value, colour: BAND_TONE[b.label] }))}
+              />
+              {weakest.length > 0 && (
+                <>
+                  <div className="panel-rule" />
+                  <ul className="mini-rows">
+                    {weakest.map((c) => (
+                      <li key={c.id}>
+                        <Link href={`/app/cells?branch=${c.branch_id}`} className="mini-row">
+                          <span className="min-w-0">
+                            <span className="block truncate font-medium">{c.name}</span>
+                            <span className="mini-row-sub truncate">{c.branch}</span>
+                          </span>
+                          <Meter value={c.turnout} colour={turnoutColour(c.turnout)} />
+                          <span className="tnum text-right font-semibold">{c.turnout}%</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </>
+          ) : (
+            <Empty action={canWrite(me, "cell") ? { href: "/app/cells", label: "Add a cell" } : undefined}>
+              No cells yet.
+            </Empty>
+          )}
+        </Panel>
       </section>
 
-      {/* ---------------- composition, in rings ----------------
-          Each is one whole split into a handful of parts, which is the
-          only question a ring answers well. More slices than this and it
-          is a bar chart wearing a circle. */}
-      <section className="grid gap-2 md:grid-cols-2 xl:grid-cols-12">
-        {showGiving && (
+      {/* ---------------- giving: whether it is holding up, and as what ---------------- */}
+      {showGiving && (
+        <section className="dash-row">
           <Panel
-            span={ringSpan}
+            className="c-8"
             title="Giving"
-            lede={`By type · ${data.giving_months.length} months`}
             accent="var(--emerald)"
+            lede={`Total given in each of the last ${data.giving_months.length} months. The dashed line is the monthly average; this month is pale because it is not over.`}
+            href="/app/giving"
+            hrefLabel="Open giving"
           >
+            <Headline
+              value={money(givingWindow, currency)}
+              note={`over ${data.giving_months.length} months${
+                givingThisMonth != null ? ` · ${money(givingThisMonth, currency)} so far this month` : ""
+              }`}
+            />
+            <div className="chart-rise mt-3">
+              <ColumnsChart
+                data={givingLine}
+                color="var(--emerald)"
+                height={170}
+                average
+                partialLast
+                ariaLabel="Total giving per month, with the monthly average"
+              />
+            </div>
+          </Panel>
+
+          <Panel className="c-4" title="By type" accent="var(--emerald)">
             <RingPanel
               value={money(givingWindow, currency)}
               label="in window"
@@ -658,11 +661,12 @@ function View({
                 <DonutChart
                   data={data.giving_types.map((g) => ({ label: g.label, value: g.total }))}
                   colors={GIVING_TONES}
-                  height={158}
-                  thickness={0.28}
+                  height={168}
+                  thickness={0.22}
                   ariaLabel="Giving split by type"
                 />
               }
+              height={168}
               items={data.giving_types.slice(0, 6).map((g, i) => ({
                 label: g.label,
                 colour: GIVING_TONES[i % GIVING_TONES.length],
@@ -670,269 +674,113 @@ function View({
               }))}
             />
           </Panel>
-        )}
+        </section>
+      )}
 
+      {/* ---------------- who they are, and who is waiting ---------------- */}
+      <section className="dash-row dash-row-3">
         <Panel
-          span={ringSpan}
-          title="Cell health"
-          lede={`${data.cells.length} cells by turnout`}
-          accent="var(--teal)"
+          className="c-4"
+          title="New people"
+          accent="var(--cobalt)"
+          lede="People who joined in each month. The total on the roll is in the strip at the top."
+          href="/app/people"
+          hrefLabel="Open the directory"
         >
-          {data.cells.length > 0 && atRisk === 0 ? (
-            <Calm
-              items={bands.map((b) => ({
-                label: b.label,
-                colour: BAND_TONE[b.label],
-                value: String(b.value),
-              }))}
-            >
-              No cells at risk.
-            </Calm>
-          ) : data.cells.length > 0 ? (
-            <RingPanel
-              value={String(atRisk)}
-              label="at risk"
-              chart={
-                <DonutChart
-                  data={bands}
-                  colors={[BAND_TONE.thriving, BAND_TONE.steady, BAND_TONE["at risk"]]}
-                  height={158}
-                  thickness={0.28}
-                  ariaLabel="Cells by health band"
+          {joinedLine.length > 0 ? (
+            <>
+              <Headline
+                value={joinedWindow.toLocaleString()}
+                note={`joined in ${joinedLine.length} months`}
+              />
+              <div className="chart-rise mt-3">
+                <ColumnsChart
+                  data={joinedLine}
+                  color="var(--cobalt)"
+                  height={140}
+                  average
+                  ariaLabel="People who joined in each month"
                 />
-              }
-              items={bands.map((b) => ({
-                label: b.label,
-                colour: BAND_TONE[b.label],
-                value: String(b.value),
-              }))}
-            />
+              </div>
+            </>
           ) : (
-            <Empty
-              action={canWrite(me, "cell") ? { href: "/app/cells", label: "Add a cell" } : undefined}
-            >
-              No cells yet.
-            </Empty>
+            <Empty>No join dates recorded.</Empty>
           )}
         </Panel>
 
-        <Panel span={ringSpan} title="Pastoral care" accent="var(--ruby)">
-          {careTotal > 0 && followUps === 0 ? (
-            <Calm
-              items={care.map((c) => ({
-                label: c.label,
-                colour: CARE_TONE[c.label] ?? "var(--sunk)",
-                value: String(c.value),
-              }))}
-            >
-              Nobody is waiting on a call.
-            </Calm>
-          ) : careTotal > 0 ? (
-            <RingPanel
-              value={String(followUps)}
-              label="need a call"
-              chart={
-                <DonutChart
-                  data={care}
-                  colors={care.map((c) => CARE_TONE[c.label] ?? "var(--sunk)")}
-                  height={158}
-                  thickness={0.28}
-                  ariaLabel="Check-ups by status"
-                />
-              }
-              items={care.map((c) => ({
-                label: c.label,
-                colour: CARE_TONE[c.label] ?? "var(--sunk)",
-                value: String(c.value),
-              }))}
-            />
+        <Panel
+          className="c-4"
+          title="Care"
+          accent="var(--ruby)"
+          lede="Check-ups by where they stand, in the order the work moves: not reached, then a follow-up, then reached, then resolved."
+          href="/app/care"
+          hrefLabel="Open care"
+        >
+          {careTotal > 0 ? (
+            <>
+              <Headline
+                value={String(waiting)}
+                note={waiting === 0 ? "nobody waiting on a call" : `waiting on a call · ${careTotal} in all`}
+              />
+              <div className="mt-4">
+                <Stages items={careStages} />
+              </div>
+            </>
           ) : (
             <Empty>No check-ups recorded.</Empty>
           )}
         </Panel>
 
         <Panel
-          span={ringSpan}
-          title="Age"
+          className="c-4"
+          title="Ages"
           accent="var(--violet)"
-          aside={
-            genders.length > 0 && (
-              <span className="tnum text-[11px] text-ink-3">
-                {Math.round((women / genderTotal) * 100)}% women
-              </span>
-            )
-          }
+          lede={`People on the roll by age band${
+            data.demographics.unknown_age ? `; ${data.demographics.unknown_age} have no date of birth` : ""
+          }.`}
         >
           {ages.length > 0 ? (
-            <RingPanel
-              value={ages.reduce((sum, a) => sum + a.value, 0).toLocaleString()}
-              label="on the roll"
-              chart={
-                <DonutChart
-                  data={ages}
-                  colors={AGE_TONES}
-                  height={158}
-                  thickness={0.28}
-                  ariaLabel="Congregation by age band"
-                />
-              }
-              items={ages.map((a, i) => ({
-                label: a.label,
-                colour: AGE_TONES[i % AGE_TONES.length],
-                value: String(a.value),
-              }))}
-            />
+            <>
+              <Histogram items={allAges} colour="var(--violet)" height={128} />
+              {genders.length > 0 && (
+                <>
+                  <div className="panel-rule" />
+                  <div className="mb-2 flex items-baseline justify-between text-[11.5px] text-ink-3">
+                    <span>Women {Math.round((women / genderTotal) * 100)}%</span>
+                    <span>Men {100 - Math.round((women / genderTotal) * 100)}%</span>
+                  </div>
+                  <SegmentBar
+                    thin
+                    showKey={false}
+                    items={[
+                      { label: "women", value: women, colour: "var(--violet)" },
+                      { label: "men", value: genderTotal - women, colour: "color-mix(in oklab, var(--violet) 35%, var(--sunk))" },
+                    ]}
+                  />
+                </>
+              )}
+            </>
           ) : (
             <Empty>No dates of birth recorded.</Empty>
           )}
         </Panel>
       </section>
 
-      {/* ---------------- branch by branch, and the long lines ---------------- */}
-      <section className="grid gap-2 lg:grid-cols-12">
-        {/* Concentric rings, not slices: branches do not add up to a
-            whole, they are independent fractions of the same 100. Nested,
-            they share a start angle and a scale, so the ranking reads off
-            the arc lengths without anyone reading a number. */}
-        <Panel
-          span="lg:col-span-3"
-          title="Turnout by branch"
-          accent="var(--violet)"
-          aside={
-            <Link
-              href="/app/branches"
-              className="text-[11px] font-medium text-ink-3 transition-colors hover:text-ink"
-            >
-              Manage →
-            </Link>
-          }
-        >
-          {ranked.length > 0 ? (
-            <RingPanel
-              height={186}
-              value={latest ? `${latest.pct}%` : "—"}
-              label="church wide"
-              chart={
-                <MultiRingChart
-                  data={ranked.slice(0, 6).map((b) => ({ label: b.name, value: b.turnout }))}
-                  colors={BRANCH_TONES}
-                  height={186}
-                  ariaLabel="Turnout percentage for each branch"
-                />
-              }
-              items={ranked.slice(0, 6).map((b, i) => ({
-                label: b.name,
-                colour: BRANCH_TONES[i % BRANCH_TONES.length],
-                value: `${b.turnout}%`,
-              }))}
-            />
-          ) : (
-            <Empty
-              action={canWrite(me, "branch") ? { href: "/app/branches", label: "Add a branch" } : undefined}
-            >
-              No branches with anyone on the roll.
-            </Empty>
-          )}
-        </Panel>
-
-        <Panel
-          span={showGiving ? "lg:col-span-3" : "lg:col-span-6"}
-          title="Membership"
-          accent="var(--cobalt)"
-          aside={
-            joined != null && (
-              <span
-                className="tnum text-[11px] font-semibold"
-                style={{ color: "var(--cobalt)" }}
-              >
-                +{joined}
-              </span>
-            )
-          }
-        >
-          {growthLine.length > 0 ? (
-            <TrendChart
-              data={growthLine}
-              color="var(--cobalt)"
-              height={214}
-              ariaLabel="Total membership at the end of each month"
-            />
-          ) : (
-            <Empty>No join dates recorded.</Empty>
-          )}
-        </Panel>
-
-        {showGiving ? (
-          <Panel
-            span="lg:col-span-6"
-            title="Giving over time"
-            accent="var(--emerald)"
-            aside={
-              <Link
-                href="/app/giving"
-                className="text-[11px] font-medium text-ink-3 transition-colors hover:text-ink"
-              >
-                Every gift →
-              </Link>
-            }
-          >
-            <TrendChart
-              data={givingLine}
-              color="var(--emerald)"
-              height={214}
-              ariaLabel="Total giving per month"
-            />
-          </Panel>
-        ) : (
-          <Panel span="lg:col-span-3" title="Last service" accent="var(--gold)">
-            {latest ? (
-              <Ring
-                height={186}
-                value={`${latest.pct}%`}
-                label="turnout"
-                chart={
-                  <GaugeChart
-                    value={latest.pct}
-                    colour={turnoutColour(latest.pct)}
-                    height={186}
-                    ariaLabel={`${latest.pct} per cent turnout at the last service`}
-                  />
-                }
-              />
-            ) : (
-              <Empty>Nothing marked yet.</Empty>
-            )}
-          </Panel>
-        )}
-      </section>
-
       {/* ---------------- platform only: the tenants ---------------- */}
       {platform && (data.churches ?? []).length > 0 && (
         <Panel title="Churches" accent="var(--violet)">
-          <ul className="rows">
-            {(data.churches ?? []).map((c) => (
-              <li key={c.id} className="flex items-center justify-between gap-3 py-1.5 first:pt-0">
-                <Link
-                  href={`/app/church?id=${c.id}`}
-                  className="min-w-0 truncate text-[12px] font-medium hover:underline"
-                >
-                  {c.name}
-                </Link>
-                <span className="tnum shrink-0 text-[11px] text-ink-3">
-                  {c.members.toLocaleString()} · {c.branches} branches
-                  <span
-                    className="ml-2 font-semibold"
-                    style={{ color: turnoutColour(c.turnout) }}
-                  >
-                    {c.turnout}%
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
+          <Bullets
+            items={(data.churches ?? []).map((c) => ({
+              id: c.id,
+              label: c.name,
+              value: c.turnout,
+              note: `${c.members.toLocaleString()} people · ${c.branches} branches`,
+              colour: turnoutColour(c.turnout),
+              href: `/app/church?id=${c.id}`,
+            }))}
+          />
         </Panel>
       )}
-
     </Page>
   );
 }

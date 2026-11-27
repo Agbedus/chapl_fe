@@ -1,6 +1,9 @@
-import { Check } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
+
+import { CountUp } from "@/components/count-up";
+import { Info } from "@/components/info";
 
 /**
  * The furniture every signed-in page is built from.
@@ -21,19 +24,20 @@ import type { CSSProperties, ReactNode } from "react";
 /* ------------------------------------------------------------------ */
 
 /**
- * The band at the top of every page: kicker, title, one line of prose,
- * and whatever action belongs to the whole screen.
+ * The top of every page: the title, one line of status under it, and
+ * whatever action belongs to the whole screen.
  *
- * Every page opens the same way for the same reason a book's chapters
- * do — you should never have to work out where you are.
+ * There used to be a kicker over the title as well ("Overview",
+ * "People"), which only repeated the sidebar's highlighted row. The nav
+ * already says where you are; the head says what this is and how it
+ * stands. `eyebrow` is still accepted so no page has to change.
  */
 export function PageHead({
-  eyebrow,
   title,
   lede,
   action,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   lede?: string;
   action?: ReactNode;
@@ -41,11 +45,8 @@ export function PageHead({
   return (
     <header className="page-head">
       <div className="min-w-0">
-        <p className="eyebrow text-ink-3">{eyebrow}</p>
-        <h1 className="head mt-1.5 text-[24px] tracking-[-0.025em] sm:text-[26px]">{title}</h1>
-        {lede && (
-          <p className="measure mt-1.5 text-[12.5px] leading-[1.5] text-ink-3">{lede}</p>
-        )}
+        <h1 className="head text-[22px] tracking-[-0.025em] sm:text-[24px]">{title}</h1>
+        {lede && <p className="measure mt-1 text-[12.5px] leading-[1.5] text-ink-3">{lede}</p>}
       </div>
       {action && <div className="page-actions shrink-0">{action}</div>}
     </header>
@@ -83,6 +84,16 @@ export function Page({
 /* sections                                                            */
 /* ------------------------------------------------------------------ */
 
+/**
+ * A panel: a title, and the thing it is about.
+ *
+ * What used to sit under every title as a line of grey prose ("Share of
+ * those marked · last 8 services") is an "i" beside it now. The sentence
+ * is there for whoever wants it, and the eight panels that do not need
+ * explaining stop explaining themselves. `href` puts the way into the
+ * page that owns this data in the corner, as one small arrow, rather
+ * than a "Manage →" written out in every panel.
+ */
 export function Panel({
   title,
   lede,
@@ -91,6 +102,9 @@ export function Panel({
   quiet,
   fill,
   accent,
+  href,
+  hrefLabel,
+  className,
   children,
 }: {
   title?: string;
@@ -102,32 +116,39 @@ export function Panel({
   fill?: boolean;
   /** A domain hue. Draws the leading dot so a panel joins its data. */
   accent?: string;
+  /** The page this panel summarises. */
+  href?: string;
+  hrefLabel?: string;
+  className?: string;
   children: ReactNode;
 }) {
   return (
     <section
       className={`sheet ${quiet ? "sheet-mist" : ""} ${
         fill ? "flex min-h-0 flex-1 flex-col" : ""
-      } ${span ?? ""}`}
+      } ${span ?? ""} ${className ?? ""}`}
     >
-      {(title || aside) && (
-        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <div className="min-w-0">
-            {title && (
-              <h2 className="flex items-center gap-2 text-[13px] font-semibold tracking-[-0.01em]">
-                {accent && (
-                  <span
-                    className="dot h-[7px] w-[7px] shrink-0 rounded-full"
-                    style={{ color: accent }}
-                    aria-hidden
-                  />
-                )}
-                {title}
-              </h2>
-            )}
-            {lede && <p className="mt-0.5 text-[11.5px] text-ink-3">{lede}</p>}
-          </div>
-          {aside}
+      {(title || aside || href) && (
+        <div className="panel-head">
+          {title ? (
+            <h2 className="panel-title">
+              {accent && <span className="dot" style={{ color: accent }} aria-hidden />}
+              <span className="truncate">{title}</span>
+              {lede && <Info text={lede} />}
+            </h2>
+          ) : (
+            <span />
+          )}
+          {(aside || href) && (
+            <div className="flex shrink-0 items-center gap-1.5">
+              {aside}
+              {href && (
+                <Link href={href} className="panel-go" aria-label={hrefLabel ?? `Open ${title ?? "this"}`}>
+                  <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       )}
       {children}
@@ -173,52 +194,6 @@ export function Empty({
       ) : action ? (
         <div className="mt-3">{action as ReactNode}</div>
       ) : null}
-    </div>
-  );
-}
-
-/**
- * The good news, said in one line.
- *
- * A donut whose only message is "0 at risk" draws a full ring to say
- * nothing is wrong, and spends the whole panel doing it. When the figure
- * the chart exists to show is zero, say so plainly and keep the breakdown
- * as a short key beneath — the chart returns the day there is something
- * for it to show.
- */
-export function Calm({
-  children,
-  items,
-}: {
-  children: ReactNode;
-  items?: { label: string; colour: string; value: string }[];
-}) {
-  return (
-    <div>
-      <p className="flex items-center gap-2 rounded-xl bg-mist px-3 py-3 text-[12.5px] text-ink-2">
-        <span
-          className="grid h-5 w-5 shrink-0 place-items-center rounded-full"
-          style={{
-            background: "color-mix(in oklab, var(--emerald) 16%, transparent)",
-            color: "var(--emerald)",
-          }}
-          aria-hidden
-        >
-          <Check className="h-3 w-3" strokeWidth={3} />
-        </span>
-        {children}
-      </p>
-      {items && items.length > 0 && (
-        <ul className="mt-3 space-y-1.5">
-          {items.map((item) => (
-            <li key={item.label} className="flex items-center gap-2 text-[12px]">
-              <span className="dot" style={{ color: item.colour }} aria-hidden />
-              <span className="text-ink-2">{item.label}</span>
-              <span className="tnum ml-auto text-ink-3">{item.value}</span>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }
@@ -298,7 +273,7 @@ export function Meter({ value, colour }: { value: number; colour: string }) {
   return (
     <span className="block h-[5px] w-full overflow-hidden rounded-full bg-sunk">
       <span
-        className="block h-full rounded-full"
+        className="meter-fill block h-full rounded-full"
         style={{
           width: `${Math.min(100, Math.max(0, value))}%`,
           background: colour,
@@ -308,39 +283,9 @@ export function Meter({ value, colour }: { value: number; colour: string }) {
   );
 }
 
-/** A named colour swatch — every categorical chart on the page needs one. */
-export function Legend({
-  items,
-}: {
-  items: { label: string; colour: string; note?: string }[];
-}) {
-  return (
-    <ul className="flex flex-wrap items-center gap-x-4 gap-y-2">
-      {items.map((item) => (
-        <li key={item.label} className="flex items-center gap-1.5 text-[12px]">
-          <span className="dot" style={{ color: item.colour }} aria-hidden />
-          <span className="text-ink-2">{item.label}</span>
-          {item.note && <span className="tnum text-ink-3">{item.note}</span>}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 /* ------------------------------------------------------------------ */
 /* navigation                                                          */
 /* ------------------------------------------------------------------ */
-
-export function PanelLink({ href, children }: { href: string; children: ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="text-[13px] font-medium text-ink-3 transition-colors hover:text-ink"
-    >
-      {children} →
-    </Link>
-  );
-}
 
 /** The page-level primary action, in the marketing page's pill. */
 export function Action({
@@ -555,8 +500,6 @@ export function StatCard({
   spark?: ReactNode;
   href?: string;
 }) {
-  const good = delta == null ? true : goodWhenDown ? delta <= 0 : delta >= 0;
-
   const body = (
     <>
       <p className="kpi-label">
@@ -565,16 +508,13 @@ export function StatCard({
       </p>
 
       <p className="mt-2 flex items-baseline gap-1.5">
-        <span className="figure text-[24px]">{value}</span>
+        <span className="figure text-[24px]">
+          <CountUp value={value} />
+        </span>
         {unit && <span className="text-[12px] text-ink-3">{unit}</span>}
         {delta != null && (
-          <span
-            className="tnum ml-auto text-[11px] font-semibold"
-            style={{ color: good ? "var(--emerald)" : "var(--ruby)" }}
-          >
-            {delta > 0 ? "+" : ""}
-            {delta}
-            {deltaLabel && ` ${deltaLabel}`}
+          <span className="ml-auto">
+            <Delta value={delta} label={deltaLabel?.trim()} goodWhenDown={goodWhenDown} />
           </span>
         )}
       </p>
@@ -724,5 +664,324 @@ export function Leaderboard({
         );
       })}
     </ol>
+  );
+}
+
+
+/* ------------------------------------------------------------------ */
+/* the dashboard's instruments                                         */
+/* ------------------------------------------------------------------ */
+/*
+ * Each answers one kind of question, and none of them is a chart
+ * library's: they are server-rendered HTML, so they arrive with the page,
+ * read without a script, and print. They animate in on CSS alone (a bar
+ * grows from its start, a column from its floor), once, and not at all
+ * under reduced motion.
+ */
+
+/**
+ * A signed change, with an arrow as well as a colour, so it reads in
+ * greyscale and to anyone who cannot tell emerald from ruby.
+ */
+export function Delta({
+  value,
+  label,
+  goodWhenDown,
+}: {
+  value: number;
+  label?: string;
+  goodWhenDown?: boolean;
+}) {
+  if (value === 0) {
+    return <span className="delta delta-flat">no change{label ? ` ${label}` : ""}</span>;
+  }
+  const good = goodWhenDown ? value < 0 : value > 0;
+  const Arrow = value > 0 ? ArrowUpRight : ArrowDownRight;
+  return (
+    <span className={`delta ${good ? "delta-good" : "delta-bad"}`}>
+      <Arrow className="h-3 w-3" strokeWidth={2.4} aria-hidden />
+      {value > 0 ? "+" : "−"}
+      {Math.abs(value).toLocaleString()}
+      {label ? ` ${label}` : ""}
+    </span>
+  );
+}
+
+/**
+ * The four numbers a leader checks first, in one ruled strip.
+ *
+ * Four cards side by side were four things competing for the eye. One
+ * strip divided by hairlines is one thing, read left to right, and it
+ * holds its shape as two by two on a phone instead of scrolling sideways
+ * out of view. Each cell is the way into its page.
+ */
+export function Pulse({ children }: { children: ReactNode }) {
+  return <section className="pulse">{children}</section>;
+}
+
+export function PulseItem({
+  href,
+  label,
+  colour,
+  value,
+  unit,
+  delta,
+  note,
+  spark,
+}: {
+  href: string;
+  label: string;
+  colour: string;
+  value: string;
+  unit?: string;
+  delta?: ReactNode;
+  note?: string;
+  spark?: ReactNode;
+}) {
+  return (
+    <Link href={href} className="pulse-item">
+      <span className="pulse-label">
+        <span className="dot" style={{ color: colour }} aria-hidden />
+        {label}
+      </span>
+      <span className="pulse-value figure">
+        <CountUp value={value} />
+        {unit && <span className="pulse-unit">{unit}</span>}
+      </span>
+      {(delta || note) && (
+        <span className="pulse-foot">
+          {delta}
+          {note && <span className="truncate">{note}</span>}
+        </span>
+      )}
+      {spark && <span className="pulse-spark">{spark}</span>}
+      <ArrowUpRight className="pulse-go h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+    </Link>
+  );
+}
+
+/**
+ * The figure a panel is about, said first and large.
+ *
+ * A panel that opens on its number answers the question before the chart
+ * under it is read; the chart is then the "why", not a puzzle.
+ */
+export function Headline({
+  value,
+  unit,
+  delta,
+  note,
+}: {
+  value: string;
+  unit?: string;
+  delta?: ReactNode;
+  note?: ReactNode;
+}) {
+  return (
+    <div className="headline">
+      <span className="figure headline-value">
+        <CountUp value={value} />
+        {unit && <span className="pulse-unit">{unit}</span>}
+      </span>
+      {delta}
+      {note && <span className="headline-note">{note}</span>}
+    </div>
+  );
+}
+
+/**
+ * Bars against a fixed scale, with one shared mark across all of them.
+ *
+ * A bullet chart: each branch's turnout is a bar out of 100, and the
+ * tick through every row is the church's own figure. "Above or below
+ * the rest of us" is the question a branch pastor is actually asked, and
+ * it reads off the tick without anyone comparing two numbers.
+ */
+export function Bullets({
+  items,
+  mark,
+  markLabel,
+  unit = "%",
+}: {
+  items: { id: string; label: string; value: number; note?: string; href?: string; colour: string }[];
+  /** Where the shared tick sits, on the same 0–100 scale. */
+  mark?: number;
+  markLabel?: string;
+  unit?: string;
+}) {
+  return (
+    <div>
+      <ul className="bullets">
+        {items.map((item, i) => {
+          const row = (
+            <>
+              <span className="min-w-0">
+                <span className="bullet-name">{item.label}</span>
+                {item.note && <span className="bullet-note">{item.note}</span>}
+              </span>
+              <span className="bullet-track">
+                <span
+                  className="bullet-fill"
+                  style={{ width: `${Math.max(0, Math.min(100, item.value))}%`, background: item.colour }}
+                />
+                {mark != null && <span className="bullet-mark" style={{ left: `${mark}%` }} aria-hidden />}
+              </span>
+              <span className="bullet-value tnum">
+                {item.value}
+                <span className="text-ink-3">{unit}</span>
+              </span>
+            </>
+          );
+          return (
+            <li key={item.id} style={{ "--i": i } as CSSProperties}>
+              {item.href ? (
+                <Link href={item.href} className="bullet">
+                  {row}
+                </Link>
+              ) : (
+                <span className="bullet">{row}</span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {mark != null && markLabel && (
+        <p className="bullet-legend">
+          <span className="bullet-legend-mark" aria-hidden />
+          {markLabel}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * One whole as one bar, split into its parts, with the key underneath.
+ *
+ * Used where a donut would be a ring of three: a bar shows the same
+ * shares in a third of the height, and lines up with the rows under it.
+ * Pointing at a part, in the bar or in the key, lifts it and dims the
+ * rest.
+ */
+export function SegmentBar({
+  items,
+  thin,
+  showKey = true,
+}: {
+  items: { label: string; value: number; colour: string; note?: string }[];
+  thin?: boolean;
+  showKey?: boolean;
+}) {
+  const total = items.reduce((sum, item) => sum + item.value, 0) || 1;
+  const shown = items.filter((item) => item.value > 0);
+  return (
+    <div className="seg-wrap">
+      <div
+        className={`seg ${thin ? "seg-thin" : ""}`}
+        role="img"
+        aria-label={shown.map((s) => `${s.label} ${s.value}`).join(", ")}
+      >
+        {items.map((item, i) =>
+          item.value > 0 ? (
+            <span
+              key={item.label}
+              data-k={i}
+              style={{ flexGrow: item.value, background: item.colour, "--i": i } as CSSProperties}
+              title={`${item.label}: ${item.value}`}
+            />
+          ) : null,
+        )}
+      </div>
+      {showKey && (
+        <ul className="seg-key">
+          {items.map((item, i) => (
+            <li key={item.label} data-k={i}>
+              <span className="dot" style={{ color: item.colour }} aria-hidden />
+              <span className="min-w-0 flex-1 truncate capitalize text-ink-2">{item.label}</span>
+              <span className="tnum font-semibold text-ink">{item.value.toLocaleString()}</span>
+              <span className="tnum w-9 text-right text-ink-3">{Math.round((item.value / total) * 100)}%</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A sequence of stages, in the order work moves through them.
+ *
+ * Pastoral care is a pipeline, not a pie: somebody is not reached, then
+ * needs a follow-up, then is reached, then it is resolved. Drawn on a
+ * rail in that order, the eye reads where the work is piling up — which
+ * a ring of the same four numbers never said.
+ */
+export function Stages({
+  items,
+}: {
+  items: { label: string; value: number; colour: string }[];
+}) {
+  const top = Math.max(1, ...items.map((item) => item.value));
+  return (
+    <ol className="stages">
+      {items.map((item, i) => (
+        <li
+          key={item.label}
+          className="stage"
+          data-on={item.value > 0 ? "" : undefined}
+          style={{ color: item.colour, "--i": i } as CSSProperties}
+        >
+          <span className="stage-node" aria-hidden />
+          <span className="stage-label">{item.label}</span>
+          <span className="stage-value tnum">{item.value.toLocaleString()}</span>
+          <span className="stage-bar" aria-hidden>
+            <span style={{ width: `${(item.value / top) * 100}%` }} />
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/**
+ * Columns over ordered bands, each labelled with its own value.
+ *
+ * For a handful of bins (ages) where the order is the point and every
+ * value is worth printing: direct labels save the trip to a tooltip, and
+ * there are few enough of them not to crowd.
+ */
+export function Histogram({
+  items,
+  colour,
+  height = 112,
+}: {
+  items: { label: string; value: number }[];
+  colour: string;
+  height?: number;
+}) {
+  const top = Math.max(1, ...items.map((item) => item.value));
+  const most = items.reduce((best, item) => (item.value > best.value ? item : best), items[0]);
+  return (
+    <div
+      className="histo"
+      style={{ height }}
+      role="img"
+      aria-label={items.map((item) => `${item.label}: ${item.value}`).join(", ")}
+    >
+      {items.map((item, i) => (
+        <div key={item.label} className="histo-col" style={{ "--i": i } as CSSProperties}>
+          <span className="histo-value tnum">{item.value.toLocaleString()}</span>
+          <span
+            className="histo-bar"
+            style={{
+              height: `${Math.max(3, (item.value / top) * 100)}%`,
+              background:
+                item === most ? colour : `color-mix(in oklab, ${colour} 38%, var(--sunk))`,
+            }}
+          />
+          <span className="histo-label">{item.label}</span>
+        </div>
+      ))}
+    </div>
   );
 }
