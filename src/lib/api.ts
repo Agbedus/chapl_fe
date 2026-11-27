@@ -59,6 +59,12 @@ type RequestOptions = {
   /** Act in a specific tenant instead of the remembered one. */
   churchId?: string | null;
   cache?: RequestCache;
+  /**
+   * A write that changes nothing stored (a signal between a leader's
+   * devices): it does not expire the church's cached reads, which would
+   * otherwise be thrown away on every slide of a presentation.
+   */
+  quiet?: boolean;
 };
 
 /**
@@ -146,6 +152,7 @@ export async function api<T>(
     auth = true,
     churchId,
     cache,
+    quiet = false,
   } = options;
 
   const headers: Record<string, string> = { Accept: "application/json" };
@@ -196,7 +203,7 @@ export async function api<T>(
     };
   }
 
-  if (!reading && response.ok) clearChurch(church);
+  if (!reading && !quiet && response.ok) clearChurch(church);
 
   if (response.status === 204) return { ok: true, data: undefined as T };
 

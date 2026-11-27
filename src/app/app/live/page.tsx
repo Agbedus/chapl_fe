@@ -2,7 +2,7 @@ import { askRoom, checkIn, openCheckIn } from "@/app/actions/manage";
 import { AskQuestionEditor, CheckInBox, CheckInOpenEditor } from "@/components/editors";
 import { LiveBoard } from "@/components/live-board";
 import { SundayPanel } from "@/components/live-service";
-import { PresentButton, ServiceDeck, type DeckEvent, type DeckNotice } from "@/components/service-deck";
+import { DeckSettingsButton, PresentButton, ServiceDeck, type DeckEvent, type DeckNotice } from "@/components/service-deck";
 import { LiveRefresh } from "@/components/live-refresh";
 import { Empty, Page, Panel } from "@/components/panels";
 import { canRead, canWrite } from "@/lib/access";
@@ -136,6 +136,7 @@ export default async function LiveServicePage() {
 
         {opener && (
           <div className="live-room-actions">
+            <DeckSettingsButton />
             <PresentButton />
             {live.length > 0 && (
               <AskQuestionEditor
@@ -157,7 +158,8 @@ export default async function LiveServicePage() {
         )}
       </header>
 
-      {/* What goes on the screen at the front, in order, and the way to show it. */}
+      {/* What goes on the screen at the front: a drawer from the control
+          room's Run of service, and the presenter. Nothing on the page itself. */}
       {opener && (
         <ServiceDeck church={churchName} live={first ?? null} notices={deckNotices} events={deckEvents} />
       )}
