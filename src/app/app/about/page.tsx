@@ -1,5 +1,6 @@
 import { ArrowUpRight, Globe, Mail, MapPin, Navigation, Phone } from "lucide-react";
 
+import { ChurchMap } from "@/components/church-map";
 import { PhoneLink } from "@/components/contact";
 import { DotFigure } from "@/components/dot-figure";
 import { Empty, Page, PageHead } from "@/components/panels";
@@ -44,6 +45,9 @@ function monogram(name: string): string {
 }
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+const FULL_DAY: Record<string, string> = {
+  Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday", Thu: "Thursday", Fri: "Friday", Sat: "Saturday", Sun: "Sunday",
+};
 const DAY_NAMES: Record<string, (typeof DAYS)[number]> = {
   mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun",
 };
@@ -222,7 +226,21 @@ export default async function AboutChurchPage() {
           <Empty>No branches listed yet.</Empty>
         ) : (
           <div className={pinned.length >= 2 ? "church-split" : undefined}>
-            {pinned.length >= 2 && <BranchField branches={pinned} mine={c.my_branch_id ?? null} />}
+            {pinned.length >= 2 && (
+              <ChurchMap
+                pins={pinned.map((b) => ({
+                  id: b.id,
+                  name: b.name,
+                  latitude: b.latitude!,
+                  longitude: b.longitude!,
+                  times: b.service_times ?? null,
+                  directions: directions(b),
+                  mine: b.id === c.my_branch_id,
+                }))}
+              >
+                <BranchField branches={pinned} mine={c.my_branch_id ?? null} />
+              </ChurchMap>
+            )}
 
             <ul className="church-branches">
               {branches.map((b) => (
@@ -244,7 +262,7 @@ function BranchRow({ branch: b, mine }: { branch: Branch; mine: boolean }) {
   const map = directions(b);
   const plan = week(b.service_times);
   return (
-    <li className="church-branch" data-mine={mine ? "" : undefined}>
+    <li className="church-branch" data-branch={b.id} data-mine={mine ? "" : undefined}>
       <div className="min-w-0">
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className={`dot ${mine ? "church-ring" : ""}`} style={{ color: "var(--violet)" }} aria-hidden />
@@ -258,24 +276,38 @@ function BranchRow({ branch: b, mine }: { branch: Branch; mine: boolean }) {
 
       <div className="church-week">
         {plan ? (
-          <>
-            <span className="church-days" aria-hidden>
-              {DAYS.map((d) => (
-                <span key={d} data-on={plan.days.has(d) ? "" : undefined}>
-                  {d[0]}
-                </span>
-              ))}
-            </span>
-            <span className="church-times">
-              {[...plan.days.entries()]
-                .sort((a, b) => DAYS.indexOf(a[0] as (typeof DAYS)[number]) - DAYS.indexOf(b[0] as (typeof DAYS)[number]))
-                .map(([day, times]) => (
-                  <span key={day}>
-                    <span className="font-semibold text-ink">{day}</span> {times.map(clock).join(", ")}
+          // The week, with the days it meets lit. A lit day carries its
+          // times in a tip (hover, focus or a tap): the strip says which
+          // days at a glance, and printing every time beside it said it twice.
+          <span className="church-days" role="list" aria-label={`${b.name} meets`}>
+            {DAYS.map((d) => {
+              const times = plan.days.get(d);
+              if (!times) {
+                return (
+                  <span key={d} className="church-day" aria-hidden>
+                    {d[0]}
                   </span>
-                ))}
-            </span>
-          </>
+                );
+              }
+              const said = times.length ? times.map(clock).join(", ") : "Service";
+              return (
+                <span
+                  key={d}
+                  className="church-day"
+                  data-on=""
+                  role="listitem"
+                  tabIndex={0}
+                  aria-label={`${FULL_DAY[d]} ${said}`}
+                >
+                  {d[0]}
+                  <span className="church-day-tip" aria-hidden>
+                    <span className="font-semibold">{FULL_DAY[d]}</span>
+                    <span className="tnum">{said}</span>
+                  </span>
+                </span>
+              );
+            })}
+          </span>
         ) : (
           <span className="church-times">{b.service_times ?? "Times not listed"}</span>
         )}
@@ -297,11 +329,10 @@ function BranchRow({ branch: b, mine }: { branch: Branch; mine: boolean }) {
 /**
  * The branches where they are, drawn as the product's own dots.
  *
- * Not a map: a field the shape of the area the branches cover, each one a
- * dot at its place and named beside it, the reader's own ringed. Relative
- * position is the whole of what a member needs from it ("the one nearest
- * me"), and a tile map would be someone else's server on every visit for
- * streets nobody reads here. Each dot opens directions.
+ * The stand-in for the map: a field the shape of the area the branches
+ * cover, each one a dot at its place and named beside it, the reader's
+ * own ringed. It is what the server sends and what stays if the map's
+ * library, its tiles or WebGL never arrive. Each dot opens directions.
  */
 function BranchField({ branches, mine }: { branches: Branch[]; mine: string | null }) {
   const lats = branches.map((b) => b.latitude!);

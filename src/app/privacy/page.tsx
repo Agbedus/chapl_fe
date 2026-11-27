@@ -247,6 +247,11 @@ export default function PrivacyPage() {
             YouTube (in its privacy-enhanced mode on this website) under Google&rsquo;s privacy policy.
           </li>
           <li>
+            <B>OpenFreeMap</B>, when you open the map of where your church meets. The map is drawn from
+            tiles your browser loads from OpenFreeMap&rsquo;s servers, which see your IP address and the
+            area being viewed, as any website you load does. Nothing about you or your church is sent.
+          </li>
+          <li>
             <B>Authorities</B>, where the law requires it, or where it is needed to protect someone from
             serious harm.
           </li>

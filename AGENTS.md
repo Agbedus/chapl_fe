@@ -731,10 +731,25 @@ copies the link. **Your church** (`/app/about`, `GET
 when, and directions — their own branch first. It opens on the church's
 mark (logo or monogram), a line of who it is, its own words, and its size
 in dot figures, with the office's phone, email, site and address as one
-row of links. Branches with coordinates are placed as dots on a dotted
-field (not a tile map), the reader's own ringed, beside one ruled list;
-each branch's `service_times` is parsed into a seven-day strip with its
-meeting days lit, falling back to the typed text when it cannot be read.
+row of links. Branches with coordinates sit on a **real map**
+(`components/church-map.tsx`): MapLibre GL (BSD, pinned `6.19.0`) over
+OpenFreeMap's vector tiles, free and keyless — Liberty by day, Dark by
+night, switched live with the theme — with HTML pins in the product's
+dot, the reader's own ringed, a click opening times and directions. A pin
+and its row in the list light each other (`data-branch`). The wheel
+scrolls the page; ctrl/⌘ + wheel zooms. Three traps: MapLibre starts its
+worker from a file beside its module, which the bundler does not emit,
+so `scripts/copy-map-worker.mjs` copies it to `public/vendor/` (on
+install, dev and build; gitignored) and the component calls
+`setWorkerUrl`; MapLibre's sheet sets `.maplibregl-map` to `position:
+relative`, which collapsed the canvas, so its box is styled two classes
+deep; and the effect is keyed on the pins' JSON, because every live
+refresh hands in a new array and tore the map down. Until it draws, the
+server-rendered dot field stands in, and it stays if tiles or WebGL never
+arrive. The privacy policy names OpenFreeMap. Each branch's
+`service_times` is parsed into a seven-day strip with its meeting days
+lit; a lit day's times are its tooltip (hover, focus or tap), not text
+beside it. Unreadable times show as typed.
 
 ## The notifications inbox
 
