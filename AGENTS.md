@@ -848,11 +848,24 @@ slide ID are isolated per service. An older unscoped deck becomes the initial
 template until the scoped deck is saved. Run of service has move-up/down
 controls; checkpoints use stable slide IDs rather than positions.
 
-The phone is controller-only. Desktops announce a named screen over the
-existing own-user channel, but only when asked: a controller says hello
+**A service's screens and remotes share the service's channel.** A deck
+with a service behind it posts through `/api/deck` to `POST
+/attendance/check-in/sessions/{id}/deck`, which the API allows only to
+someone who could run that service (the same check as Ask the room) and
+publishes to its leaders: `branch:` for a branch's service, `leaders:`
+(whole-church authority only) for the church's. So a branch pastor's
+phone finds and drives the screen the media desk presents from, for their
+branch and no other, and no member hears or moves anything. A deck with
+no service, or a sender the service refuses, stays on the sender's own
+`user:` channel. The remote page lists the open services its holder can
+run and says hello on each.
+
+The phone is controller-only. Desktops announce a named screen, but only
+when asked: a controller says hello
 every four seconds while it is on screen, and each screen answers that or
 reports a real change to what it shows (deduplicated, since the effect
-re-runs on every live refresh). There is no standing heartbeat, because
+re-runs on every live refresh; and one answer a second, since a remote
+says hello on two channels). There is no standing heartbeat, because
 every open Live service tab is a screen, and three of them beating every
 three seconds was a request a second with nobody listening. Registered receivers keep their
 connection open while the page is mounted, even when its tab is hidden. Commands carry both `screenId`

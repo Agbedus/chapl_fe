@@ -168,7 +168,7 @@ export function DeckStudioButton() {
   </button>;
 }
 
-function StudioOverlay({ onClose, scopeKey }: { onClose: () => void; scopeKey: string }) {
+function StudioOverlay({ onClose, scopeKey, sessionId }: { onClose: () => void; scopeKey: string; sessionId?: string }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const previous = document.body.style.overflow;
@@ -182,7 +182,7 @@ function StudioOverlay({ onClose, scopeKey }: { onClose: () => void; scopeKey: s
     if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) onClose();
   }}>
     <header className="slide-studio-head"><h2 id="slide-studio-title">Slide studio</h2><button type="button" className="btn btn-quiet btn-sm" onClick={onClose} aria-label="Close slide studio"><X className="h-4 w-4" aria-hidden /></button></header>
-    <div className="slide-studio-body"><DeckRemote scopeKey={scopeKey} /></div>
+    <div className="slide-studio-body"><DeckRemote scopeKey={scopeKey} sessions={sessionId ? [sessionId] : []} /></div>
   </dialog>, document.body);
 }
 
@@ -323,6 +323,8 @@ export function ServiceDeck({
   defaultStart?: string;
 }) {
   const stored = useSettings(scopeKey);
+  // The service behind the deck: its screens and remotes share its channel.
+  const sessionId = live?.session_id;
   const settings = useMemo(
     () => (stored.start ? stored : { ...stored, start: defaultStart ?? "10:00" }),
     [stored, defaultStart],
@@ -379,6 +381,7 @@ export function ServiceDeck({
   const screenId = useRef(receiverId ?? "");
   const transportReady = useRef(false);
   const lastReport = useRef("");
+  const lastReportAt = useRef(-Infinity);
   const undoHistory = useRef<Settings[]>([]);
   const [undoCount, setUndoCount] = useState(0);
   const [screenName, setScreenName] = useState("Presentation screen");
@@ -479,15 +482,19 @@ export function ServiceDeck({
       if (!transportReady.current || !eligible()) return;
       let name = screenName;
       try { name = window.localStorage.getItem("chaplScreenName") || name; } catch { /* Use the session name. */ }
-      const signal: DeckSignal = { action, screenId: screenId.current, serviceKey: scopeKey,
+      const signal: DeckSignal = { action, sessionId, screenId: screenId.current, serviceKey: scopeKey,
         name, presenting, slide: at, blank: blank || !presenting,
         resumeSlide: canResume ? resumeSlide : undefined,
         titles: JSON.parse(titlesKey), style: JSON.parse(styleKey), canUndo: undoCount > 0 };
       // This effect re-runs whenever the page re-renders (a live refresh
       // hands in new slides); only a real change goes on the wire.
       const key = JSON.stringify({ ...signal, action: undefined });
-      if (!force && key === lastReport.current) return;
+      // A remote says hello on two channels (its own and the service's),
+      // and every remote does; one answer a second covers them all.
+      const now = performance.now();
+      if (key === lastReport.current && (!force || now - lastReportAt.current < 1000)) return;
       lastReport.current = key;
+      lastReportAt.current = now;
       void sendDeck(signal);
     };
     const onLive = (event: Event) => {
@@ -554,11 +561,11 @@ export function ServiceDeck({
     window.dispatchEvent(new Event("chapl:live-probe"));
     report(presenting ? "state" : "screen");
     return () => window.removeEventListener("chapl:live", onLive);
-  }, [desktopOutput, audience, localOutput, scopeKey, screenName, presenting, at, blank, resumeSlide, canResume, titlesKey, styleKey, undoCount, shown, go, end]);
+  }, [desktopOutput, audience, localOutput, scopeKey, sessionId, screenName, presenting, at, blank, resumeSlide, canResume, titlesKey, styleKey, undoCount, shown, go, end]);
 
   return (
     <>
-      {!audience && studio && <StudioOverlay scopeKey={scopeKey} onClose={() => setStudio(false)} />}
+      {!audience && studio && <StudioOverlay scopeKey={scopeKey} sessionId={sessionId} onClose={() => setStudio(false)} />}
       {drawer && (
         <Drawer
           slides={orderedSlides}
@@ -1192,11 +1199,18 @@ function QuestionSlide({ prompt }: { prompt: Prompt }) {
  */
 type RemoteScreen = DeckMessage & { screenId: string; serviceKey: string; lastSeen: number };
 
-export function DeckRemote({ scopeKey, returnOnEnd = false }: { scopeKey?: string; returnOnEnd?: boolean }) {
+/**
+ * A remote for a service's screens. It says hello on its own channel (its
+ * own screens) and on each service in [sessions] — the open services the
+ * holder could run — so a pastor's phone finds the screen the media desk
+ * is presenting from, and the API refuses a service they could not run.
+ */
+export function DeckRemote({ scopeKey, returnOnEnd = false, sessions = [] }: { scopeKey?: string; returnOnEnd?: boolean; sessions?: string[] }) {
   const router = useRouter();
   const [screens, setScreens] = useState<Record<string, RemoteScreen>>({});
   const [chosen, setChosen] = useState("");
   const pairingKey = `chaplPairedScreen:${scopeKey ?? "remote"}`;
+  const sessionsKey = sessions.join(",");
   const [now, setNow] = useState(0);
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
@@ -1219,12 +1233,17 @@ export function DeckRemote({ scopeKey, returnOnEnd = false }: { scopeKey?: strin
     // Connecting announces itself twice (connected, then ready); every
     // screen answers each hello, so one within a second of the last is
     // dropped.
+    const ids = sessionsKey ? sessionsKey.split(",") : [];
+    const sayHello = () => {
+      void sendDeck({ action: "hello" });
+      for (const sessionId of ids) void sendDeck({ action: "hello", sessionId });
+    };
     let lastHello = -Infinity;
     const hello = () => {
       const now = performance.now();
       if (now - lastHello < 1000) return;
       lastHello = now;
-      void sendDeck({ action: "hello" });
+      sayHello();
     };
     try {
       const saved = window.sessionStorage.getItem(pairingKey);
@@ -1239,8 +1258,11 @@ export function DeckRemote({ scopeKey, returnOnEnd = false }: { scopeKey?: strin
       }
       if (message.type === "deck.screen" || message.type === "deck.state") {
         if (!message.screenId || !message.serviceKey || (scopeKey && message.serviceKey !== scopeKey)) return;
+        // A report heard on a service's channel says which; one on our own
+        // channel keeps the service it was last heard on.
         const peer: RemoteScreen = { ...message, screenId: message.screenId, serviceKey: message.serviceKey, lastSeen: Date.now() };
-        setScreens(previous => ({ ...previous, [peer.screenId]: peer }));
+        if (!peer.session_id) delete peer.session_id;
+        setScreens(previous => ({ ...previous, [peer.screenId]: { ...previous[peer.screenId], ...peer } }));
         if (message.screenId === selectedId.current && message.presenting) {
           if (startTimer.current != null) window.clearTimeout(startTimer.current);
           setStarting(false);
@@ -1253,7 +1275,7 @@ export function DeckRemote({ scopeKey, returnOnEnd = false }: { scopeKey?: strin
     window.addEventListener("chapl:output-blocked", onBlocked);
     // Sent before the socket may be open, so it does not count against the
     // throttle: the connect that follows must still be able to ask.
-    void sendDeck({ action: "hello" });
+    sayHello();
     window.dispatchEvent(new Event("chapl:live-probe"));
     const clock = window.setInterval(() => setNow(Date.now()), 1000);
     // The hello is the screens' heartbeat: each answers it, so a screen
@@ -1271,7 +1293,7 @@ export function DeckRemote({ scopeKey, returnOnEnd = false }: { scopeKey?: strin
       window.clearInterval(clock); window.clearInterval(discover);
       if (startTimer.current != null) window.clearTimeout(startTimer.current);
     };
-  }, [scopeKey, pairingKey]);
+  }, [scopeKey, pairingKey, sessionsKey]);
 
   const pair = (id: string) => {
     selectedId.current = id;
@@ -1294,7 +1316,7 @@ export function DeckRemote({ scopeKey, returnOnEnd = false }: { scopeKey?: strin
         setError("The desktop has not acknowledged Start. Check its connection and try again.");
       }, 6000);
     }
-    const ok = await sendDeck({ ...signal, screenId: screen.screenId, serviceKey: screen.serviceKey });
+    const ok = await sendDeck({ ...signal, sessionId: screen.session_id, screenId: screen.screenId, serviceKey: screen.serviceKey });
     setSending(false);
     if (!ok) {
       setError("Could not reach the screen. Try again.");
