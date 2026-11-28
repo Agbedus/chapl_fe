@@ -6103,10 +6103,9 @@ a.church-link:active {
    =================================================================== */
 .live-room {
   position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: 1.25rem 2rem;
   overflow: hidden;
   padding: 1.5rem 1.5rem 1.375rem;
@@ -6182,10 +6181,27 @@ a.church-link:active {
   vertical-align: middle;
 }
 .live-room-actions {
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
+}
+.live-room-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+.live-room .live-room-tool {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+}
+@media (max-width: 480px) {
+  .live-room {
+    padding: 1rem;
+    column-gap: 0.625rem;
+  }
 }
 /* The buttons on the stage are the stage's: quiet ones are glass, the
    way in is the accent. */
@@ -6220,6 +6236,7 @@ a.church-link:active {
   background: #07080b;
   color: var(--ink);
   cursor: default;
+  outline: none;
 }
 .presenter::before {
   content: "";
@@ -6312,6 +6329,7 @@ a.church-link:active {
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  max-width: calc(100vw - 2rem);
   padding: 0.3rem;
   border: 1px solid var(--line-strong);
   border-radius: 14px;
@@ -6320,13 +6338,14 @@ a.church-link:active {
   translate: -50% 0;
   transition: opacity 0.3s ease, translate 0.3s var(--ease-out);
 }
-.presenter[data-idle] .presenter-controls,
+.presenter[data-idle] .presenter-controls:not(:focus-within),
 .presenter[data-idle] .presenter-hint {
   opacity: 0;
   translate: -50% 8px;
   pointer-events: none;
 }
 .presenter-controls > button {
+  flex-shrink: 0;
   display: grid;
   place-items: center;
   width: 2.25rem;
@@ -6344,10 +6363,20 @@ a.church-link:active {
 }
 .presenter-dots {
   display: flex;
-  gap: 0.375rem;
-  padding: 0 0.5rem;
+  align-items: center;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 .presenter-dots > button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 24px;
+  height: 36px;
+  border-radius: 6px;
+}
+.presenter-dots > button::before {
+  content: "";
   width: 8px;
   height: 8px;
   border-radius: 99px;
@@ -6355,8 +6384,15 @@ a.church-link:active {
   transition: background-color 0.15s ease, width 0.2s var(--ease-out);
 }
 .presenter-dots > button[aria-current] {
+  flex-basis: 32px;
+}
+.presenter-dots > button[aria-current]::before {
   width: 22px;
   background: var(--ink);
+}
+.presenter-controls button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
 }
 .presenter-sep {
   width: 1px;
@@ -6761,26 +6797,6 @@ a.church-link:active {
 .ps-announce .ps-event-where {
   grid-column: 1;
 }
-.presenter-progress {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.06);
-}
-.presenter-progress > span {
-  display: block;
-  height: 100%;
-  background: var(--gold);
-  transition: width 0.5s var(--ease-out);
-}
-.presenter-count {
-  min-width: 3.5rem;
-  text-align: center;
-  font-size: 12.5px;
-  color: var(--ink-2);
-}
 
 /* --- the run of service drawer ----------------------------------------- */
 .drawer-scrim {
@@ -7012,8 +7028,335 @@ a.church-link:active {
   .ps-option-bar,
   .drawer,
   .drawer-scrim,
-  .presenter-progress > span {
+  .presenter-dots > button::before {
     animation: none;
     transition: none;
   }
+}
+
+/* The studio stays on the operator's screen; the output contains only slides. */
+.presentation-settings { min-width: 0; }
+.presentation-settings > summary { display:flex; align-items:center; justify-content:space-between; cursor:pointer; font-weight:600; padding:0.5rem 0; }
+.presentation-settings-body { display:grid; gap:1.25rem; margin-top:1rem; }
+.presentation-settings legend { font-size:11px; text-transform:uppercase; letter-spacing:0.13em; color:var(--ink-3); margin-bottom:0.75rem; }
+.presentation-swatches { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:0.625rem; }
+.presentation-swatches button { text-align:left; padding:5px; border:1px solid var(--line); border-radius:12px; background:var(--paper); }
+.presentation-swatches button[aria-pressed=true] { border-color:var(--cobalt); outline:1px solid var(--cobalt); }
+.presentation-swatches strong,.presentation-swatches small { display:block; padding:0 5px; }
+.presentation-swatches strong { font-size:12px; margin-top:6px; }
+.presentation-swatches small { font-size:10px; color:var(--ink-3); margin-bottom:4px; }
+.presentation-swatch { display:grid; place-items:center; height:76px; border-radius:8px; background:var(--mist); background-size:cover; background-position:center; }
+.presentation-dot-mark { color:var(--violet); font-size:36px; }
+.presentation-options { display:flex; flex-wrap:wrap; gap:0.5rem; }
+.presentation-options button[aria-pressed=true] { color:var(--accent-ink); background:var(--accent); }
+.presentation-range { display:grid; grid-template-columns:1fr auto; gap:0.75rem; font-size:12px; }
+.presentation-range input { grid-column:1/-1; width:100%; accent-color:var(--accent); }
+.presentation-toggle { display:flex; gap:0.625rem; align-items:center; font-size:12px; }
+.presentation-settings form { display:grid; gap:0.75rem; }
+.presentation-settings form label { display:grid; gap:0.375rem; font-size:12px; }
+.presentation-preview { position:relative; isolation:isolate; aspect-ratio:16/9; display:grid; place-items:center; overflow:hidden; border-radius:12px; text-align:center; }
+.presentation-preview > div:last-child { position:relative; z-index:1; padding:1rem; }
+.presentation-preview strong { display:block; font-family:var(--font-display); font-size:clamp(24px,3vw,44px); letter-spacing:-0.035em; }
+.presentation-preview p { font-size:13px; margin-top:0.5rem; }
+.presentation-preview .eyebrow { font-size:9px; color:var(--ink-2); }
+.presenter,.presentation-preview { --stage-ground:var(--paper); --stage-ink:var(--ink); --stage-muted:var(--ink-2); background:var(--stage-ground); color:var(--stage-ink); }
+.presenter[data-mode=dark],.presentation-preview[data-mode=dark] { --stage-ground:#07080b; --stage-ink:#f2f3f7; --stage-muted:#c5c7d1; }
+.presenter[data-mode=light],.presentation-preview[data-mode=light] { --stage-ground:#f8f5ee; --stage-ink:#181b27; --stage-muted:#434755; }
+.presenter { --ink:var(--stage-ink); --ink-2:var(--stage-muted); --ink-3:var(--stage-muted); isolation:isolate; }
+/* Explicit auto tokens avoid a self-reference through the slide's local ink. */
+.presenter[data-mode=auto] { --stage-ink:#181b27; --stage-muted:#434755; }
+.dark .presenter[data-mode=auto] { --stage-ink:#f2f3f7; --stage-muted:#c5c7d1; }
+.presentation-backdrop { position:absolute; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
+.presentation-photo { position:absolute; inset:-2%; background-size:cover; background-position:center; animation:stage-drift 35s ease-in-out infinite alternate; }
+.presentation-veil { position:absolute; inset:0; background:color-mix(in oklab,var(--stage-ground) 82%,transparent); }
+.presentation-glass { position:absolute; right:-10%; top:-10%; height:120%; width:80%; color:var(--stage-muted); opacity:0.35; }
+.presentation-glass circle { animation:glass-breathe 8s ease-in-out infinite alternate; }
+.presenter::before { display:none; }
+.presenter-slide { max-height:85dvh; overflow:auto; scrollbar-width:none; }
+.ps-editorial { text-align:center; max-width:1100px; margin:auto; }
+.ps-editorial h1 { font-family:var(--font-display); font-size:clamp(36px,6.5vw,116px); font-weight:600; line-height:1.05; letter-spacing:-0.045em; text-wrap:balance; overflow-wrap:anywhere; }
+.ps-editorial > p { margin:2rem auto 0; max-width:50ch; font-size:clamp(18px,2.3vw,38px); line-height:1.5; color:var(--ink-2); white-space:pre-line; }
+.presenter-slide .ps > * { animation-duration:280ms; }
+.presenter-slide .ps > *:nth-child(n+2) { animation-delay:70ms; }
+.presenter[data-blank] .presentation-backdrop { visibility:hidden; }
+@keyframes stage-drift { from { transform:scale(1); } to { transform:scale(1.045) translate(-0.5%,0.5%); } }
+@keyframes glass-breathe { from { opacity:0.25; transform:translateY(0); } to { opacity:0.8; transform:translateY(-4px); } }
+[data-motion=off] .presentation-photo,[data-motion=off] .presentation-glass circle,[data-motion=off] .presenter-slide * { animation:none!important; transition:none!important; }
+@media (prefers-reduced-motion:reduce) { .presentation-photo,.presentation-glass circle,.presenter-slide * { animation:none!important; transition:none!important; } }
+.presenter .ps-welcome { font-size:clamp(48px,10vw,180px); text-wrap:balance; line-height:0.98; letter-spacing:-0.055em; }
+.presenter .ps-center > .ps-lede { margin:1.5rem auto 0; }
+.presentation-veil { background:radial-gradient(ellipse at center,color-mix(in oklab,var(--stage-ground) 92%,transparent),color-mix(in oklab,var(--stage-ground) 72%,transparent) 70%,color-mix(in oklab,var(--stage-ground) 52%,transparent)); }
+.presentation-dot-mark { display:grid; grid-template-columns:repeat(3,5px); gap:4px; }
+.presentation-dot-mark i { height:5px; width:5px; border-radius:50%; background:var(--violet); }
+.ps-editorial .ps-kicker { text-align:center; }
+/* Keep live navigation ahead of the studio on a narrow controller. */
+.remote { display:flex; flex-direction:column; }
+.remote-now { order:-3; }
+.remote-pad { order:-2; }
+.remote-row { order:-1; }
+.presentation-settings { order:1; }
+.remote-list { order:2; }
+@media(min-width:1100px) {
+  .page-in > .remote { display:grid; grid-template-columns:minmax(260px,0.8fr) minmax(0,1.2fr); align-items:start; }
+  .page-in > .remote > .presentation-settings { grid-column:2; grid-row:1 / span 6; }
+  .page-in > .remote > :not(.presentation-settings) { grid-column:1; }
+}
+.presentation-theme-group + .presentation-theme-group { margin-top:1rem; }
+.presentation-theme-group h3 { margin-bottom:0.5rem; font-size:12px; font-weight:600; color:var(--ink-2); }
+.presentation-swatch { height:auto; aspect-ratio:16/9; }
+/* Live service keeps its data on the page; presentation controls are an overlay. */
+.live-room-session { grid-column:1/-1; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:1rem; border-top:1px solid var(--line-strong); padding-top:1rem; }
+.live-room-session .live-code-wrap { margin-left:auto; }
+.slide-studio-dialog { position:fixed; inset:0; margin:auto; width:min(960px,calc(100vw - 2rem)); max-height:calc(100dvh - 2rem); padding:0; border:1px solid var(--line-strong); border-radius:18px; background:var(--paper); color:var(--ink); overflow:auto; overscroll-behavior:contain; }
+.slide-studio-dialog::backdrop { background:rgb(0 0 0 / 45%); backdrop-filter:blur(6px); }
+.slide-studio-head { position:sticky; top:0; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem 1.25rem; background:var(--paper); border-bottom:1px solid var(--line); }
+.slide-studio-head h2 { font-size:15px; font-weight:600; }
+.slide-studio-body { padding:1rem 1.25rem; }
+@media(min-width:760px) {
+  .slide-studio-body > .remote { display:grid; grid-template-columns:minmax(240px,0.8fr) minmax(0,1.2fr); align-items:start; }
+  .slide-studio-body > .remote > .presentation-settings { grid-column:2; grid-row:1/span 6; }
+  .slide-studio-body > .remote > :not(.presentation-settings) { grid-column:1; }
+}
+@media(max-width:480px) {
+  .slide-studio-dialog { width:calc(100vw - 1rem); max-height:calc(100dvh - 1rem); border-radius:14px; }
+  .slide-studio-head,.slide-studio-body { padding:0.875rem; }
+}
+@media(min-width:760px) {
+  .live-room:has(.live-room-session) > :first-child { grid-column:1; grid-row:1/span 2; }
+  .live-room:has(.live-room-session) > .live-room-tools { grid-column:2; grid-row:1; justify-content:flex-end; }
+  .live-room:has(.live-room-session) > .live-room-session { grid-column:2; grid-row:2/span 2; border:0; padding:0; }
+  .live-room:has(.live-room-session) > .live-room-actions { grid-column:1; grid-row:3; align-self:end; }
+}
+.slide-studio-dialog .presentation-settings > summary { display:none; }
+.slide-studio-dialog .presentation-settings-body { margin-top:0; }
+/* The studio uses the same right-hand drawer dimensions and entrance as Run of service. */
+.slide-studio-dialog {
+  inset:0.5rem 0.5rem 0.5rem auto;
+  margin:0;
+  width:min(27rem,calc(100vw - 1rem));
+  height:calc(100dvh - 1rem);
+  max-height:calc(100dvh - 1rem);
+  border-radius:18px;
+  animation:drawer-in 0.36s var(--ease-out);
+}
+.slide-studio-body > .remote { display:flex; flex-direction:column; }
+.slide-studio-head { padding:1.125rem 1.25rem 0.875rem; }
+.live-session-switcher { display:flex; flex-wrap:wrap; gap:0.375rem; margin-top:0.875rem; }
+.live-session-switcher a { padding:0.375rem 0.625rem; border:1px solid var(--line-strong); border-radius:8px; color:var(--ink-2); font-size:12px; }
+.live-session-switcher a[aria-current] { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+@media(prefers-reduced-motion:reduce) { .slide-studio-dialog { animation:none; } }
+/* The projected room shares the live board's fan/row seating and arrival order. */
+.theatre-presentation .theatre-hall { width:100%; margin-inline:auto; }
+.theatre-presentation .theatre-count .figure { font-size:clamp(36px,7vw,112px); font-weight:600; letter-spacing:-0.055em; line-height:1; }
+.theatre-presentation .theatre-of { font-size:clamp(12px,1.3vw,22px); color:var(--ink-2); }
+.theatre-presentation[data-seen] .theatre-seat { animation:projected-seat-arrive 650ms var(--ease-out) backwards; transform-box:fill-box; transform-origin:center; }
+.ps-room-scene { width:100%; }
+.ps-room-turnout { display:flex; align-items:center; justify-content:center; gap:1rem; margin:clamp(16px,3vh,40px) auto 0; color:var(--ink-2); font-size:clamp(14px,1.6vw,24px); }
+.ps-room-track { width:min(32vw,420px); height:5px; overflow:hidden; border-radius:99px; background:color-mix(in oklab,var(--ink) 12%,transparent); }
+.ps-room-track > span { display:block; height:100%; border-radius:inherit; background:var(--gold); transition:width 500ms var(--ease-out); }
+@keyframes projected-seat-arrive { from { opacity:0.3; transform:scale(0.75); } 65% { opacity:1; transform:scale(1.25); } to { transform:scale(1); } }
+@media(prefers-reduced-motion:reduce) { .theatre-presentation[data-seen] .theatre-seat { animation:none; } .ps-room-track > span { transition:none; } }
+/* Secondary presentation tools stay folded away until needed. */
+.remote-screen-picker { margin-top:0.875rem; padding-top:0.75rem; border-top:1px solid rgb(255 255 255 / 12%); font-size:12px; }
+.remote-screen-picker summary { cursor:pointer; color:inherit; opacity:0.8; }
+.remote-screen-options { display:grid; gap:0.5rem; margin-top:0.75rem; }
+.remote-screen-options .btn { color:inherit; background:rgb(255 255 255 / 6%); border-color:rgb(255 255 255 / 15%); justify-content:flex-start; }
+.remote-screen-options button[aria-pressed=true] { border-color:var(--gold); }
+.remote-screen-options form { display:grid; gap:0.5rem; }
+.remote-screen-options label { display:grid; gap:0.375rem; }
+.remote-screen-options .deck-input { color:inherit; background:rgb(255 255 255 / 6%); }
+.remote-slide-index { order:2; font-size:12px; color:var(--ink-2); }
+.remote-slide-index summary { cursor:pointer; padding:0.5rem 0; }
+.remote-undo { order:3; justify-self:start; align-self:flex-start; }
+.remote-error { order:-4; padding:0.625rem 0.75rem; border:1px solid var(--line); border-radius:10px; color:var(--ruby); font-size:12px; }
+.remote-start { order:-1; }
+.deck-reorder { display:flex; flex-direction:column; }
+.deck-reorder .deck-play { width:24px; height:20px; }
+
+/* --- the Live service button, in the top bar --------------------------- */
+.live-link {
+  display: inline-flex;
+  height: 2.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.875rem;
+  border-radius: 12px;
+  background: #0a0c10;
+  color: #f0f2f6;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, scale 0.12s var(--ease-out);
+}
+.dark .live-link {
+  background: #f0f2f6;
+  color: #0a0c10;
+}
+.live-link:hover {
+  background: #1a1e27;
+}
+.dark .live-link:hover {
+  background: #ffffff;
+}
+.live-link:active {
+  scale: 0.97;
+}
+.live-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* On air: the room is live, so the button turns the colour of it. */
+.live-link[data-on-air] {
+  background: var(--ruby);
+  color: #fff;
+}
+.live-link[data-on-air]:hover {
+  background: color-mix(in oklab, var(--ruby) 88%, #000);
+}
+.dark .live-link[data-on-air] {
+  color: #08090d;
+}
+.live-link[aria-current="page"] {
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px currentColor;
+}
+.live-link[data-on-air][aria-current="page"] {
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--ruby);
+}
+.live-link-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  background: currentColor;
+  animation: on-air-light 1.6s ease-in-out infinite;
+}
+@keyframes on-air-light {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6); }
+  60% { box-shadow: 0 0 0 6px rgba(255, 255, 255, 0); }
+}
+/* A phone: the icon or dot and one word. */
+@media (max-width: 520px) {
+  .live-link {
+    padding: 0 0.625rem;
+  }
+  .live-link:not([data-on-air]) .live-link-text {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-link-dot { animation: none; }
+  .live-link { transition: none; }
+}
+
+/* --- Live service: today and coming up --------------------------------- */
+.coming-list > li + li {
+  border-top: 1px solid var(--line-soft);
+}
+.coming-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  margin-inline: -0.5rem;
+  padding: 0.625rem 0.5rem;
+  border-radius: 0;
+  transition: background-color 0.15s ease;
+}
+.coming-row[data-today] {
+  background: color-mix(in oklab, var(--violet) 7%, transparent);
+}
+.coming-row[data-over] {
+  opacity: 0.55;
+}
+.coming-date {
+  display: grid;
+  width: 2.75rem;
+  flex-shrink: 0;
+  justify-items: center;
+  padding: 0.3125rem 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  line-height: 1.1;
+}
+.coming-date > span:first-child {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.coming-date > span:last-child {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.coming-row[data-today] .coming-date {
+  border-color: var(--violet);
+  background: var(--violet);
+}
+.coming-row[data-today] .coming-date > span {
+  color: var(--accent-ink);
+}
+.dark .coming-row[data-today] .coming-date > span {
+  color: #08090d;
+}
+.coming-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.coming-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.875rem;
+  margin-top: 0.125rem;
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+.coming-go .btn {
+  border-color: var(--ruby);
+  background: var(--ruby);
+  color: #fff;
+  font-weight: 600;
+}
+.dark .coming-go .btn {
+  color: #08090d;
+}
+.coming-air {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ruby);
+  background: color-mix(in oklab, var(--ruby) 11%, transparent);
+}
+.coming-air .live-room-dot {
+  background: var(--ruby);
+  animation: on-air 1.6s ease-in-out infinite;
+}
+.coming-note {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+@media (max-width: 560px) {
+  .coming-row {
+    flex-wrap: wrap;
+  }
+  .coming-go,
+  .coming-air,
+  .coming-note {
+    margin-left: calc(2.75rem + 0.875rem);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coming-air .live-room-dot { animation: none; }
 }

@@ -553,7 +553,13 @@ export async function realtimeTicket(): Promise<{ ticket: string; url: string } 
   // browser cannot see CHAPL_API_URL, and the old fallback pointed every
   // deployed tab at ws://localhost:8000, which never connected (and an
   // https page may not open ws:// at all). https becomes wss.
-  const url = `${API_URL.replace(/^http/, "ws")}/realtime/ws`;
+  const apiHost = new URL(API_URL).hostname;
+  // A phone cannot reach the development computer through localhost.
+  // Relay a local API through Next so only the frontend needs forwarding.
+  const localRelay = process.env.NODE_ENV === "development" &&
+    ["localhost", "127.0.0.1", "[::1]"].includes(apiHost);
+  const url = process.env.NEXT_PUBLIC_WS_URL ||
+    (localRelay ? "/api/realtime" : `${API_URL.replace(/^http/, "ws")}/realtime/ws`);
   return result.ok ? { ticket: result.data.ticket, url } : null;
 }
 

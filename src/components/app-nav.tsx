@@ -8,7 +8,7 @@ import type { Resource } from "@/lib/access";
 import { ProfileDot } from "@/components/profile-completion";
 import { ChurchSwitcher } from "@/components/church-switcher";
 import { Tooltip } from "@/components/tooltip";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import {
   Activity,
   CalendarDays,
@@ -41,6 +41,12 @@ export type Item = {
   label: string;
   icon: typeof Home;
   tone: string;
+  /**
+   * Only with one church in scope. A live service belongs to a church:
+   * across all of them (platform staff, nothing chosen) there is no room
+   * to run, and the entry would open on a page about nobody.
+   */
+  needsChurch?: boolean;
   /**
    * The resource this page reads. An item with none is for everybody —
    * the dashboard and the account page are the only two.
@@ -83,7 +89,7 @@ export const SECTIONS: { heading: string; items: Item[] }[] = [
       { href: "/app/notices", label: "Notices", icon: Megaphone, tone: "var(--cobalt)", needs: "notice" },
       // Open to everyone: a member checks in and asks for prayer here;
       // a leader opens the service and answers the requests.
-      { href: "/app/live", label: "Live service", icon: Radio, tone: "var(--ruby)" },
+      { href: "/app/live", label: "Live service", icon: Radio, tone: "var(--ruby)", needsChurch: true },
       { href: "/app/care", label: "Care", icon: HeartHandshake, tone: "var(--ruby)" },
     ],
   },
@@ -144,19 +150,22 @@ export const SECTIONS: { heading: string; items: Item[] }[] = [
  * filtered out disappear with their heading — a "People" heading over
  * nothing reads as a loading bug.
  */
-export function permittedSections(allowed: Resource[], isPlatform: boolean) {
+export function permittedSections(allowed: Resource[], isPlatform: boolean, scoped = true) {
   const permitted = new Set(allowed);
   return SECTIONS.map((section) => ({
     ...section,
     items: section.items.filter(
       (item) =>
         (!item.needs || permitted.has(item.needs)) &&
-        (!item.platformOnly || isPlatform),
+        (!item.platformOnly || isPlatform) &&
+        (!item.needsChurch || scoped),
     ),
   })).filter((section) => section.items.length > 0);
 }
 
 const COLLAPSE_KEY = "chapl-nav-collapsed";
+const RAIL_OPEN = 248;
+const RAIL_COLLAPSED = 76;
 
 /**
  * The collapsed preference lives in localStorage, which the server cannot
@@ -239,16 +248,55 @@ export function AppNav({
 }) {
   const pathname = usePathname();
 
-  const sections = permittedSections(allowed, isPlatform);
+  // Platform staff with no church chosen are across all of them.
+  const sections = permittedSections(allowed, isPlatform, !(isPlatform && !churchId));
 
   const collapsed = useSyncExternalStore(
     collapseStore.subscribe,
     collapseStore.get,
     () => false, // the server has no localStorage; expanded is the default
   );
-  const toggle = useCallback(() => collapseStore.set(!collapsed), [collapsed]);
+  const asideRef = useRef<HTMLElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const [marker, setMarker] = useState<{ top: number; height: number; left: number; width: number } | null>(null);
+  const markerRef = useRef<HTMLSpanElement>(null);
+
+  /*
+   * The rail's width is a transition, and everything beside it used to
+   * re-flow on every frame of it: each chart rebuilt its SVG on resize,
+   * the map resized its canvas, eighteen times in 300ms. Instead the
+   * content column is pinned at the width it will end at the moment the
+   * toggle is pressed, so it lays out and draws once and then only slides
+   * beside the moving rail (the shell clips the overhang). It lets go when
+   * the rail lands, at which point its width is already right.
+   */
+  const settle = useRef<(() => void) | null>(null);
+  const toggle = useCallback(() => {
+    const next = !collapsed;
+    // Pressed again mid-move: unpin first, so the measure below is real.
+    settle.current?.();
+    const aside = asideRef.current;
+    const main = document.querySelector<HTMLElement>("[data-app-main]");
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (aside && main && !still) {
+      const final = main.offsetWidth + aside.offsetWidth - (next ? RAIL_COLLAPSED : RAIL_OPEN);
+      main.style.flex = "none";
+      main.style.width = `${final}px`;
+      let timer = 0;
+      const release = (event?: TransitionEvent) => {
+        if (event && (event.target !== aside || event.propertyName !== "width")) return;
+        aside.removeEventListener("transitionend", release);
+        window.clearTimeout(timer);
+        settle.current = null;
+        main.style.flex = "";
+        main.style.width = "";
+      };
+      settle.current = () => release();
+      aside.addEventListener("transitionend", release);
+      // In case the transition never ends (a hidden tab, a cancelled run).
+      timer = window.setTimeout(() => release(), 500);
+    }
+    collapseStore.set(next);
+  }, [collapsed]);
 
   // Longest matching href wins, so a detail page keeps its section lit.
   const activeHref = SECTIONS.flatMap((s) => s.items)
@@ -256,14 +304,34 @@ export function AppNav({
     .filter((href) => pathname === href || pathname.startsWith(`${href}/`))
     .sort((a, b) => b.length - a.length)[0];
 
+  // The marker's position is four numbers the browser needs, not data the
+  // tree does, so it is written to the node: measuring into state rendered
+  // the whole rail, tooltips and all, on every frame of a resize.
   useEffect(() => {
     const list = listRef.current;
-    if (!list || !activeHref) return setMarker(null);
+    const marker = markerRef.current;
+    if (!list || !marker) return;
 
+    let placed = false;
     const measure = () => {
-      const el = list.querySelector<HTMLElement>(`[data-href="${activeHref}"]`);
-      if (!el) return setMarker(null);
-      setMarker({ top: el.offsetTop, height: el.offsetHeight, left: el.offsetLeft, width: el.offsetWidth });
+      const el = activeHref ? list.querySelector<HTMLElement>(`[data-href="${activeHref}"]`) : null;
+      if (!el) {
+        marker.style.opacity = "0";
+        placed = false;
+        return;
+      }
+      // The first placement lands where it is; only moves between items glide.
+      if (!placed) marker.style.transition = "none";
+      marker.style.top = `${el.offsetTop}px`;
+      marker.style.height = `${el.offsetHeight}px`;
+      marker.style.left = `${el.offsetLeft}px`;
+      marker.style.width = `${el.offsetWidth}px`;
+      marker.style.opacity = "1";
+      if (!placed) {
+        void marker.offsetWidth;
+        marker.style.transition = "";
+        placed = true;
+      }
     };
 
     measure();
@@ -274,12 +342,13 @@ export function AppNav({
 
   return (
     <aside
+      ref={asideRef}
       data-collapsed={collapsed || undefined}
       className="group/nav sticky top-4 z-30 hidden h-[calc(100vh-2rem)] shrink-0
                  flex-col
                  transition-[width] duration-300 ease-out lg:flex
                  motion-reduce:transition-none"
-      style={{ width: collapsed ? 76 : 248 }}
+      style={{ width: collapsed ? RAIL_COLLAPSED : RAIL_OPEN }}
       aria-label="Sections"
     >
       {/*
@@ -345,22 +414,15 @@ export function AppNav({
 
       {/* items */}
       <div ref={listRef} className="relative flex-1 overflow-y-auto px-3 pb-3">
-        {marker && (
-          <span
-            aria-hidden
-            className="pointer-events-none absolute rounded-xl bg-sunk
-                       transition-[top,height,left,width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
-                       motion-reduce:transition-none"
-            // Sized to the item itself, so collapsed it is a square around
-            // the icon rather than a bar with padding trailing off right.
-            style={{
-              top: marker.top,
-              height: marker.height,
-              left: marker.left,
-              width: marker.width,
-            }}
-          />
-        )}
+        {/* Sized to the item itself, so collapsed it is a square around
+            the icon rather than a bar with padding trailing off right. */}
+        <span
+          ref={markerRef}
+          aria-hidden
+          className="pointer-events-none absolute rounded-xl bg-sunk opacity-0
+                     transition-[top,height,left,width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
+                     motion-reduce:transition-none"
+        />
 
         {/* Account lives once, in the footer with the person's name and
             photo — listing it here as well put "you" in the nav twice. */}

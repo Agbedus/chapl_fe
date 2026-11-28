@@ -29,6 +29,37 @@ function clock(iso: string): string {
   return `${h}:${String(d.getMinutes()).padStart(2, "0")} ${d.getHours() < 12 ? "am" : "pm"}`;
 }
 
+/** The code and close control, shared by the service header and other boards. */
+export function LiveSessionCode({ live, canRun = false, sessionId, showTime = false }: { live: Live; canRun?: boolean; sessionId?: string; showTime?: boolean }) {
+  const code = (live.code ?? "").padEnd(6, " ").slice(0, 6).split("");
+  return (
+    <div className="live-code-wrap">
+      <p className="live-kicker">Check-in code</p>
+      <div
+        className="live-code"
+        role="img"
+        aria-label={`Check-in code ${live.code ?? ""}`}
+      >
+        {code.map((ch, i) => (
+          <span key={i}>{ch.trim()}</span>
+        ))}
+      </div>
+      {showTime && <p className="mt-2 text-[12px] text-ink-2">{live.is_open ? "Open until" : "Closed at"} {clock(live.closes_at)}</p>}
+      {canRun && sessionId && live.is_open && (
+        <div className="mt-2 flex justify-end">
+          <ActionButton
+            action={closeCheckIn}
+            fields={{ id: sessionId }}
+            label="Close check-in"
+            icon={<X className="h-3 w-3" aria-hidden />}
+            confirm="Stop taking check-ins for this service?"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 /**
  * One cell as a small grid of the same dots as the room: filled for
  * everyone marked present, a ring for everyone who belongs and is not
@@ -242,9 +273,12 @@ export function LiveBoard({
   canRun = false,
   sessionId,
   compact = false,
+  hideHeader = false,
 }: {
   live: Live;
   leader: boolean;
+  /** The page has already merged this service into its control-room header. */
+  hideHeader?: boolean;
   canRun?: boolean;
   /** The dashboard's version: a dozen cells, the open question only, and a way to the whole board. */
   compact?: boolean;
@@ -254,14 +288,13 @@ export function LiveBoard({
   const where = live.branch_name ?? "The whole church";
   const prompts = live.prompts ?? (live.prompt ? [live.prompt] : []);
   const open = prompts.find((p) => p.is_open);
-  const code = (live.code ?? "").padEnd(6, " ").slice(0, 6).split("");
 
   return (
     <div className="live-board">
       <LiveRefresh prefix="service." fallback={leader ? 20 : 30} />
 
       {/* --- the first line: the service and its code ---------------- */}
-      <section className="live-card live-head">
+      {!hideHeader && <section className="live-card live-head">
         <div className="min-w-0">
           <p className="live-kicker">
             <span className="live-beat" aria-hidden /> Live · {where}
@@ -293,29 +326,7 @@ export function LiveBoard({
         </div>
 
         {leader ? (
-          <div className="live-code-wrap">
-            <p className="live-kicker">Check-in code</p>
-            <div
-              className="live-code"
-              role="img"
-              aria-label={`Check-in code ${live.code ?? ""}`}
-            >
-              {code.map((ch, i) => (
-                <span key={i}>{ch.trim()}</span>
-              ))}
-            </div>
-            {canRun && sessionId && live.is_open && (
-              <div className="mt-2 flex justify-end">
-                <ActionButton
-                  action={closeCheckIn}
-                  fields={{ id: sessionId }}
-                  label="Close check-in"
-                  icon={<X className="h-3 w-3" aria-hidden />}
-                  confirm="Stop taking check-ins for this service?"
-                />
-              </div>
-            )}
-          </div>
+          <LiveSessionCode live={live} canRun={canRun} sessionId={sessionId} />
         ) : (
           <div className="live-code-wrap">
             {live.checked_in ? (
@@ -334,7 +345,7 @@ export function LiveBoard({
             )}
           </div>
         )}
-      </section>
+      </section>}
 
       {/* --- the room: the congregation by cell ---------------------- */}
       <Room live={live} compact={compact} />

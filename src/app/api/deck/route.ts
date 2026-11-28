@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { api } from "@/lib/api";
 
-const ACTIONS = new Set(["next", "prev", "first", "last", "goto", "blank", "end", "state", "hello"]);
+const ACTIONS = new Set(["next", "prev", "first", "last", "goto", "blank", "end", "state", "hello", "style", "screen", "rename", "resume", "undo"]);
 
 /**
  * The deck's signals between a leader's own devices (the phone remote and
@@ -24,6 +24,13 @@ export async function POST(request: Request) {
   }
   const signal = {
     action: body.action,
+    ...(typeof body.screenId === "string" ? { screenId: body.screenId } : {}),
+    ...(typeof body.serviceKey === "string" ? { serviceKey: body.serviceKey } : {}),
+    ...(typeof body.name === "string" ? { name: body.name } : {}),
+    ...(typeof body.presenting === "boolean" ? { presenting: body.presenting } : {}),
+    ...(typeof body.resumeSlide === "number" ? { resumeSlide: body.resumeSlide } : {}),
+    ...(typeof body.canUndo === "boolean" ? { canUndo: body.canUndo } : {}),
+    ...(body.style && typeof body.style === "object" && !Array.isArray(body.style) ? { style: body.style } : {}),
     ...(typeof body.slide === "number" ? { slide: body.slide } : {}),
     ...(typeof body.blank === "boolean" ? { blank: body.blank } : {}),
     ...(Array.isArray(body.titles) ? { titles: body.titles.slice(0, 200).map(String) } : {}),

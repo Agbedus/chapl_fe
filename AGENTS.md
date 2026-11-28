@@ -350,6 +350,15 @@ in `src/lib/palette.ts` keeps the map and the list beside it in agreement.
 
 ## The signed-in visual language
 
+**The side nav collapses without re-flowing the page.** Its width is a
+transition, and everything beside it used to re-lay out on every frame of
+it: each TanStack chart rebuilt its SVG on resize, the map resized its
+canvas. `AppNav`'s toggle pins the content column (`[data-app-main]`) at
+the width it will end at, so it lays out and draws once and then only
+slides beside the rail, the shell clipping the overhang
+(`overflow-x-clip`), and unpins when the rail lands. The active marker's
+position is written to its node, not state, for the same reason.
+
 The marketing page and the product had drifted into two design systems —
 the home page breathing at 17px with display type and pill buttons, the
 admin screens at 12.5px in a grid of boxes. These are the rules that put
@@ -734,6 +743,27 @@ or not, the service, who is here, the code, and the controls — **Present**,
 Ask question, Open check-in. The page reads each open service's live
 data once and gives it to both the board and the presenter.
 
+**Live service has its own button in the top bar** (`live-service-link.tsx`),
+near-black like the control room, turning ruby with a pulsing dot and
+"On air" while a service is open, ringed while you are on the page. The
+layout reads the on-air count (a leader's open sessions, or for a member
+the ones they can check in to) beside the church, and the button
+re-reads the page only on `service.opened` / `service.closed`. It and the
+side-nav entry (`needsChurch`) show only with one church in scope:
+platform staff on All churches see neither, and `/app/live` there says to
+choose a church.
+
+**Today and coming up** on `/app/live` lists the next fortnight of
+published events from the start of today in the church's own time zone,
+today's highlighted. A whole-church or branch event today carries **Go
+live**: `openCheckIn` for that branch (or the church), dated today, telling
+its members, after a confirmation; one already open shows **On air** and
+links to its board. Cell and department events are listed, not startable,
+because check-in is a branch's or the church's and a cell meets on the
+register. The countdown's start is empty until set, and until then
+follows today's next event (`defaultStart`). With nothing on air a leader
+sees no empty panels; the control room says so once.
+
 **The run of service** (`components/service-deck.tsx`) is what goes on
 the screen at the front, in order, under the control room: a welcome, a
 countdown to the start, the check-in code, the room filling, today's
@@ -792,6 +822,53 @@ arrive. The privacy policy names OpenFreeMap. Each branch's
 `service_times` is parsed into a seven-day strip with its meeting days
 lit; a lit day's times are its tooltip (hover, focus or tap), not text
 beside it. Unreadable times show as typed.
+
+## Presentation studio and audience output
+
+`Present` opens `/app/live?screen=audience` in a named audience window.
+The main live-service page and `/app/live/remote` remain operator surfaces.
+The palette icon in the main header opens the studio, preview and remote
+controls as a modal overlay. The phone remote keeps its full-page controls.
+The first service’s code and close control are merged into the main header;
+its board renders room and polls directly, without a second service heading.
+Project or share the audience window, rather than mirroring the controller.
+The output contains no settings controls; F or double-click enters full
+screen. Ending presentation keeps the output blank rather than revealing
+church administration underneath.
+
+`presentation-settings.tsx` is shared by desktop and phone. Six local landscape
+Pexels photos (credits in `public/presentation/CREDITS.md`) and a token-coloured
+SVG dot window are selectable. Both motion-off and reduced-motion disable
+animations. The room slide reuses the live board's theatre seating without
+showing its interactive controls to the audience.
+
+Decks are saved on the presentation computer under `chaplDeck:<church>:<session>`.
+Slide order, readings, songs, appearance, slide-specific text and the last
+slide ID are isolated per service. An older unscoped deck becomes the initial
+template until the scoped deck is saved. Run of service has move-up/down
+controls; checkpoints use stable slide IDs rather than positions.
+
+The phone is controller-only. Desktops announce a named screen over the
+existing own-user channel, but only when asked: a controller says hello
+every four seconds while it is on screen, and each screen answers that or
+reports a real change to what it shows (deduplicated, since the effect
+re-runs on every live refresh). There is no standing heartbeat, because
+every open Live service tab is a screen, and three of them beating every
+three seconds was a request a second with nobody listening. Registered receivers keep their
+connection open while the page is mounted, even when its tab is hidden. Commands carry both `screenId`
+and `serviceKey`, and a receiver ignores commands for a different target.
+The separate audience window inherits its operator's logical screen ID;
+the operator stops advertising while that window is open. A controller pairs
+with one screen, remembers that choice for the tab session, and marks it
+disconnected after twelve seconds without a screen report. Multiple screens
+can be chosen from the collapsed screen picker, where the name can be edited.
+
+Resume returns to the saved slide; Start over deliberately chooses the first.
+Style edits keep a bounded ten-entry undo stack on the receiver. These messages
+are relayed without server persistence. Ending from the dedicated remote returns
+to `/app/live` after the command is accepted; the projector remains blank.
+Mobile starts can activate the desktop's already-open Live service page, but
+native browser fullscreen still requires a local gesture on the computer.
 
 ## The notifications inbox
 

@@ -82,7 +82,7 @@ export function MobileNav({
   const open = openOn === pathname;
   const sheet = useRef<HTMLDivElement>(null);
 
-  const sections = permittedSections(allowed, isPlatform);
+  const sections = permittedSections(allowed, isPlatform, !(isPlatform && !churchId));
   const everything = sections.flatMap((s) => s.items);
   const byHref = new Map(everything.map((item) => [item.href, item]));
 

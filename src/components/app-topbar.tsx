@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+
+import { LiveServiceLink } from "@/components/live-service-link";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { ChevronsUpDown, Loader2, Search, X } from "lucide-react";
 
@@ -29,7 +31,10 @@ export function AppTopbar({
   getTicket,
   getUnread,
   markRead,
+  live = null,
 }: {
+  /** The Live service button: open services in scope, or null to hide it (all churches). */
+  live?: { onAir: number } | null;
   churchName: string | null;
   /** The church name doubles as the way to change it, when there is a choice. */
   canSwitch?: boolean;
@@ -191,6 +196,7 @@ export function AppTopbar({
         </button>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          {live && <LiveServiceLink onAir={live.onAir} />}
           {health && (
             <span
               className="hidden items-center gap-2 text-[12px] text-ink-3 md:flex"

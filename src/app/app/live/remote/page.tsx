@@ -18,7 +18,7 @@ export default async function RemotePage() {
       <Link href="/app/live" className="mb-4 inline-flex items-center gap-1.5 text-[12.5px] text-ink-3 hover:text-ink">
         <ArrowLeft className="h-3.5 w-3.5" aria-hidden /> Live service
       </Link>
-      <DeckRemote />
+      <DeckRemote returnOnEnd />
     </div>
   );
 }

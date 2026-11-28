@@ -8,11 +8,17 @@ import { AppNav } from "@/components/app-nav";
 import { MobileNav } from "@/components/mobile-nav";
 import { AppTopbar } from "@/components/app-topbar";
 import { Toaster } from "@/components/toaster";
-import { readable } from "@/lib/access";
+import { canRead, readable } from "@/lib/access";
 import { api } from "@/lib/api";
 import { currentChurchId, requireMe } from "@/lib/session";
+import type { Schemas } from "@/lib/generated/api";
 import type { Church, Dashboard, Role } from "@/lib/types";
 import { ROLE_LABEL } from "@/lib/types";
+
+/** A session's closing time (UTC from the API) is still ahead. Server-only, so the clock is safe. */
+function stillOpen(closesAt: string): boolean {
+  return new Date(closesAt.endsWith("Z") ? closesAt : `${closesAt}Z`).getTime() > Date.now();
+}
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const me = await requireMe();
@@ -31,12 +37,29 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const roleLabel = held.length ? ROLE_LABEL[held[0]] : "Member";
 
   const canSwitch = (me.churches?.length ?? 0) > 1 || me.is_platform_staff;
-  if (churchId) {
-    const result = await api<Church>(`/churches/${churchId}`);
-    if (result.ok) churchName = result.data.name;
-  } else if (!me.is_platform_staff && me.churches?.length === 1) {
-    churchName = me.churches[0].name;
-  }
+
+  /*
+   * Live service is a church's, so its button needs one church in scope:
+   * none for platform staff across all churches. Whether anything is on
+   * air is read beside the church: a leader's open sessions, or for a
+   * member the ones they can check in to.
+   */
+  const scoped = !(me.is_platform_staff && !churchId) && Boolean(churchId || (me.churches?.length ?? 0) > 0);
+  const [churchRead, airRead] = await Promise.all([
+    churchId ? api<Church>(`/churches/${churchId}`) : Promise.resolve(null),
+    !scoped
+      ? Promise.resolve(null)
+      : canRead(me, "attendance")
+        ? api<Schemas["CheckInSessionList"]>("/attendance/check-in/sessions")
+        : api<Schemas["CheckInAvailable"][]>("/attendance/check-in/open"),
+  ]);
+  if (churchRead?.ok) churchName = churchRead.data.name;
+  else if (!churchId && !me.is_platform_staff && me.churches?.length === 1) churchName = me.churches[0].name;
+  const onAir = !airRead?.ok
+    ? 0
+    : Array.isArray(airRead.data)
+      ? airRead.data.length
+      : airRead.data.items.filter((s) => s.is_open && stillOpen(s.closes_at)).length;
 
   // Platform staff get live system state in the bar. A church admin has no
   // business seeing infrastructure, so it is fetched only for them.
@@ -60,7 +83,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     // Below `lg` the tab bar is fixed to the bottom, so the page keeps clear of it.
-    <div className="app-ambient flex min-h-screen w-full gap-2 px-2 pb-[calc(4.25rem+env(safe-area-inset-bottom))] lg:pb-0">
+    <div className="app-ambient flex min-h-screen w-full gap-2 overflow-x-clip px-2 pb-[calc(4.25rem+env(safe-area-inset-bottom))] lg:pb-0">
       <AppNav
         churchName={churchName}
         userName={me.full_name}
@@ -88,7 +111,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         badges={waiting > 0 ? { "/app/platform": waiting } : {}}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div data-app-main className="flex min-w-0 flex-1 flex-col">
         <AppTopbar
           churchName={churchName}
           canSwitch={canSwitch}
@@ -97,6 +120,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           health={health}
           runtime={runtime}
           searchAction={search}
+        live={scoped ? { onAir } : null}
         getTicket={realtimeTicket}
         getUnread={unreadCount}
         markRead={markAllRead}

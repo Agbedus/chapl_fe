@@ -98,7 +98,9 @@ export function useRealtime({ getTicket, getUnread }: Options) {
   const [connected, setConnected] = useState(false);
 
   // Refs, not state: changing these must never cause a render.
-  const socket = useRef<WebSocket | null>(null);
+  const socket = useRef<WebSocket | EventSource | null>(null);
+  const presenting = useRef(false);
+  const receiver = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const attempts = useRef(0);
   const alive = useRef(true);
@@ -161,17 +163,18 @@ export function useRealtime({ getTicket, getUnread }: Options) {
          * twice. The handlers go first so a close we asked for stays
          * closed; only a close we did not ask for retries.
          */
-        s.onclose = null;
+        if (s instanceof WebSocket) s.onclose = null;
         s.onerror = null;
         s.onmessage = null;
         s.onopen = null;
         if (s.readyState <= WebSocket.OPEN) s.close();
       }
       setConnected(false);
+      window.dispatchEvent(new CustomEvent("chapl:live", { detail: { type: "disconnected" } }));
     };
 
     const connect = async () => {
-      if (stale() || document.hidden) return;
+      if (stale() || (document.hidden && !presenting.current && !receiver.current)) return;
       if (socket.current || connecting.current) return;
       connecting.current = true;
 
@@ -193,10 +196,13 @@ export function useRealtime({ getTicket, getUnread }: Options) {
 
       const url = new URL(
         minted.url ?? process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000/api/v1/realtime/ws",
+        window.location.origin,
       );
       url.searchParams.set("ticket", minted.ticket);
 
-      const ws = new WebSocket(url.toString());
+      const ws = url.protocol === "http:" || url.protocol === "https:"
+        ? new EventSource(url.toString())
+        : new WebSocket(url.toString());
       // Opened while a newer run was starting: close it and step aside,
       // rather than leaving an orphan nobody holds a reference to.
       if (stale()) {
@@ -211,6 +217,7 @@ export function useRealtime({ getTicket, getUnread }: Options) {
         attempts.current = 0;
         lastHeard.current = Date.now();
         setConnected(true);
+        window.dispatchEvent(new CustomEvent("chapl:live", { detail: { type: "connected" } }));
         if (opened.current) {
           window.dispatchEvent(new CustomEvent("chapl:live", { detail: { type: "resync" } }));
         }
@@ -244,19 +251,33 @@ export function useRealtime({ getTicket, getUnread }: Options) {
         });
       };
 
-      ws.onclose = () => {
+      const disconnected = () => {
+        if (socket.current !== ws) return;
+        ws.onopen = null;
+        ws.onmessage = null;
+        ws.onerror = null;
+        if (ws instanceof WebSocket) ws.onclose = null;
+        ws.close();
         socket.current = null;
         setConnected(false);
+        window.dispatchEvent(new CustomEvent("chapl:live", { detail: { type: "disconnected" } }));
         retry();
       };
 
       // `onerror` always precedes `onclose`; letting close handle the
       // retry keeps one path rather than two racing.
-      ws.onerror = () => ws.close();
+      if (ws instanceof WebSocket) {
+        ws.onclose = disconnected;
+        ws.onerror = () => ws.close();
+      } else {
+        // EventSource retries the same URL by default, but tickets are
+        // single-use. Close it and mint a fresh one through our backoff.
+        ws.onerror = disconnected;
+      }
     };
 
     const retry = () => {
-      if (stale() || document.hidden) return;
+      if (stale() || (document.hidden && !presenting.current && !receiver.current)) return;
       clearTimer();
       attempts.current = Math.min(attempts.current + 1, 6);
       const base = Math.min(1000 * 2 ** (attempts.current - 1), 30_000);
@@ -265,7 +286,7 @@ export function useRealtime({ getTicket, getUnread }: Options) {
     };
 
     const onVisibility = () => {
-      if (document.hidden) close();
+      if (document.hidden && !presenting.current && !receiver.current) close();
       else {
         attempts.current = 0;
         void connect();
@@ -278,19 +299,41 @@ export function useRealtime({ getTicket, getUnread }: Options) {
       void connect();
     };
 
+    const onProbe = () => {
+      if (socket.current?.readyState === WebSocket.OPEN) {
+        window.dispatchEvent(new CustomEvent("chapl:live", { detail: { type: "connected" } }));
+      }
+    };
+
+    const onPresentation = (event: Event) => {
+      presenting.current = Boolean((event as CustomEvent<boolean>).detail);
+      onVisibility();
+    };
+    const onReceiver = (event: Event) => {
+      receiver.current = Boolean((event as CustomEvent<boolean>).detail);
+      onVisibility();
+    };
+
     // A socket can die without a close event (a phone changing networks,
     // a laptop waking). The server pings every 25 seconds, so 70 of
     // silence means nobody is on the other end.
     const watchdog = setInterval(() => {
       const s = socket.current;
       if (s && s.readyState === WebSocket.OPEN && Date.now() - lastHeard.current > 70_000) {
-        s.close();
+        if (s instanceof WebSocket) s.close();
+        else {
+          close();
+          retry();
+        }
       }
     }, 20_000);
 
     void connect();
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("online", onOnline);
+    window.addEventListener("chapl:live-probe", onProbe);
+    window.addEventListener("chapl:presentation", onPresentation);
+    window.addEventListener("chapl:receiver", onReceiver);
 
     return () => {
       alive.current = false;
@@ -298,6 +341,9 @@ export function useRealtime({ getTicket, getUnread }: Options) {
       clearInterval(watchdog);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("online", onOnline);
+      window.removeEventListener("chapl:live-probe", onProbe);
+      window.removeEventListener("chapl:presentation", onPresentation);
+      window.removeEventListener("chapl:receiver", onReceiver);
       close();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

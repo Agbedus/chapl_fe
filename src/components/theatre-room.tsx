@@ -40,10 +40,13 @@ export function TheatreRoom({
   expected,
   where,
   children,
+  presentation = false,
 }: {
   present: number;
   expected: number;
   where: string;
+  /** Audience rendering: larger hall, with no interactive controls. */
+  presentation?: boolean;
   /** The heading row's own content; the style switch goes at its end. */
   children?: React.ReactNode;
 }) {
@@ -104,8 +107,8 @@ export function TheatreRoom({
   const pct = (v: number, of: number) =>
     `${Math.round((v / of) * 10000) / 100}%`;
   return (
-    <div ref={ref} className="theatre" data-seen={seen ? "" : undefined}>
-      <div className="theatre-head">
+    <div ref={ref} className={presentation ? "theatre theatre-presentation" : "theatre"} data-seen={seen ? "" : undefined}>
+      {!presentation && <div className="theatre-head">
         {children}
         <div
           className="theatre-switch"
@@ -130,9 +133,9 @@ export function TheatreRoom({
             </button>
           ))}
         </div>
-      </div>
+      </div>}
       {hall.seats.length > 0 && (
-        <div className="theatre-hall" style={{ maxWidth: `${widest}px` }}>
+        <div className="theatre-hall" style={{ maxWidth: presentation ? `min(100%, 1100px, ${Math.round(65 * b.width / b.height)}dvh)` : `${widest}px` }}>
           <svg
             viewBox={`${b.left} ${b.top} ${b.width} ${b.height}`}
             width="100%"
@@ -158,6 +161,9 @@ export function TheatreRoom({
                   className="theatre-seat"
                   style={{
                     transitionDelay: seen
+                      ? `${Math.round(hall.rank[i] * step)}ms`
+                      : undefined,
+                    animationDelay: presentation && seen
                       ? `${Math.round(hall.rank[i] * step)}ms`
                       : undefined,
                   }}
