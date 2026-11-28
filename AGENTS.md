@@ -773,7 +773,14 @@ own** (pinned first, six at most), **Coming up** (the next fortnight's
 events), **Birthdays this week** (first names only: no age, no surname,
 nothing a wall should not show), **Giving** (the church's own phone,
 website and email), and **Go in peace** with the next service that has
-not started. Each row switches on or off and can be
+not started. **The countdown leaves the run when it reaches zero**: a
+coarse clock read through `useSyncExternalStore` (its snapshot is the
+yes/no itself, so the deck re-renders once, not every tick), and a screen
+showing it moves on to the slide after it. **Custom words go on the
+current slide** (Apply, in the studio or from either remote), kept per
+slide in `edits`; **Revert to original slide** shows only while a slide
+has them and clears both, which puts the slide's own content back.
+Each row switches on or off and can be
 presented from; the start time is a dropdown. Those settings are kept on
 the device (`localStorage`, read with `useSyncExternalStore` as the raw
 string so the snapshot is stable). With nothing on air the deck still has

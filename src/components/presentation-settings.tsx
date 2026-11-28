@@ -50,7 +50,8 @@ export function PresentationSettings({ appearance, onChange, live, textEditable 
       {live && textEditable && <form key={`${appearance.title}:${appearance.subtitle}`} onSubmit={e => { e.preventDefault(); const data = new FormData(e.currentTarget); onChange({title:String(data.get("title") ?? ""),subtitle:String(data.get("subtitle") ?? "")}); }}>
         <label>Title<input className="deck-input" name="title" defaultValue={appearance.title} maxLength={200} placeholder="Use the slide’s original title" /></label>
         <label>Subtitle<textarea className="deck-input" name="subtitle" defaultValue={appearance.subtitle} maxLength={500} rows={3} placeholder="Add a line for the room" /></label>
-        <div className="presentation-options"><button className="btn btn-sm" type="submit">Apply to current slide</button><button className="btn btn-sm btn-quiet" type="button" onClick={() => onChange({title:'',subtitle:''})}>Restore original</button></div>
+        <div className="presentation-options"><button className="btn btn-sm" type="submit">Apply to current slide</button>{(appearance.title || appearance.subtitle) && <button className="btn btn-sm btn-quiet" type="button" onClick={() => onChange({title:'',subtitle:''})}>Revert to original slide</button>}</div>
+        {(appearance.title || appearance.subtitle) && <p className="text-xs text-ink-3">This slide shows your words. Revert to put its own content back.</p>}
       </form>}
       <p className="text-xs text-ink-3">Move the audience window to the projector and press F for full screen. Share that window to keep controls private.</p>
       <a className="text-xs text-ink-3 underline" href="/presentation/CREDITS.md" target="_blank" rel="noreferrer">Photo credits · Pexels</a>

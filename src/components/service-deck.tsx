@@ -71,6 +71,28 @@ const ICON: Record<Kind, typeof Play> = {
 /* the deck's settings: on this device, read as an external store      */
 /* ------------------------------------------------------------------ */
 
+/*
+ * A coarse clock, read as an external store so render stays pure: the run
+ * of service asks it whether the countdown has reached zero, and the
+ * answer only needs to be right within a few seconds.
+ */
+const CLOCK_STEP = 5000;
+const clockTick = () => Math.floor(Date.now() / CLOCK_STEP);
+const clockTickServer = () => 0;
+function subscribeClock(changed: () => void) {
+  const timer = window.setInterval(changed, CLOCK_STEP);
+  return () => window.clearInterval(timer);
+}
+
+/** Whether today's `start` ("HH:MM") has come, at clock tick `tick`. */
+function startPassed(start: string, tick: number): boolean {
+  if (!tick) return false;
+  const [h, m] = start.split(":").map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return false;
+  const now = new Date(tick * CLOCK_STEP);
+  return now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds() >= h * 3600 + m * 60;
+}
+
 const subscribeMounted = () => () => {};
 const clientMounted = () => true;
 const serverMounted = () => false;
@@ -365,10 +387,22 @@ export function ServiceDeck({
     return [...all].sort((a, b) => Number(b.is_open) - Number(a.is_open) || b.created_at.localeCompare(a.created_at));
   }, [live]);
 
+  // The snapshot is the answer itself, so the deck re-renders once, when
+  // the countdown runs out, not on every tick of the clock.
+  const countdownOver = useSyncExternalStore(
+    subscribeClock,
+    () => startPassed(settings.start, clockTick()),
+    () => startPassed(settings.start, clockTickServer()),
+  );
+
   const slides: Slide[] = useMemo(
     () => [
       { id: "welcome", kind: "welcome", title: "Welcome", summary: church },
-      { id: "countdown", kind: "countdown", title: "Countdown", summary: `To ${STARTS.find((s) => s.value === settings.start)?.label ?? settings.start}` },
+      // At zero the countdown has said what it had to: it leaves the run,
+      // and a screen showing it moves on to what came after it.
+      ...(countdownOver
+        ? []
+        : [{ id: "countdown", kind: "countdown" as const, title: "Countdown", summary: `To ${STARTS.find((s) => s.value === settings.start)?.label ?? settings.start}` }]),
       ...(live
         ? [
             { id: "code", kind: "code" as const, title: "Check-in code", summary: live.is_open && live.code ? live.code.toUpperCase() : "Check-in closed" },
@@ -388,7 +422,7 @@ export function ServiceDeck({
       ...(giving ? [{ id: "giving", kind: "giving" as const, title: "Giving", summary: [giving.phone, giving.website, giving.email].filter(Boolean)[0] ?? "" }] : []),
       { id: "closing", kind: "closing" as const, title: "Go in peace", summary: nextService ? `Next: ${nextService.title}, ${eventWhen(nextService.startsAt, false)}` : "Send-off" },
     ],
-    [church, live, prompts, settings.start, settings.passages, settings.songs, notices, events.length, birthdays, giving, nextService],
+    [church, live, prompts, settings.start, countdownOver, settings.passages, settings.songs, notices, events.length, birthdays, giving, nextService],
   );
   const orderedSlides = useMemo(() => {
     const position = new Map(settings.order.map((id, i) => [id, i]));
