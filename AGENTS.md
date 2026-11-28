@@ -766,9 +766,14 @@ sees no empty panels; the control room says so once.
 
 **The run of service** (`components/service-deck.tsx`) is what goes on
 the screen at the front, in order, under the control room: a welcome, a
-countdown to the start, the check-in code, the room filling, today's
-message, the notices (pinned first, four at most), the next fortnight's
-events, and each question asked. Each row switches on or off and can be
+countdown to the start, the check-in code, the room filling, **New here?**
+(the code again and a word about cells), today's message, the readings
+and songs, each question asked; then **each notice on a slide of its
+own** (pinned first, six at most), **Coming up** (the next fortnight's
+events), **Birthdays this week** (first names only: no age, no surname,
+nothing a wall should not show), **Giving** (the church's own phone,
+website and email), and **Go in peace** with the next service that has
+not started. Each row switches on or off and can be
 presented from; the start time is a dropdown. Those settings are kept on
 the device (`localStorage`, read with `useSyncExternalStore` as the raw
 string so the snapshot is stable). With nothing on air the deck still has

@@ -5,7 +5,7 @@ import { Radio } from "lucide-react";
 import { ActionButton, AskQuestionEditor, CheckInBox, CheckInOpenEditor } from "@/components/editors";
 import { LiveBoard, LiveSessionCode } from "@/components/live-board";
 import { SundayPanel } from "@/components/live-service";
-import { DeckRemoteButton, DeckSettingsButton, DeckStudioButton, PresentButton, ServiceDeck, type DeckEvent, type DeckNotice } from "@/components/service-deck";
+import { DeckRemoteButton, DeckSettingsButton, DeckStudioButton, PresentButton, ServiceDeck, type DeckEvent, type DeckGiving, type DeckNotice } from "@/components/service-deck";
 import { LiveRefresh } from "@/components/live-refresh";
 import { Empty, Page, Panel } from "@/components/panels";
 import { canRead, canWrite } from "@/lib/access";
@@ -121,22 +121,27 @@ export default async function LiveServicePage({ searchParams }: { searchParams: 
   const first = selectedBoard?.data;
 
   // What the deck can put on the screen besides the service itself: the
-  // church's name, its notices (pinned first, at most four), and the next
-  // two weeks of published events.
+  // church's name and how to reach it (the Giving slide), its notices
+  // (pinned first, a slide each, at most six), the next two weeks of
+  // published events, and this week's birthdays (first names only).
   // From the start of today, not from now: a service that began at nine
   // is still today's service at ten.
   const now = new Date();
   const dayStart = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const fortnight = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-  const [churchInfo, noticeList, coming] = leader
+  const week = new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000);
+  const [churchInfo, noticeList, coming, birthdayList] = leader
     ? await Promise.all([
         churchId ? api<Church>(`/churches/${churchId}`) : Promise.resolve(null),
         opener ? api<Paged<Notice>>("/communication/notices/?limit=20&sort=created_at&order=desc") : Promise.resolve(null),
         api<Schemas["EventOccurrenceList"]>(
           `/events/occurrences?start=${dayStart.toISOString().slice(0, 19)}&end=${fortnight.toISOString().slice(0, 19)}`,
         ),
+        opener
+          ? api<Schemas["BirthdayList"]>(`/events/birthdays?start=${now.toISOString().slice(0, 10)}&end=${week.toISOString().slice(0, 10)}`)
+          : Promise.resolve(null),
       ])
-    : [null, null, null];
+    : [null, null, null, null];
   const zone = churchInfo?.ok ? churchInfo.data.timezone : undefined;
   const today = dayKey(now, zone);
   const clockNow = clockKey(now, zone);
@@ -150,7 +155,7 @@ export default async function LiveServicePage({ searchParams }: { searchParams: 
   const deckNotices: DeckNotice[] = (noticeList?.ok ? noticeList.data.items : [])
     .filter((n) => n.is_active !== false && (!n.expires_at || new Date(n.expires_at) > now))
     .sort((a, b) => Number(b.is_pinned) - Number(a.is_pinned))
-    .slice(0, 4)
+    .slice(0, 6)
     .map((n) => ({ id: n.id, title: n.title, content: n.content, pinned: Boolean(n.is_pinned) }));
   const deckEvents: DeckEvent[] = occurrences
     .filter((e) => e.starts_at.slice(0, 16) >= `${today}T${clockNow}` || e.is_all_day)
@@ -163,6 +168,20 @@ export default async function LiveServicePage({ searchParams }: { searchParams: 
       location: e.location ?? null,
     }));
   const churchName = churchInfo?.ok ? churchInfo.data.name : (first?.branch_name ?? "Our church");
+  // On a wall in front of everyone: a first name and nothing else — no
+  // age, no surname, no number.
+  const deckBirthdays = (birthdayList?.ok ? birthdayList.data.items : [])
+    .map((b) => b.full_name.trim().split(/\s+/)[0])
+    .filter(Boolean)
+    .slice(0, 24);
+  const deckGiving: DeckGiving | null = churchInfo?.ok && (churchInfo.data.contact_phone || churchInfo.data.contact_email || churchInfo.data.website)
+    ? { phone: churchInfo.data.contact_phone ?? null, email: churchInfo.data.contact_email ?? null, website: churchInfo.data.website ?? null }
+    : null;
+  // The next service that has not started: the Closing slide's "see you".
+  const upcomingService = occurrences.find(
+    (e) => e.event_type === "service" && !e.is_all_day && e.starts_at.slice(0, 16) > `${today}T${clockNow}`,
+  );
+  const deckNextService = upcomingService ? { title: upcomingService.title, startsAt: upcomingService.starts_at } : null;
 
   return (
     <Page>
@@ -246,7 +265,7 @@ export default async function LiveServicePage({ searchParams }: { searchParams: 
       {/* What goes on the screen at the front: a drawer from the control
           room's Run of service, and the presenter. Nothing on the page itself. */}
       {opener && (
-        <ServiceDeck receiverId={params.screen === "audience" && /^[a-zA-Z0-9-]{1,64}$/.test(params.receiver ?? "") ? params.receiver : undefined} scopeKey={`${churchId ?? churchName}:${selectedBoard?.id ?? "draft"}`} key={selectedBoard?.id ?? "no-service"} audience={params.screen === "audience"} initialSlide={Math.max(0, Math.min(500, Number(params.slide) || 0))} church={churchName} live={first ?? null} notices={deckNotices} events={deckEvents} defaultStart={nextToday?.starts_at.slice(11, 16)} />
+        <ServiceDeck receiverId={params.screen === "audience" && /^[a-zA-Z0-9-]{1,64}$/.test(params.receiver ?? "") ? params.receiver : undefined} scopeKey={`${churchId ?? churchName}:${selectedBoard?.id ?? "draft"}`} key={selectedBoard?.id ?? "no-service"} audience={params.screen === "audience"} initialSlide={Math.max(0, Math.min(500, Number(params.slide) || 0))} church={churchName} live={first ?? null} notices={deckNotices} events={deckEvents} birthdays={deckBirthdays} giving={deckGiving} nextService={deckNextService} defaultStart={nextToday?.starts_at.slice(11, 16)} />
       )}
 
       {/* The member's half. Leaders can check in too — they were there. */}

@@ -1,8 +1,9 @@
 "use client";
 
 import {
-  ArrowDown, ArrowUp, BookOpen, Check, ChevronLeft, ChevronRight, Clock3, Copy, Hand, Maximize2, Megaphone,
-  Minimize2, MonitorPlay, Music, Palette, Play, RotateCcw, Undo2, QrCode, Settings2, Smartphone, Sparkles, Trash2, Users, X,
+  ArrowDown, ArrowUp, BookOpen, Cake, CalendarDays, Check, ChevronLeft, ChevronRight, Clock3, Copy, DoorOpen, Hand, HandHeart,
+  Maximize2, Megaphone, Minimize2, MonitorPlay, Music, Palette, Play, RotateCcw, Undo2, QrCode, Settings2, Smartphone,
+  Sparkles, Sunset, Trash2, Users, X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -23,9 +24,15 @@ type Prompt = Schemas["LivePrompt"];
 
 export type DeckNotice = { id: string; title: string; content: string; pinned: boolean };
 export type DeckEvent = { id: string; title: string; startsAt: string; allDay: boolean; location: string | null };
+/** How to give, from the church's own contact details. */
+export type DeckGiving = { phone: string | null; email: string | null; website: string | null };
+/** The next service that has not started, for the Closing slide. */
+export type DeckNextService = { title: string; startsAt: string };
 type Song = { id: string; title: string; lyrics: string };
 
-type Kind = "welcome" | "countdown" | "code" | "room" | "message" | "scripture" | "song" | "question" | "announcements";
+type Kind =
+  | "welcome" | "countdown" | "code" | "room" | "newhere" | "message" | "scripture" | "song" | "question"
+  | "notice" | "events" | "birthdays" | "giving" | "closing";
 
 type Slide = {
   /** Stable across refreshes, so switching one off sticks. */
@@ -39,6 +46,8 @@ type Slide = {
   prompt?: Prompt;
   /** For a scripture passage or a song: what the remove button takes out. */
   removes?: { type: "passage" | "song"; key: string };
+  /** A notice slide's notice. */
+  notice?: DeckNotice;
 };
 
 const ICON: Record<Kind, typeof Play> = {
@@ -50,7 +59,12 @@ const ICON: Record<Kind, typeof Play> = {
   scripture: BookOpen,
   song: Music,
   question: Hand,
-  announcements: Megaphone,
+  newhere: DoorOpen,
+  notice: Megaphone,
+  events: CalendarDays,
+  birthdays: Cake,
+  giving: HandHeart,
+  closing: Sunset,
 };
 
 /* ------------------------------------------------------------------ */
@@ -290,10 +304,12 @@ function songSlides(song: Song): Slide[] {
  *
  * Every slide the service can put on the screen at the front, in the
  * order they are shown: Welcome, a countdown to the start, the check-in
- * code, the room filling, today's message, the readings (KJV, looked up
- * by reference), the songs (lyrics as typed, a verse a screen), each
- * question asked, and the announcements last (notices and what is coming
- * up, together). The run lives in a drawer opened from the control room,
+ * code, the room filling, New here? (the code again, and a word about
+ * cells), today's message, the readings (KJV, looked up by reference),
+ * the songs (lyrics as typed, a verse a screen), each question asked;
+ * then each notice on a slide of its own, what is coming up, this week's
+ * birthdays (first names only), how to give, and a closing send-off with
+ * the next service. The run lives in a drawer opened from the control room,
  * so it is not across the top of the page while the service runs; its
  * settings are kept on this device.
  *
@@ -312,12 +328,19 @@ export function ServiceDeck({
   live,
   notices,
   events,
+  birthdays = [],
+  giving = null,
+  nextService = null,
   defaultStart,
 }: {
   church: string;
   live: Live | null;
   notices: DeckNotice[];
   events: DeckEvent[];
+  /** First names with a birthday this week. */
+  birthdays?: string[];
+  giving?: DeckGiving | null;
+  nextService?: DeckNextService | null;
   audience?: boolean; initialSlide?: number; scopeKey: string; receiverId?: string;
   /** "HH:MM" of today's next event, for a countdown nobody has set. */
   defaultStart?: string;
@@ -352,20 +375,20 @@ export function ServiceDeck({
             { id: "room", kind: "room" as const, title: "The room", summary: `${live.present ?? 0}${live.expected ? ` of ${live.expected}` : ""} here` },
           ]
         : []),
+      { id: "newhere", kind: "newhere" as const, title: "New here?", summary: live?.is_open && live.code ? `Code ${live.code.toUpperCase()} · join a cell` : "Welcome · join a cell" },
       ...(live?.sermon ? [{ id: "message", kind: "message" as const, title: "Today’s message", summary: live.sermon.title }] : []),
       ...settings.passages.flatMap(passageSlides),
       ...settings.songs.flatMap(songSlides),
       ...prompts.map((p) => ({ id: `q:${p.id}`, kind: "question" as const, title: p.question, summary: p.is_open ? "Question · open" : "Question · results", prompt: p })),
-      ...(notices.length || events.length
-        ? [{
-            id: "announcements",
-            kind: "announcements" as const,
-            title: "Announcements",
-            summary: [notices.length && `${notices.length} ${notices.length === 1 ? "notice" : "notices"}`, events.length && `${events.length} coming up`].filter(Boolean).join(" · "),
-          }]
-        : []),
+      // Each notice is a slide of its own, pinned first, so none is cut to
+      // fit beside another.
+      ...notices.map((n) => ({ id: `notice:${n.id}`, kind: "notice" as const, title: n.title, summary: n.pinned ? "Notice · pinned" : "Notice", notice: n })),
+      ...(events.length ? [{ id: "events", kind: "events" as const, title: "Coming up", summary: `${events.length} in the next two weeks` }] : []),
+      ...(birthdays.length ? [{ id: "birthdays", kind: "birthdays" as const, title: "Birthdays this week", summary: birthdays.slice(0, 3).join(", ") + (birthdays.length > 3 ? ` and ${birthdays.length - 3} more` : "") }] : []),
+      ...(giving ? [{ id: "giving", kind: "giving" as const, title: "Giving", summary: [giving.phone, giving.website, giving.email].filter(Boolean)[0] ?? "" }] : []),
+      { id: "closing", kind: "closing" as const, title: "Go in peace", summary: nextService ? `Next: ${nextService.title}, ${eventWhen(nextService.startsAt, false)}` : "Send-off" },
     ],
-    [church, live, prompts, settings.start, settings.passages, settings.songs, notices.length, events.length],
+    [church, live, prompts, settings.start, settings.passages, settings.songs, notices, events.length, birthdays, giving, nextService],
   );
   const orderedSlides = useMemo(() => {
     const position = new Map(settings.order.map((id, i) => [id, i]));
@@ -585,8 +608,11 @@ export function ServiceDeck({
           go={go}
           onEnd={end}
           live={live}
-          notices={notices}
           events={events}
+          birthdays={birthdays}
+          giving={giving}
+          nextService={nextService}
+          church={church}
           start={settings.start}
           appearance={JSON.parse(styleKey)}
           audience
@@ -833,8 +859,11 @@ function Stage({
   go,
   onEnd,
   live,
-  notices,
   events,
+  birthdays,
+  giving,
+  nextService,
+  church,
   start,
 }: {
   appearance: PresentationStyle; audience: boolean;
@@ -846,8 +875,11 @@ function Stage({
   go: (n: number) => void;
   onEnd: () => void;
   live: Live | null;
-  notices: DeckNotice[];
   events: DeckEvent[];
+  birthdays: string[];
+  giving: DeckGiving | null;
+  nextService: DeckNextService | null;
+  church: string;
   start: string;
 }) {
   const mounted = useSyncExternalStore(subscribeMounted, clientMounted, serverMounted);
@@ -959,7 +991,12 @@ function Stage({
         {slide.kind === "message" && live?.sermon && <MessageSlide sermon={live.sermon} />}
         {(slide.kind === "scripture" || slide.kind === "song") && <WordsSlide slide={slide} />}
         {slide.kind === "question" && slide.prompt && <QuestionSlide prompt={slide.prompt} />}
-        {slide.kind === "announcements" && <AnnouncementsSlide notices={notices} events={events} />}
+        {slide.kind === "newhere" && <NewHereSlide live={live} />}
+        {slide.kind === "notice" && slide.notice && <NoticeSlide notice={slide.notice} />}
+        {slide.kind === "events" && <EventsSlide events={events} />}
+        {slide.kind === "birthdays" && <BirthdaysSlide names={birthdays} />}
+        {slide.kind === "giving" && giving && <GivingSlide giving={giving} church={church} />}
+        {slide.kind === "closing" && <ClosingSlide next={nextService} />}
         </>}
       </div>
 
@@ -1032,33 +1069,105 @@ function WordsSlide({ slide }: { slide: Slide }) {
   );
 }
 
-/** Notices and what is coming up, together, at the end of the service. */
-function AnnouncementsSlide({ notices, events }: { notices: DeckNotice[]; events: DeckEvent[] }) {
+/** One notice, the whole of it, large enough to read from the back. */
+function NoticeSlide({ notice }: { notice: DeckNotice }) {
   return (
     <div className="ps">
-      <div className={notices.length && events.length ? "ps-announce" : ""}>
-        {notices.length > 0 && (
-          <ul className="ps-notices">
-            {notices.slice(0, 3).map((n) => (
-              <li key={n.id}>
-                <span className="ps-notice-title">{n.title}</span>
-                <span className="ps-notice-body">{n.content}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {events.length > 0 && (
-          <ul className="ps-events">
-            {events.slice(0, 4).map((e) => (
-              <li key={e.id}>
-                <span className="ps-event-when">{eventWhen(e.startsAt, e.allDay)}</span>
-                <span className="ps-event-title">{e.title}</span>
-                {e.location && <span className="ps-event-where">{e.location}</span>}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <p className="ps-kicker">{notice.pinned ? "Notice · pinned" : "Notice"}</p>
+      <p className="ps-title">{notice.title}</p>
+      {notice.content && <p className="ps-notice-full">{notice.content}</p>}
+    </div>
+  );
+}
+
+/** The next two weeks, in order: when, what, where. */
+function EventsSlide({ events }: { events: DeckEvent[] }) {
+  return (
+    <div className="ps">
+      <p className="ps-kicker">Coming up</p>
+      <ul className="ps-events">
+        {events.slice(0, 5).map((e) => (
+          <li key={e.id}>
+            <span className="ps-event-when">{eventWhen(e.startsAt, e.allDay)}</span>
+            <span className="ps-event-title">{e.title}</span>
+            {e.location && <span className="ps-event-where">{e.location}</span>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** First names only: a wall is no place for an age or a surname. */
+function BirthdaysSlide({ names }: { names: string[] }) {
+  return (
+    <div className="ps ps-center">
+      <p className="ps-kicker">Happy birthday</p>
+      <p className="ps-title">This week we celebrate</p>
+      <ul className="ps-names">
+        {names.map((name, i) => (
+          <li key={`${name}-${i}`}>{name}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** How to give, from the church's own phone, website and email. */
+function GivingSlide({ giving, church }: { giving: DeckGiving; church: string }) {
+  const ways = [
+    giving.phone && { label: "Call or send", value: giving.phone },
+    giving.website && { label: "Online", value: giving.website.replace(/^https?:\/\//, "").replace(/\/$/, "") },
+    giving.email && { label: "Email", value: giving.email },
+  ].filter((w): w is { label: string; value: string } => Boolean(w));
+  return (
+    <div className="ps">
+      <p className="ps-kicker">Giving</p>
+      <p className="ps-title">Thank you for giving to {church}</p>
+      <ul className="ps-ways">
+        {ways.map((w) => (
+          <li key={w.label}>
+            <span className="ps-way-label">{w.label}</span>
+            <span className="ps-way-value">{w.value}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** For anyone here the first time: check in, and find a cell. */
+function NewHereSlide({ live }: { live: Live | null }) {
+  const code = live?.is_open && live.code ? live.code.toUpperCase() : "";
+  return (
+    <div className="ps ps-center">
+      <p className="ps-kicker">New here?</p>
+      <p className="ps-title">You are welcome.</p>
+      {code ? (
+        <>
+          <p className="ps-lede">Check in with this code in Chapl</p>
+          <div className="ps-code ps-code-small">
+            <DotNumeral value={code} label={`Check-in code ${code}`} />
+          </div>
+        </>
+      ) : (
+        <p className="ps-lede">Say hello at the welcome desk after the service.</p>
+      )}
+      <p className="ps-foot">Ask about a cell group near you: a small circle that meets in the week.</p>
+    </div>
+  );
+}
+
+/** The send-off, and when to come back. */
+function ClosingSlide({ next }: { next: DeckNextService | null }) {
+  return (
+    <div className="ps ps-center">
+      <p className="ps-welcome">Go in peace</p>
+      {next && (
+        <p className="ps-lede">
+          See you at {next.title}, {eventWhen(next.startsAt, false)}
+        </p>
+      )}
     </div>
   );
 }
